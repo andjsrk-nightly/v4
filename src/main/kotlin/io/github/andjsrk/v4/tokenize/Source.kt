@@ -8,11 +8,18 @@ class Source(private val source: String) {
     }
     fun advance(): Char {
         val curr = curr
-        pos++
+        if (pos < source.length) pos++
+        return curr
+    }
+    fun advanceWhile(check: (Char) -> Boolean): Char {
+        while (check(curr)) advance()
         return curr
     }
     val curr get() =
-        source[pos]
+        source.getOrNull(pos) ?: endOfInput
     fun peek(relativePos: Int = 1) =
-        source[pos + relativePos]
+        source.getOrNull(pos + relativePos) ?: endOfInput
+    companion object {
+        const val endOfInput = (-1).toChar()
+    }
 }

@@ -14,7 +14,7 @@ data class Token(
         lateinit var type: TokenType
         var literal = ""
         var afterLineTerminator = false
-        fun build() =
+        fun build(type: TokenType = this.type) =
             Token(type, literal, afterLineTerminator, startPos)
     }
 }

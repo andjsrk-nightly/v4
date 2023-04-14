@@ -22,9 +22,18 @@ val Char.isSpecHexDigit get() =
 // 12.2 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-white-space)
 val Char.isSpecWhiteSpace get() =
     this.isOneOf('\t', '\u000B', '\u000C', '\uFEFF') || this in CharCategory.SPACE_SEPARATOR
+
 // 12.3 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-line-terminators)
 val Char.isSpecLineTerminator get() =
     this.isOneOf('\n', '\r', '\u2028', '\u2029')
+
+// 12.7 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#prod-AsciiLetter)
+val Char.isSpecAsciiLetter get() =
+    this in 'a'..'z' || this in 'A'..'Z'
+// changed; 12.7 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#prod-IdentifierName)
+val Char.isSpecIdentifierName get() =
+    this.isSpecAsciiLetter
+
 // 12.9.4.2 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#table-string-single-character-escape-sequences)
 private typealias UnescapedChar = Char
 val specSingleEscapeCharacterMap =
@@ -39,6 +48,3 @@ val specSingleEscapeCharacterMap =
         't' to '\t',
         'v' to '\u000B',
     )
-// 12.9.4 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#prod-SingleEscapeCharacter)
-val Char.isSpecSingleEscapeCharacter get() =
-    this.isOneOf('\'', '"', '\\', 'b', 'f', 'n', 'r', 't', 'v')

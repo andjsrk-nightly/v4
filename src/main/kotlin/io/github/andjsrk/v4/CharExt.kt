@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4
 
-fun Char.toHexIntOrNull() =
+internal fun Char.toHexIntOrNull() =
     digitToIntOrNull(16)
-fun String.toHexIntOrNull() =
+internal fun String.toHexIntOrNull() =
     toIntOrNull(16)

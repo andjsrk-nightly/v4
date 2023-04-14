@@ -11,10 +11,6 @@ class Source(private val source: String) {
         if (pos < source.length) pos++
         return curr
     }
-    fun advanceWhile(check: (Char) -> Boolean): Char {
-        while (check(curr)) advance()
-        return curr
-    }
     val curr get() =
         source.getOrNull(pos) ?: endOfInput
     fun peek(relativePos: Int = 1) =

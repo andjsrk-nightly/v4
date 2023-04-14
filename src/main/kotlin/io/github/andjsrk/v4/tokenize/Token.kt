@@ -4,17 +4,19 @@ import io.github.andjsrk.v4.Location
 
 data class Token(
     val type: TokenType,
+    val rawContent: String,
     val literal: String,
     val afterLineTerminator: Boolean,
     private val startPos: Int,
 ) {
     val location get() =
-        Location.since(startPos, literal.length)
+        Location.since(startPos, rawContent.length)
     internal class Builder(private val startPos: Int) {
-        lateinit var type: TokenType
+        var type = TokenType.UNINITIALIZED
+        var rawContent = ""
         var literal = ""
         var afterLineTerminator = false
         fun build(type: TokenType = this.type) =
-            Token(type, literal, afterLineTerminator, startPos)
+            Token(type, rawContent, literal, afterLineTerminator, startPos)
     }
 }

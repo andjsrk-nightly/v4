@@ -41,7 +41,10 @@ class Tokenizer(sourceText: String) {
     private fun Token.Builder.select(expected: Char, then: TokenType, `else`: TokenType): Token {
         advance()
         return (
-            if (curr == expected) build(then).alsoAdvance()
+            if (curr == expected) {
+                advance()
+                build(then)
+            }
             else build(`else`)
         )
     }

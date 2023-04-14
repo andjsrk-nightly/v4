@@ -64,19 +64,19 @@ class Tokenizer(sourceText: String) {
         TokenType.values()
             .filter { it.staticContent?.length == 1 }
             .associateBy { it.staticContent!!.single() }
-    private fun skipWhiteSpace(): Token {
-        println("skipping white space")
-        if (curr.isSpecWhiteSpace.not()) return builder.build(ILLEGAL)
+    private fun skipWhiteSpaceOrLineTerminator() {
+        val isSpecWhiteSpace = curr.isSpecWhiteSpace
+        val isSpecLineTerminator = curr.isSpecLineTerminator
+        if (isSpecWhiteSpace.not() && isSpecLineTerminator.not()) return
 
-        if (curr.isSpecLineTerminator) builder.afterLineTerminator = true
+        if (isSpecLineTerminator) builder.afterLineTerminator = true
 
         advanceWhile {
-            (it.isSpecWhiteSpace || it.isSpecLineTerminator).thenAlso {
-                if (it.isSpecLineTerminator) builder.afterLineTerminator = true
+            val isSpecLineTerminator = it.isSpecLineTerminator
+            (it.isSpecWhiteSpace || isSpecLineTerminator).thenAlso {
+                if (isSpecLineTerminator) builder.afterLineTerminator = true
             }
         }
-
-        return builder.build(WHITE_SPACE)
     }
     private fun skipSingleLineComment() {
         advanceWhile { it.isSpecLineTerminator.not() }
@@ -431,12 +431,12 @@ class Tokenizer(sourceText: String) {
                         }
                         curr.isEndOfInput -> build(if (hasError) ILLEGAL else EOS)
                         else -> {
-                            skipWhiteSpace()
+                            skipWhiteSpaceOrLineTerminator()
                             continue
                         }
                     }
                 }
-            } while (builder.type == WHITE_SPACE)
+            } while (builder.type == UNINITIALIZED)
         }
         return builder.build()
     }

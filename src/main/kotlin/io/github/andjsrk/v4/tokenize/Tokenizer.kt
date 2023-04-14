@@ -144,9 +144,13 @@ class Tokenizer(sourceText: String) {
                 } else addUnescapedHex4DigitsUnicodeEscapeSequence(begin)
             }
             'x' -> {
+                val begin = source.pos - hexEscapeSequencePrefix.length
                 advance()
                 val (_, charCode) = readHexIntOrNull(2)
-                if (charCode == null) return false
+                if (charCode == null) {
+                    reportError(SyntaxError.INVALID_HEX_ESCAPE_SEQUENCE, Location(begin, source.pos))
+                    return false
+                }
                 literal += charCode.toChar()
             }
             else -> literal += curr

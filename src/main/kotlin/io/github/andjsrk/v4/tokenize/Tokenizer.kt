@@ -287,7 +287,6 @@ class Tokenizer(sourceText: String) {
         return true
     }
     private fun getNumberToken(): Token {
-        println("asdf $curr")
         builder.run {
             var seenPeriod = false
             val kind =

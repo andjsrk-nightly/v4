@@ -12,7 +12,7 @@ data class Token(
     val location get() =
         Location.since(startPos, rawContent.length)
     internal class Builder(private val startPos: Int) {
-        var type = TokenType.UNINITIALIZED
+        lateinit var type: TokenType
         var rawContent = ""
         var literal = ""
         var afterLineTerminator = false

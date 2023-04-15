@@ -1,7 +1,6 @@
 package io.github.andjsrk.v4.tokenize
 
 enum class TokenType(val staticContent: String?, val precedence: Int = 0) {
-    UNINITIALIZED(null),
     EOS(null),
     ILLEGAL(null),
     TEMPLATE_HEAD(null),

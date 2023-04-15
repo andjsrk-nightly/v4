@@ -527,7 +527,7 @@ class Tokenizer(sourceText: String) {
                     }
                     else -> if (curr.isEndOfInput) build(if (hasError) ILLEGAL else EOS)
                 }
-            } while (builder.type == UNINITIALIZED)
+            } while (builder.type == WHITE_SPACE)
         }
         return builder.build()
     }

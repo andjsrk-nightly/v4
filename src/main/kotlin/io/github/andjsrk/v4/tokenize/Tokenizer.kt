@@ -321,7 +321,7 @@ class Tokenizer(sourceText: String) {
             if (curr == 'n' && !seenPeriod) { // bigint literal
                 isBigint = true
                 advance()
-            } else if (curr.equals('e', ignoreCase=true)) {
+            } else if (curr.isSpecExponentIndicator) {
                 if (kind != NumberKind.DECIMAL) return buildIllegal()
                 addLiteralAdvance()
                 if (curr == '+' || curr == '-') addLiteralAdvance()

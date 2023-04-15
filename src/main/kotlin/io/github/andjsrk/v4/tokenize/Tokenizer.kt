@@ -24,7 +24,7 @@ class Tokenizer(sourceText: String) {
      * If `true`, when got `` ` `` it should be interpreted as start of `TEMPLATE_HEAD`.
      * If `false`, when got `}` it should be interpreted as start of `TEMPLATE_MIDDLE` or `TEMPLATE_TAIL`.
      */
-    private var syntacticPairs = ArrayDeque<SyntacticPair>()
+    private val syntacticPairs = ArrayDeque<SyntacticPair>()
     private fun ArrayDeque<SyntacticPair>.isLastClosingPart(value: Char) =
         lastOrNull()?.closingPart == value.toString()
     private fun advance() =

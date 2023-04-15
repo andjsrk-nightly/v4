@@ -1,6 +1,8 @@
 package io.github.andjsrk.v4.tokenize
 
-enum class SyntaxError(val message: String) {
+import io.github.andjsrk.v4.error.Error
+
+enum class SyntaxError(override val message: String): Error {
     AMBIGUOUS_EXPORT("The requested module '%' contains conflicting star exports for name '%'"),
     BAD_GETTER_ARITY("Getter must not have any formal parameters."),
     BAD_SETTER_ARITY("Setter must have exactly one formal parameter."),

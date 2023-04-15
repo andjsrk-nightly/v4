@@ -1,6 +1,9 @@
 package io.github.andjsrk.v4.tokenize
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.error.Error
+import io.github.andjsrk.v4.error.RangeError
+import io.github.andjsrk.v4.error.SyntaxError
 import io.github.andjsrk.v4.tokenize.TokenType.*
 
 private typealias WasSuccessful = Boolean
@@ -12,7 +15,7 @@ class Tokenizer(sourceText: String) {
         private set
     val hasError get() =
         error != null
-    private fun reportError(kind: SyntaxError, location: Location) {
+    private fun reportError(kind: Error, location: Location = Location.since(source.pos, 1)) {
         if (!hasError) error = TokenizerError(kind, location)
     }
     // for use by methods
@@ -38,6 +41,10 @@ class Tokenizer(sourceText: String) {
         source.curr
     private fun peek(relativePos: Int = 1) =
         source.peek(relativePos)
+    private fun Token.Builder.addLiteralAdvance(char: Char = curr) {
+        literal += char
+        advance()
+    }
     private fun Token.Builder.select(expected: Char, then: TokenType, `else`: TokenType): Token {
         advance()
         return (
@@ -65,11 +72,13 @@ class Tokenizer(sourceText: String) {
             .filter { it.staticContent?.length == 1 }
             .associateBy { it.staticContent!!.single() }
     private fun skipWhiteSpaceOrLineTerminator() {
-        val isSpecWhiteSpace = curr.isSpecWhiteSpace
-        val isSpecLineTerminator = curr.isSpecLineTerminator
-        if (isSpecWhiteSpace.not() && isSpecLineTerminator.not()) return
+        run { // isolated scope
+            val isSpecWhiteSpace = curr.isSpecWhiteSpace
+            val isSpecLineTerminator = curr.isSpecLineTerminator
+            if (isSpecWhiteSpace.not() && isSpecLineTerminator.not()) return
 
-        if (isSpecLineTerminator) builder.afterLineTerminator = true
+            if (isSpecLineTerminator) builder.afterLineTerminator = true
+        }
 
         advanceWhile {
             val isSpecLineTerminator = it.isSpecLineTerminator
@@ -131,10 +140,7 @@ class Tokenizer(sourceText: String) {
         if (curr.isEndOfInput) return false
 
         when (curr) {
-            in specSingleEscapeCharacterMap -> {
-                literal += specSingleEscapeCharacterMap[curr]
-                advance()
-            }
+            in specSingleEscapeCharacterMap -> addLiteralAdvance(specSingleEscapeCharacterMap[curr]!!)
             'u' -> {
                 val begin = source.pos - unicodeEscapeSequencePrefix.length
                 advance()
@@ -162,93 +168,171 @@ class Tokenizer(sourceText: String) {
 
         advance()
 
-        while (true) {
-            advanceWhile {
-                (it != quote && it != '\\').thenAlso {
-                    builder.literal += it
+        builder.run {
+            while (true) {
+                advanceWhile {
+                    (it != quote && it != '\\').thenAlso {
+                        literal += it
+                    }
                 }
+
+                while (curr == '\\') {
+                    advance()
+                    if (curr.isEndOfInput) return buildIllegal()
+                    val successful = addUnescapedEscapeSequence()
+                    if (!successful) return buildIllegal()
+                }
+
+                if (curr == quote) {
+                    advance()
+                    return build(STRING)
+                }
+
+                if (curr.isEndOfInput || curr.isSpecLineTerminator) return buildIllegal()
+
+                addLiteralAdvance()
             }
-
-            while (curr == '\\') {
-                advance()
-                if (curr.isEndOfInput) return builder.build(ILLEGAL)
-                val successful = builder.addUnescapedEscapeSequence()
-                if (!successful) return builder.build(ILLEGAL)
-            }
-
-            if (curr == quote) {
-                advance()
-                return builder.build(STRING)
-            }
-
-            if (curr.isEndOfInput || curr.isSpecLineTerminator) return builder.build(ILLEGAL)
-
-            builder.literal += curr
-            advance()
         }
     }
     private fun getTemplateHeadToken(): Token {
         // ` have already been read
-        while (true) {
-            if (curr.isEndOfInput) return builder.build(ILLEGAL)
+        builder.run {
+            while (true) {
+                if (curr.isEndOfInput) return buildIllegal()
 
-            when (curr) {
-                '`' -> {
-                    advance()
-                    return builder.build(TEMPLATE_FULL)
-                }
-                '\\' -> {
-                    advance()
-                    builder.addUnescapedEscapeSequence()
-                    continue
-                }
-                else -> {
-                    if (curr == '$' && peek() == '{') {
+                when (curr) {
+                    '`' -> {
                         advance()
-                        advance()
-                        syntacticPairs.add(SyntacticPair.TEMPLATE_LITERAL)
-                        return builder.build()
+                        return build(TEMPLATE_FULL)
                     }
-                    if (curr.isSpecLineTerminator) {
-                        builder.literal += takeCrLfNormalizedLineTerminator()
+                    '\\' -> {
+                        advance()
+                        addUnescapedEscapeSequence()
                         continue
                     }
+                    else -> {
+                        if (curr == '$' && peek() == '{') {
+                            advance()
+                            advance()
+                            syntacticPairs.add(SyntacticPair.TEMPLATE_LITERAL)
+                            return build()
+                        }
+                        if (curr.isSpecLineTerminator) {
+                            literal += takeCrLfNormalizedLineTerminator()
+                            continue
+                        }
+                    }
                 }
+                addLiteralAdvance()
             }
-            builder.literal += curr
-            advance()
         }
     }
     private fun getTemplateMiddleToken(): Token {
         // } have already been read
-        while (true) {
-            if (curr.isEndOfInput) return builder.build(ILLEGAL)
+        builder.run {
+            while (true) {
+                if (curr.isEndOfInput) return buildIllegal()
 
-            when (curr) {
-                '`' -> {
-                    advance()
-                    return builder.build(TEMPLATE_TAIL)
-                }
-                '\\' -> {
-                    advance()
-                    builder.addUnescapedEscapeSequence()
-                    continue
-                }
-                else -> {
-                    if (curr == '$' && peek() == '{') {
+                when (curr) {
+                    '`' -> {
                         advance()
-                        advance()
-                        syntacticPairs.add(SyntacticPair.TEMPLATE_LITERAL)
-                        return builder.build(TEMPLATE_MIDDLE)
+                        return build(TEMPLATE_TAIL)
                     }
-                    if (curr.isSpecLineTerminator) {
-                        builder.literal += takeCrLfNormalizedLineTerminator()
+                    '\\' -> {
+                        advance()
+                        addUnescapedEscapeSequence()
                         continue
+                    }
+                    else -> {
+                        if (curr == '$' && peek() == '{') {
+                            advance()
+                            advance()
+                            syntacticPairs.add(SyntacticPair.TEMPLATE_LITERAL)
+                            return build(TEMPLATE_MIDDLE)
+                        }
+                        if (curr.isSpecLineTerminator) {
+                            literal += takeCrLfNormalizedLineTerminator()
+                            continue
+                        }
+                    }
+                }
+                addLiteralAdvance()
+            }
+        }
+    }
+    private fun Token.Builder.addDigitsWithNumericSeparators(check: (Char) -> Boolean, checkFirstDigit: Boolean = true): WasSuccessful {
+        if (checkFirstDigit && !check(curr)) return false
+
+        var separatorSeen = false
+
+        while (check(curr) || curr.isSpecNumericLiteralSeparator) {
+            if (curr.isSpecNumericLiteralSeparator) {
+                advance()
+                if (curr.isSpecNumericLiteralSeparator) {
+                    reportError(RangeError.CONTINUOUS_NUMERIC_SEPARATOR)
+                    return false
+                }
+                separatorSeen = true
+                continue
+            }
+            separatorSeen = false
+            addLiteralAdvance()
+        }
+
+        if (separatorSeen) {
+            reportError(RangeError.TRAILING_NUMERIC_SEPARATOR)
+            return false
+        }
+
+        return true
+    }
+    private fun getNumberToken(): Token {
+        println("asdf $curr")
+        builder.run {
+            var seenPeriod = false
+            val kind =
+                if (curr == '0') {
+                    addLiteralAdvance()
+                    when (val lowercasePrev = curr.lowercaseChar()) {
+                        'b', 'o', 'x' -> {
+                            addLiteralAdvance()
+                            NumberKind.getByKindSpecifier(lowercasePrev)!!
+                        }
+                        else -> NumberKind.DECIMAL
+                    }
+                } else NumberKind.DECIMAL
+            val successful = when (kind) {
+                NumberKind.BINARY -> addDigitsWithNumericSeparators(Char::isSpecBinaryDigit)
+                NumberKind.OCTAL -> addDigitsWithNumericSeparators(Char::isSpecOctalDigit)
+                NumberKind.HEX -> addDigitsWithNumericSeparators(Char::isSpecHexDigit)
+                NumberKind.DECIMAL -> addDigitsWithNumericSeparators(Char::isSpecDecimalDigit).also {
+                    if (curr == '.') {
+                        seenPeriod = true
+                        addLiteralAdvance('.')
+                        if (curr.isSpecNumericLiteralSeparator) return buildIllegal()
+                        val successful = addDigitsWithNumericSeparators(Char::isSpecDecimalDigit)
+                        if (!successful) return buildIllegal()
                     }
                 }
             }
-            builder.literal += curr
-            advance()
+            if (!successful) return buildIllegal()
+
+            var isBigint = false
+            if (curr == 'n' && !seenPeriod) { // bigint literal
+                isBigint = true
+                advance()
+            } else if (curr.equals('e', ignoreCase=true)) {
+                if (kind != NumberKind.DECIMAL) return buildIllegal()
+                addLiteralAdvance()
+                if (curr == '+' || curr == '-') addLiteralAdvance()
+                if (curr.isSpecDecimalDigit.not()) return buildIllegal()
+                val successful = addDigitsWithNumericSeparators(Char::isSpecDecimalDigit)
+                if (!successful) return buildIllegal()
+            }
+
+            if (curr.isSpecDecimalDigit || curr.isSpecIdentifierName) return buildIllegal()
+
+            return build(if (isBigint) BIGINT else NUMBER)
         }
     }
     fun getNextToken(): Token {
@@ -259,7 +343,12 @@ class Tokenizer(sourceText: String) {
                     '#' -> PRIVATE_NAME
                     '"', '\'' -> STRING
                     '`' -> TEMPLATE_HEAD
-                    else -> singleCharTokenMap[curr] ?: UNINITIALIZED
+                    else -> singleCharTokenMap[curr] ?: when {
+                        curr.isSpecWhiteSpace || curr.isSpecLineTerminator -> WHITE_SPACE
+                        curr.isSpecDecimalDigit -> NUMBER
+                        curr.isSpecIdentifierName -> IDENTIFIER
+                        else -> ILLEGAL
+                    }
                 }
 
                 when (type) {
@@ -277,7 +366,7 @@ class Tokenizer(sourceText: String) {
                         } else {
                             reportError(SyntaxError.UNEXPECTED_TOKEN, Location.since(source.pos, 1))
                             advance()
-                            build(ILLEGAL)
+                            buildIllegal()
                         }
                     )
                     RIGHT_BRACE -> return when (syntacticPairs.lastOrNull()) {
@@ -294,7 +383,7 @@ class Tokenizer(sourceText: String) {
                         else -> {
                             reportError(SyntaxError.UNEXPECTED_TOKEN, Location.since(source.pos, 1))
                             advance()
-                            build(ILLEGAL)
+                            buildIllegal()
                         }
                     }
                     CONDITIONAL -> {
@@ -428,17 +517,16 @@ class Tokenizer(sourceText: String) {
                         return getTemplateHeadToken()
                     }
                     PRIVATE_NAME -> TODO()
-                    else -> return when {
-                        curr.isSpecIdentifierName -> {
-                            advanceWhile { it.isSpecIdentifierName }
-                            build(IDENTIFIER)
-                        }
-                        curr.isEndOfInput -> build(if (hasError) ILLEGAL else EOS)
-                        else -> {
-                            skipWhiteSpaceOrLineTerminator()
-                            continue
-                        }
+                    IDENTIFIER -> {
+                        advanceWhile { it.isSpecIdentifierName }
+                        return build(IDENTIFIER)
                     }
+                    NUMBER -> return getNumberToken()
+                    WHITE_SPACE -> {
+                        skipWhiteSpaceOrLineTerminator()
+                        continue
+                    }
+                    else -> if (curr.isEndOfInput) build(if (hasError) ILLEGAL else EOS)
                 }
             } while (builder.type == UNINITIALIZED)
         }

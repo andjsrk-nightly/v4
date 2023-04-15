@@ -18,5 +18,7 @@ data class Token(
         var afterLineTerminator = false
         fun build(type: TokenType = this.type) =
             Token(type, rawContent, literal, afterLineTerminator, startPos)
+        fun buildIllegal() =
+            build(TokenType.ILLEGAL)
     }
 }

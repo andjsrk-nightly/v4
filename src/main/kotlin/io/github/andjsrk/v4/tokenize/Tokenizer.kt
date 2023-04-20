@@ -6,17 +6,16 @@ import io.github.andjsrk.v4.error.RangeError
 import io.github.andjsrk.v4.error.SyntaxError
 import io.github.andjsrk.v4.tokenize.TokenType.*
 
-private typealias WasSuccessful = Boolean
 private typealias Length = Int
 
 class Tokenizer(sourceText: String) {
     private val source = Source(sourceText)
-    var error: TokenizerError? = null
+    var error: ErrorWithRange? = null
         private set
     val hasError get() =
         error != null
-    private fun reportError(kind: Error, location: Location = Location.since(source.pos, 1)) {
-        if (!hasError) error = TokenizerError(kind, location)
+    private fun reportError(kind: Error, range: Range = Range.since(source.pos, 1)) {
+        if (!hasError) error = ErrorWithRange(kind, range)
     }
     // for use by methods
     private lateinit var builder: Token.Builder
@@ -27,16 +26,18 @@ class Tokenizer(sourceText: String) {
     private val syntacticPairs = ArrayDeque<SyntacticPair>()
     private fun ArrayDeque<SyntacticPair>.isLastClosingPart(value: Char) =
         lastOrNull()?.closingPart == value.toString()
-    private fun advance() =
+    private inline fun advance(addRawContent: Boolean = true) =
         source.advance().also {
-            builder.rawContent += it
+            if (addRawContent) builder.rawContent += it
         }
     private fun <T> T.alsoAdvance() =
-        this.also { advance() }
-    private fun advanceWhile(check: (Char) -> Boolean): Char {
-        while (check(curr)) advance()
+        also { advance() }
+    private fun advanceWhile(addRawContent: Boolean, check: (Char) -> Boolean): Char {
+        while (check(curr)) advance(addRawContent)
         return curr
     }
+    private fun advanceWhile(check: (Char) -> Boolean) =
+        advanceWhile(true, check)
     private val curr get() =
         source.curr
     private fun peek(relativePos: Int = 1) =
@@ -72,19 +73,10 @@ class Tokenizer(sourceText: String) {
             .filter { it.staticContent?.length == 1 }
             .associateBy { it.staticContent!!.single() }
     private fun skipWhiteSpaceOrLineTerminator() {
-        run { // isolated scope
-            val isSpecWhiteSpace = curr.isSpecWhiteSpace
-            val isSpecLineTerminator = curr.isSpecLineTerminator
-            if (isSpecWhiteSpace.not() && isSpecLineTerminator.not()) return
-
-            if (isSpecLineTerminator) builder.afterLineTerminator = true
-        }
-
-        advanceWhile {
+        advanceWhile(false) {
             val isSpecLineTerminator = it.isSpecLineTerminator
-            (it.isSpecWhiteSpace || isSpecLineTerminator).thenAlso {
-                if (isSpecLineTerminator) builder.afterLineTerminator = true
-            }
+            if (isSpecLineTerminator) builder.afterLineTerminator = true
+            it.isSpecWhiteSpace || isSpecLineTerminator
         }
     }
     private fun skipSingleLineComment() {
@@ -111,7 +103,7 @@ class Tokenizer(sourceText: String) {
         if (mv == null || mv > specMaxCodePoint) {
             reportError(
                 SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE,
-                Location.since(beginPos, digitCount + unicodeEscapeSequencePrefix.length),
+                Range.since(beginPos, digitCount + unicodeEscapeSequencePrefix.length),
             )
             return false
         }
@@ -128,7 +120,7 @@ class Tokenizer(sourceText: String) {
         }
         val mv = hexDigits.toHexIntOrNull()
         if (mv == null || mv > specMaxCodePoint || curr != '}') {
-            reportError(SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE, Location(beginPos, source.pos))
+            reportError(SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE, Range(beginPos, source.pos))
             return false
         }
         advance()
@@ -154,7 +146,7 @@ class Tokenizer(sourceText: String) {
                 advance()
                 val (_, charCode) = readHexIntOrNull(2)
                 if (charCode == null) {
-                    reportError(SyntaxError.INVALID_HEX_ESCAPE_SEQUENCE, Location(begin, source.pos))
+                    reportError(SyntaxError.INVALID_HEX_ESCAPE_SEQUENCE, Range(begin, source.pos))
                     return false
                 }
                 literal += charCode.toChar()
@@ -260,8 +252,8 @@ class Tokenizer(sourceText: String) {
             }
         }
     }
-    private fun Token.Builder.addDigitsWithNumericSeparators(check: (Char) -> Boolean, checkFirstDigit: Boolean = true): WasSuccessful {
-        if (checkFirstDigit && !check(curr)) return false
+    private fun Token.Builder.addDigitsWithNumericSeparators(check: (Char) -> Boolean): WasSuccessful {
+        if (!check(curr)) return false
 
         var separatorSeen = false
 
@@ -300,24 +292,33 @@ class Tokenizer(sourceText: String) {
                         else -> NumberKind.DECIMAL
                     }
                 } else NumberKind.DECIMAL
-            val successful = when (kind) {
+            val added = when (kind) {
                 NumberKind.BINARY -> addDigitsWithNumericSeparators(Char::isSpecBinaryDigit)
                 NumberKind.OCTAL -> addDigitsWithNumericSeparators(Char::isSpecOctalDigit)
                 NumberKind.HEX -> addDigitsWithNumericSeparators(Char::isSpecHexDigit)
                 NumberKind.DECIMAL -> addDigitsWithNumericSeparators(Char::isSpecDecimalDigit).also {
                     if (curr == '.') {
                         seenPeriod = true
-                        addLiteralAdvance('.')
-                        if (curr.isSpecNumericLiteralSeparator) return buildIllegal()
-                        val successful = addDigitsWithNumericSeparators(Char::isSpecDecimalDigit)
-                        if (!successful) return buildIllegal()
+                        val peeked = peek()
+                        when {
+                            peeked.isSpecNumericLiteralSeparator -> {
+                                addLiteralAdvance()
+                                return buildIllegal()
+                            }
+                            peeked.isSpecDecimalDigit -> {
+                                addLiteralAdvance()
+                                val added = addDigitsWithNumericSeparators(Char::isSpecDecimalDigit)
+                                if (!added) return buildIllegal()
+                            }
+                            else -> return build(NUMBER)
+                        }
                     }
                 }
             }
-            if (!successful) return buildIllegal()
+            if (!added) return buildIllegal()
 
             var isBigint = false
-            if (curr == 'n' && !seenPeriod) { // bigint literal
+            if (curr == 'n' && !seenPeriod) {
                 isBigint = true
                 advance()
             } else if (curr.isSpecExponentIndicator) {
@@ -351,7 +352,7 @@ class Tokenizer(sourceText: String) {
                 }
 
                 when (type) {
-                    COLON, SEMICOLON, COMMA, BIT_NOT, ILLEGAL -> return build().alsoAdvance()
+                    COLON, SEMICOLON, COMMA, BIT_NOT -> return build().alsoAdvance()
                     LEFT_PAREN, LEFT_BRACE, LEFT_BRACK -> {
                         syntacticPairs.add(SyntacticPair.findByOpeningPart(curr.toString())!!)
                         advance()
@@ -363,7 +364,7 @@ class Tokenizer(sourceText: String) {
                             advance()
                             build()
                         } else {
-                            reportError(SyntaxError.UNEXPECTED_TOKEN, Location.since(source.pos, 1))
+                            reportError(SyntaxError.UNEXPECTED_TOKEN, Range.since(source.pos, 1))
                             advance()
                             buildIllegal()
                         }
@@ -380,7 +381,7 @@ class Tokenizer(sourceText: String) {
                             build()
                         }
                         else -> {
-                            reportError(SyntaxError.UNEXPECTED_TOKEN, Location.since(source.pos, 1))
+                            reportError(SyntaxError.UNEXPECTED_TOKEN, Range.since(source.pos, 1))
                             advance()
                             buildIllegal()
                         }
@@ -502,14 +503,14 @@ class Tokenizer(sourceText: String) {
                     }
                     // ^ ^=
                     BIT_XOR -> return selectIf('=', ASSIGN_BIT_XOR)
-                    PERIOD -> {
+                    DOT -> {
                         // . ...
                         advance()
                         return if (curr == '.' && peek() == '.') {
                             advance()
                             advance()
                             build(ELLIPSIS)
-                        } else build(PERIOD)
+                        } else build(DOT)
                     }
                     TEMPLATE_HEAD -> {
                         advance()
@@ -525,7 +526,11 @@ class Tokenizer(sourceText: String) {
                         skipWhiteSpaceOrLineTerminator()
                         continue
                     }
-                    else -> if (curr.isEndOfInput) build(if (hasError) ILLEGAL else EOS)
+                    ILLEGAL -> return (
+                        if (curr.isEndOfInput) return build(if (hasError) ILLEGAL else EOS)
+                        else build().alsoAdvance()
+                    )
+                    else -> TODO()
                 }
             } while (builder.type == WHITE_SPACE)
         }

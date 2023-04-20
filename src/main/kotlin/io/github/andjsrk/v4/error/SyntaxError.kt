@@ -1,4 +1,4 @@
-package io.github.andjsrk.v4.tokenize
+package io.github.andjsrk.v4.error
 
 import io.github.andjsrk.v4.error.Error
 

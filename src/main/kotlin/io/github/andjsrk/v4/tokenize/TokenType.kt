@@ -7,7 +7,7 @@ enum class TokenType(val staticContent: String?, val precedence: Int = 0) {
     TEMPLATE_MIDDLE(null),
     TEMPLATE_TAIL(null),
     TEMPLATE_FULL(null),
-    PERIOD("."),
+    DOT("."),
     LEFT_BRACK("["),
     QUESTION_PERIOD("?."),
     LEFT_PAREN("("),
@@ -70,6 +70,5 @@ enum class TokenType(val staticContent: String?, val precedence: Int = 0) {
     PRIVATE_NAME(null),
     WHITE_SPACE(null),
     REGEXP_LITERAL(null),
-    IDENTIFIER(null),
-    KEYWORD(null);
+    IDENTIFIER(null);
 }

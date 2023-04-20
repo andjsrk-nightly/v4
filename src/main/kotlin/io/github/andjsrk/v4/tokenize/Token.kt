@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.tokenize
 
-import io.github.andjsrk.v4.Location
+import io.github.andjsrk.v4.Range
 
 data class Token(
     val type: TokenType,
@@ -9,8 +9,8 @@ data class Token(
     val afterLineTerminator: Boolean,
     private val startPos: Int,
 ) {
-    val location get() =
-        Location.since(startPos, rawContent.length)
+    val range get() =
+        Range.since(startPos, rawContent.length)
     internal class Builder(private val startPos: Int) {
         lateinit var type: TokenType
         var rawContent = ""

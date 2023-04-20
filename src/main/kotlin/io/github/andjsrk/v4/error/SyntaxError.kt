@@ -1,7 +1,5 @@
 package io.github.andjsrk.v4.error
 
-import io.github.andjsrk.v4.error.Error
-
 enum class SyntaxError(override val message: String): Error {
     AMBIGUOUS_EXPORT("The requested module '%' contains conflicting star exports for name '%'"),
     BAD_GETTER_ARITY("Getter must not have any formal parameters."),

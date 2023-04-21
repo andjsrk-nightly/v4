@@ -1,14 +1,13 @@
 package io.github.andjsrk.v4.parse.node.literal
 
 import io.github.andjsrk.v4.stringifyLikeDataClass
+import io.github.andjsrk.v4.tokenize.Token
 
-class BooleanLiteralNode(override val raw: DynamicPrimitiveLiteralRaw): DynamicPrimitiveLiteralNode<Boolean>() {
+class BooleanLiteralNode(token: Token): DynamicPrimitiveLiteralNode<Boolean>() {
+    override val raw = token.literal
+    override val range = token.range
     override fun DynamicPrimitiveLiteralRaw.toActualValue() =
         this.toBoolean()
     override fun toString() =
-        stringifyLikeDataClass(::raw, ::value)
-    class Unsealed: DynamicPrimitiveLiteralNode.Unsealed<Boolean>() {
-        override fun toSealed() =
-            BooleanLiteralNode(raw)
-    }
+        stringifyLikeDataClass(::raw, ::value, ::range)
 }

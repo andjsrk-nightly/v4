@@ -8,8 +8,5 @@ abstract class DynamicPrimitiveLiteralNode<Actual>: DynamicLiteralNode<Actual> {
         raw.toActualValue()
     }
     protected abstract fun DynamicPrimitiveLiteralRaw.toActualValue(): Actual
-    abstract class Unsealed<Actual>: DynamicLiteralNode.Unsealed<Actual> {
-        var raw = ""
-        abstract override fun toSealed(): DynamicPrimitiveLiteralNode<Actual>
-    }
+    // primitive literals do not need unsealed nodes
 }

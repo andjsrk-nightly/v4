@@ -5,21 +5,21 @@ import io.github.andjsrk.v4.parse.node.ExpressionNode
 import io.github.andjsrk.v4.stringifyLikeDataClass
 import io.github.andjsrk.v4.tokenize.Token
 
-private typealias ArrayItems = List<ExpressionNode>
+private typealias ObjectProperties = Map<ExpressionNode, ExpressionNode>
 
-class ArrayLiteralNode(
-    override val value: ArrayItems,
+class ObjectLiteralNode(
+    override val value: ObjectProperties,
     override val range: Range,
-): DynamicLiteralNode<ArrayItems> {
+): DynamicLiteralNode<ObjectProperties> {
     override fun toString() =
         stringifyLikeDataClass(::value, ::range)
-    class Unsealed: DynamicLiteralNode.Unsealed<ArrayItems> {
+    class Unsealed: DynamicLiteralNode.Unsealed<ObjectProperties> {
         lateinit var startToken: Token
         lateinit var endToken: Token
-        val value = mutableListOf<ExpressionNode>()
+        val value = mutableMapOf<ExpressionNode, ExpressionNode>()
         override fun toSealed() =
-            ArrayLiteralNode(
-                value.toList(),
+            ObjectLiteralNode(
+                value.toMap(),
                 startToken.range until endToken.range,
             )
     }

@@ -1,13 +1,11 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.stringifyLikeDataClass
+import io.github.andjsrk.v4.tokenize.Token
 
-class IdentifierNode(val value: String): ExpressionNode {
+class IdentifierNode(token: Token): ExpressionNode {
+    val value = token.rawContent
+    override val range = token.range
     override fun toString() =
-        stringifyLikeDataClass(::value)
-    class Unsealed: ExpressionNode.Unsealed {
-        var value = ""
-        override fun toSealed() =
-            IdentifierNode(value)
-    }
+        stringifyLikeDataClass(::value, ::range)
 }

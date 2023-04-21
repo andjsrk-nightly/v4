@@ -6,9 +6,7 @@ import io.github.andjsrk.v4.WasSuccessful
 import io.github.andjsrk.v4.error.Error
 import io.github.andjsrk.v4.error.SyntaxError
 import io.github.andjsrk.v4.parse.node.*
-import io.github.andjsrk.v4.parse.node.literal.ArrayLiteralNode
-import io.github.andjsrk.v4.parse.node.literal.BigintLiteralNode
-import io.github.andjsrk.v4.parse.node.literal.NumericLiteralNode
+import io.github.andjsrk.v4.parse.node.literal.*
 import io.github.andjsrk.v4.thenAlso
 import io.github.andjsrk.v4.tokenize.Token
 import io.github.andjsrk.v4.tokenize.TokenType
@@ -22,8 +20,9 @@ class Parser(private val tokenizer: Tokenizer) {
     lateinit var errorArgs: Array<String>
     val hasError get() =
         error != null
-    private fun advance() {
+    private fun advance(): Token {
         currToken = tokenizer.getNextToken()
+        return currToken
     }
     private fun <T> T.alsoAdvance() =
         also { advance() }
@@ -35,8 +34,8 @@ class Parser(private val tokenizer: Tokenizer) {
         error = ErrorWithRange(kind, range)
         errorArgs = arrayOf(*args)
     }
-    private fun reportUnexpectedToken(expected: TokenType, range: Range) {
-        val kind = when (expected) {
+    private fun reportUnexpectedToken(token: Token = currToken) {
+        val kind = when (token.type) {
             EOS -> SyntaxError.UNEXPECTED_EOS
             NUMBER, BIGINT -> SyntaxError.UNEXPECTED_TOKEN_NUMBER
             STRING -> SyntaxError.UNEXPECTED_TOKEN_STRING
@@ -45,34 +44,68 @@ class Parser(private val tokenizer: Tokenizer) {
             ILLEGAL -> SyntaxError.INVALID_OR_UNEXPECTED_TOKEN
             else -> return reportErrorMessage(
                 SyntaxError.UNEXPECTED_TOKEN,
-                range,
-                expected.staticContent ?: expected.name,
+                token.range,
+                token.type.staticContent ?: token.rawContent.ifEmpty { token.type.name },
             )
         }
-        reportErrorMessage(kind, range)
+        reportErrorMessage(kind, token.range)
     }
-    private fun expect(tokenType: TokenType, check: (Token) -> Boolean = { true }) {
+    private fun expect(tokenType: TokenType, check: (Token) -> Boolean = { true }) =
         if (currToken.type == tokenType && check(currToken)) advance()
-        else reportUnexpectedToken(tokenType, currToken.range)
+        else null.also { reportUnexpectedToken() }
+    private fun parseString(): StringLiteralNode? {
+        TODO()
+    }
+    private fun parseArrayLiteral(): ArrayLiteralNode? {
+        val array = ArrayLiteralNode.Unsealed()
+        array.startToken = expect(LEFT_BRACK) ?: return null
+
+
+        // allow trailing comma, but disallow sparse array
+        var skippedComma = true
+        while (currToken.type != RIGHT_BRACK) {
+            if (!skippedComma || currToken.type == COMMA) {
+                reportUnexpectedToken()
+                return null
+            }
+            array.value += parseExpression() ?: return null
+            skippedComma = skip(COMMA)
+        }
+        array.endToken = expect(RIGHT_BRACK) ?: return null
+
+        return array.toSealed()
+    }
+    private fun parseObjectLiteral(): ObjectLiteralNode? {
+        val obj = ObjectLiteralNode.Unsealed()
+
+        obj.startToken = expect(LEFT_BRACE) ?: return null
+
+        val skippedComma = true
+        while (currToken.type != RIGHT_BRACE) {
+            if (!skippedComma || currToken.type == COMMA) {
+                reportUnexpectedToken()
+                return null
+            }
+            TODO()
+        }
+        obj.endToken = expect(RIGHT_BRACE) ?: return null
+
+        return obj.toSealed()
     }
     private fun parseExpressionWithoutContinuous(): ExpressionNode? {
+        val content = currToken.rawContent
         return when (currToken.type) {
-            IDENTIFIER -> {
-                val content = currToken.rawContent
-                advance()
-                IdentifierNode(content)
+            IDENTIFIER -> when (content) {
+                "null" -> NullLiteralNode(currToken)
+                "true", "false" -> BooleanLiteralNode(currToken)
+                else -> IdentifierNode(currToken)
             }
-            NUMBER -> NumericLiteralNode(currToken.literal).alsoAdvance()
-            BIGINT -> BigintLiteralNode(currToken.literal).alsoAdvance()
-            LEFT_BRACK -> {
-                advance()
-                val array = ArrayLiteralNode.Unsealed()
-                while (currToken.type != RIGHT_BRACK) {
-                    array.value += parseExpression() ?: return null
-                }
-                expect(RIGHT_BRACK)
-                array.toSealed()
-            }
+                .alsoAdvance()
+            STRING -> StringLiteralNode(currToken).alsoAdvance()
+            NUMBER -> NumericLiteralNode(currToken).alsoAdvance()
+            BIGINT -> BigintLiteralNode(currToken).alsoAdvance()
+            LEFT_BRACK -> parseArrayLiteral()
+            LEFT_BRACE -> parseObjectLiteral()
             else -> null
         }
     }
@@ -94,11 +127,11 @@ class Parser(private val tokenizer: Tokenizer) {
     private fun parseBlockStatement(): BlockStatementNode? {
         val block = BlockStatementNode.Unsealed()
 
-        expect(LEFT_BRACE)
+        block.startToken = expect(LEFT_BRACE) ?: return null
         while (currToken.type != RIGHT_BRACE) {
             block.statements += parseStatement() ?: return null
         }
-        expect(RIGHT_BRACE)
+        block.endToken = expect(RIGHT_BRACE) ?: return null
 
         return block.toSealed()
     }

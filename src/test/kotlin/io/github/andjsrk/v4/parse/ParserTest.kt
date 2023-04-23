@@ -20,9 +20,7 @@ internal class ParserTest {
             true
         """.trimIndent())
 
-        val program = parser.parseProgram()
-        assert(parser.hasError.not())
-        assertNotNull(program)
+        val program = parser.parseProgramSuccessfully()
 
         val exprs = program.statements.map { it.unwrapExprStmt<PrimitiveLiteralNode>() }
         assert(exprs.size == 6)
@@ -39,12 +37,9 @@ internal class ParserTest {
         val parser = createParser(
             """
             [123, "abc", []]
-        """.trimIndent()
-        )
+        """.trimIndent())
 
-        val program = parser.parseProgram()
-        assert(parser.hasError.not())
-        assertNotNull(program)
+        val program = parser.parseProgramSuccessfully()
 
         program.statements[0].unwrapExprStmt<ArrayLiteralNode>().run {
             assert(items.size == 3)
@@ -61,9 +56,7 @@ internal class ParserTest {
             [{}]
         """.trimIndent())
 
-        val program = parser.parseProgram()
-        assert(parser.hasError.not())
-        assertNotNull(program)
+        val program = parser.parseProgramSuccessfully()
 
         assertIs<BlockStatementNode>(program.statements[0])
 
@@ -82,9 +75,7 @@ internal class ParserTest {
             a?.b[c]
         """.trimIndent())
 
-        val program = parser.parseProgram()
-        assert(parser.hasError.not())
-        assertNotNull(program)
+        val program = parser.parseProgramSuccessfully()
 
         val memberExprs = program.statements.map { it.unwrapExprStmt<MemberExpressionNode>() }
         assert(memberExprs.size == 5)
@@ -127,9 +118,7 @@ internal class ParserTest {
             new A.B(1, ...a)
         """.trimIndent())
 
-        val program = parser.parseProgram()
-        assert(parser.hasError.not())
-        assertNotNull(program)
+        val program = parser.parseProgramSuccessfully()
 
         val newExprs = program.statements.map { it.unwrapExprStmt<NewExpressionNode>() }
         assert(newExprs.size == 2)
@@ -168,6 +157,12 @@ private inline fun <reified T> Any?.assertTypeThenRun(block: T.() -> Unit) =
     run {
         assertIs<T>(this)
         run(block)
+    }
+private fun Parser.parseProgramSuccessfully() =
+    parseProgram().let {
+        assert(hasError.not())
+        assertNotNull(it)
+        it
     }
 private fun createParser(code: String) =
     Parser(Tokenizer(code))

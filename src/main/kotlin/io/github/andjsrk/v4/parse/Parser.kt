@@ -261,11 +261,19 @@ class Parser(private val tokenizer: Tokenizer) {
                 member.endRange = member.property.range
             }
             else -> {
-                if (parsingNewExpression && currToken.type == LEFT_PAREN) {
-                    requireNotNull(new)
-                    new.callee = `object`
-                    new.arguments += parseArguments(new) ?: return null
-                    return new.toSealed()
+                if (currToken.type == LEFT_PAREN) {
+                    if (parsingNewExpression) {
+                        requireNotNull(new)
+                        new.callee = `object`
+                        new.arguments += parseArguments(new) ?: return null
+                        return new.toSealed()
+                    } else {
+                        val call = NormalCallExpressionNode.Unsealed()
+                        call.callee = `object`
+                        call.arguments += parseArguments(call) ?: return null
+                        call.isOptionalChain = member.isOptionalChain
+                        return call.toSealed()
+                    }
                 }
 
                 return `object`
@@ -291,7 +299,7 @@ class Parser(private val tokenizer: Tokenizer) {
         val superCall = SuperCallNode.Unsealed()
 
         val superToken = takeIfMatchesKeyword(SUPER) ?: return null
-        superCall.startRange = superToken.range
+        superCall.superNode = SuperNode(superToken.range)
         takeIfMatches(LEFT_PAREN) ?: return reportErrorMessage(SyntaxError.SUPER_NOT_CALLED, superToken.range)
         superCall.arguments += parseArguments(superCall) ?: return null
         expect(RIGHT_PAREN) ?: return null
@@ -303,8 +311,10 @@ class Parser(private val tokenizer: Tokenizer) {
         val importCall = ImportCallNode.Unsealed()
 
         val importToken = takeIfMatchesKeyword(IMPORT) ?: return null
-        importCall.startRange = importToken.range
+        importCall.importNode = ImportNode(importToken.range)
+        expect(LEFT_PAREN) ?: return null
         importCall.pathSpecifier = parseExpression() ?: return null
+        importCall.endRange = expect(RIGHT_PAREN)?.range ?: return null
 
         return importCall.toSealed()
     }
@@ -314,9 +324,8 @@ class Parser(private val tokenizer: Tokenizer) {
             currToken.isKeyword(SUPER) -> parseSuperCall()
             currToken.isKeyword(IMPORT) -> parseImportCall()
             else -> {
-                val call = CallExpressionNode.Unsealed()
+                val call = NormalCallExpressionNode.Unsealed()
                 call.callee = parseMemberExpression(null) ?: return null
-                call.startRange = call.callee.range
                 call.arguments += parseArguments(call) ?: return null
                 call.toSealed()
             }

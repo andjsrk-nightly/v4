@@ -6,7 +6,6 @@ abstract class CallSyntaxExpressionNode(
     override val range: Range,
 ): ExpressionNode, ComplexNode {
     abstract class Unsealed: ComplexNode.Unsealed {
-        lateinit var startRange: Range
         lateinit var endRange: Range
     }
 }

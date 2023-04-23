@@ -3,11 +3,13 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 
 class SuperCallNode(
+    superNode: SuperNode,
     arguments: List<CommaSeparatedElementNode>,
     range: Range,
-): FixedCalleeCallExpressionNode(arguments, range) {
+): CallExpressionNode(superNode, arguments, range) {
     class Unsealed: FixedCalleeCallExpressionNode.Unsealed() {
+        lateinit var superNode: SuperNode
         override fun toSealed() =
-            SuperCallNode(arguments.toList(), startRange until endRange)
+            SuperCallNode(superNode, arguments.toList(), superNode.range until endRange)
     }
 }

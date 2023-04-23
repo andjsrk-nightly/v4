@@ -14,8 +14,9 @@ class Tokenizer(sourceText: String) {
         private set
     val hasError get() =
         error != null
-    private fun reportError(kind: Error, range: Range = Range.since(source.pos, 1)) {
+    private fun reportError(kind: Error, range: Range = Range.since(source.pos, 1)): Boolean {
         if (!hasError) error = ErrorWithRange(kind, range)
+        return false
     }
     // for use by methods
     private lateinit var builder: Token.Builder
@@ -66,7 +67,8 @@ class Tokenizer(sourceText: String) {
                 advance()
                 '\n'
             } else curr
-        ).alsoAdvance()
+        )
+            .alsoAdvance()
     }
     private val singleCharTokenMap =
         TokenType.values()
@@ -100,13 +102,10 @@ class Tokenizer(sourceText: String) {
     }
     private fun Token.Builder.addUnescapedHex4DigitsUnicodeEscapeSequence(beginPos: Int): WasSuccessful {
         val (digitCount, mv) = readHexIntOrNull(4)
-        if (mv == null || mv > specMaxCodePoint) {
-            reportError(
-                SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE,
-                Range.since(beginPos, digitCount + unicodeEscapeSequencePrefix.length),
-            )
-            return false
-        }
+        if (mv == null || mv > specMaxCodePoint) return reportError(
+            SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE,
+            Range.since(beginPos, digitCount + unicodeEscapeSequencePrefix.length),
+        )
         literal += mv.toChar()
         return true
     }
@@ -119,10 +118,10 @@ class Tokenizer(sourceText: String) {
             }
         }
         val mv = hexDigits.toHexIntOrNull()
-        if (mv == null || mv > specMaxCodePoint || curr != '}') {
-            reportError(SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE, Range(beginPos, source.pos))
-            return false
-        }
+        if (mv == null || mv > specMaxCodePoint || curr != '}') return reportError(
+            SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE,
+            Range(beginPos, source.pos),
+        )
         advance()
         literal += mv.toChar()
         return true
@@ -145,10 +144,10 @@ class Tokenizer(sourceText: String) {
                 val begin = source.pos - hexEscapeSequencePrefix.length
                 advance()
                 val (_, charCode) = readHexIntOrNull(2)
-                if (charCode == null) {
-                    reportError(SyntaxError.INVALID_HEX_ESCAPE_SEQUENCE, Range(begin, source.pos))
-                    return false
-                }
+                if (charCode == null) return reportError(
+                    SyntaxError.INVALID_HEX_ESCAPE_SEQUENCE,
+                    Range(begin, source.pos),
+                )
                 literal += charCode.toChar()
             }
             else -> literal += curr
@@ -260,10 +259,7 @@ class Tokenizer(sourceText: String) {
         while (check(curr) || curr.isSpecNumericLiteralSeparator) {
             if (curr.isSpecNumericLiteralSeparator) {
                 advance()
-                if (curr.isSpecNumericLiteralSeparator) {
-                    reportError(RangeError.CONTINUOUS_NUMERIC_SEPARATOR)
-                    return false
-                }
+                if (curr.isSpecNumericLiteralSeparator) return reportError(RangeError.CONTINUOUS_NUMERIC_SEPARATOR)
                 separatorSeen = true
                 continue
             }
@@ -271,10 +267,7 @@ class Tokenizer(sourceText: String) {
             addLiteralAdvance()
         }
 
-        if (separatorSeen) {
-            reportError(RangeError.TRAILING_NUMERIC_SEPARATOR)
-            return false
-        }
+        if (separatorSeen) return reportError(RangeError.TRAILING_NUMERIC_SEPARATOR)
 
         return true
     }
@@ -336,9 +329,10 @@ class Tokenizer(sourceText: String) {
         }
     }
     fun getNextToken(): Token {
-        builder = Token.Builder(source.pos)
+        builder = Token.Builder()
         builder.run {
             do {
+                startPos = source.pos
                 type = when (curr) {
                     '#' -> PRIVATE_NAME
                     '"', '\'' -> STRING
@@ -352,13 +346,16 @@ class Tokenizer(sourceText: String) {
                 }
 
                 when (type) {
-                    COLON, SEMICOLON, COMMA, BIT_NOT -> return build().alsoAdvance()
-                    LEFT_PAREN, LEFT_BRACE, LEFT_BRACK -> {
+                    COLON, SEMICOLON, COMMA, BIT_NOT -> {
+                        advance()
+                        return build()
+                    }
+                    LEFT_PAREN, LEFT_BRACE, LEFT_BRACKET -> {
                         syntacticPairs.add(SyntacticPair.findByOpeningPart(curr.toString())!!)
                         advance()
                         return build()
                     }
-                    RIGHT_PAREN, RIGHT_BRACK -> return (
+                    RIGHT_PAREN, RIGHT_BRACKET -> return (
                         if (syntacticPairs.isLastClosingPart(curr)) {
                             syntacticPairs.removeLast()
                             advance()
@@ -390,8 +387,8 @@ class Tokenizer(sourceText: String) {
                         // ? ?. ?? ??=
                         advance()
                         return when (curr) {
-                            '.' -> build(QUESTION_PERIOD).alsoAdvance()
-                            '?' -> select('=', ASSIGN_NULLISH, NULLISH)
+                            '.' -> build(QUESTION_DOT).alsoAdvance()
+                            '?' -> select('=', ASSIGN_COALESCE, COALESCE)
                             else -> build()
                         }
                     }
@@ -470,39 +467,36 @@ class Tokenizer(sourceText: String) {
                     DIVIDE -> {
                         // / /* /= //
                         advance()
-                        return when (curr) {
-                            '/' -> {
-                                skipSingleLineComment()
-                                continue
-                            }
+                        when (curr) {
+                            '/' -> skipSingleLineComment()
                             // '*' -> {
                             //     skipMultiLineComment()
                             //     continue
                             // }
-                            '=' -> build(ASSIGN_DIVIDE).alsoAdvance()
-                            else -> build()
+                            '=' -> return build(ASSIGN_DIVIDE).alsoAdvance()
+                            else -> return build()
                         }
                     }
-                    BIT_AND -> {
+                    BITWISE_AND -> {
                         // & &= && &&=
                         advance()
                         return when (curr) {
                             '&' -> select('=', ASSIGN_AND, AND)
-                            '=' -> build(ASSIGN_BIT_AND).alsoAdvance()
+                            '=' -> build(ASSIGN_BITWISE_AND).alsoAdvance()
                             else -> build()
                         }
                     }
-                    BIT_OR -> {
+                    BITWISE_OR -> {
                         // | |= || ||=
                         advance()
                         return when (curr) {
                             '|' -> select('=', ASSIGN_OR, OR)
-                            '=' -> build(ASSIGN_BIT_OR).alsoAdvance()
+                            '=' -> build(ASSIGN_BITWISE_OR).alsoAdvance()
                             else -> build()
                         }
                     }
                     // ^ ^=
-                    BIT_XOR -> return selectIf('=', ASSIGN_BIT_XOR)
+                    BITWISE_XOR -> return selectIf('=', ASSIGN_BITWISE_XOR)
                     DOT -> {
                         // . ...
                         advance()
@@ -522,10 +516,7 @@ class Tokenizer(sourceText: String) {
                         return build(IDENTIFIER)
                     }
                     NUMBER -> return getNumberToken()
-                    WHITE_SPACE -> {
-                        skipWhiteSpaceOrLineTerminator()
-                        continue
-                    }
+                    WHITE_SPACE -> skipWhiteSpaceOrLineTerminator()
                     ILLEGAL -> return (
                         if (curr.isEndOfInput) return build(if (hasError) ILLEGAL else EOS)
                         else build().alsoAdvance()

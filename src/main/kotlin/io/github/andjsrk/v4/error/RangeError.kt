@@ -37,7 +37,6 @@ enum class RangeError(override val message: String): Error {
     MAXIMUM_FRACTION_DIGITS_NOT_EQUAL_MINIMUM_FRACTION_DIGITS("maximumFractionDigits not equal to minimumFractionDigits"),
     NORMALIZATION_FORM("The normalization form should be one of %."),
     OUT_OF_MEMORY("%: Out of memory"),
-    PARAMETER_OF_FUNCTION_OUT_OF_RANGE("Paramenter % of function %() is % and out of range"),
     ZERO_DIGIT_NUMERIC_SEPARATOR("Numeric separator can not be used after leading 0."),
     NUMBER_FORMAT_RANGE("% argument must be between 0 and 100"),
     TRAILING_NUMERIC_SEPARATOR("Numeric separators are not allowed at the end of numeric literals"),

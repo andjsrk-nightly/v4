@@ -9,9 +9,9 @@ data class Token(
     val afterLineTerminator: Boolean,
     private val startPos: Int,
 ) {
-    val range get() =
-        Range.since(startPos, rawContent.length)
-    internal class Builder(private val startPos: Int) {
+    val range = Range.since(startPos, rawContent.length)
+    internal class Builder {
+        var startPos = 0
         lateinit var type: TokenType
         var rawContent = ""
         var literal = ""

@@ -1,10 +1,9 @@
 package io.github.andjsrk.v4.parse.node.literal
 
-import io.github.andjsrk.v4.stringifyLikeDataClass
+import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 import io.github.andjsrk.v4.tokenize.Token
 
-class NullLiteralNode(token: Token): LiteralNode {
-    override val range = token.range
+class NullLiteralNode(token: Token): PrimitiveLiteralNode(token) {
     override fun toString() =
-        stringifyLikeDataClass(::range)
+        stringifyLikeDataClass(::range) // null has fixed content, so ignoring it
 }

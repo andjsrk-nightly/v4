@@ -56,7 +56,7 @@ enum class SyntaxError(override val message: String): Error {
     JSON_PARSE_UNEXPECTED_TOKEN_STRING("Unexpected string in JSON at position %"),
     JSON_PARSE_UNTERMINATED_STRING("Unterminated string in JSON at position %"),
     JSON_PARSE_EXPECTED_PROP_NAME_OR_RIGHT_BRACE("Expected property name or '}' in JSON at position %"),
-    JSON_PARSE_EXPECTED_COMMA_OR_RIGHT_BRACK("Expected ',' or ']' after array element in JSON at position %"),
+    JSON_PARSE_EXPECTED_COMMA_OR_RIGHT_BRACKET("Expected ',' or ']' after array element in JSON at position %"),
     JSON_PARSE_EXPECTED_COMMA_OR_RIGHT_BRACE("Expected ',' or '}' after property value in JSON at position  %"),
     JSON_PARSE_EXPECTED_DOUBLE_QUOTED_PROPERTY_NAME("Expected double-quoted property name in JSON at position %"),
     JSON_PARSE_EXPONENT_PART_MISSING_NUMBER("Exponent part is missing a number in JSON at position %"),

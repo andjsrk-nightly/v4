@@ -1,5 +1,6 @@
-package io.github.andjsrk.v4
+package io.github.andjsrk.v4.parse
 
+import io.github.andjsrk.v4.className
 import io.github.andjsrk.v4.parse.node.Node
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -7,11 +8,12 @@ import kotlin.reflect.KProperty0
 
 // if this is declared as an extension function,
 // we do not need to pass type of this explicitly because it will be inferred
-internal inline fun <reified T: Any> T.stringifyLikeDataClass(vararg properties: KProperty0<*>, pretty: Boolean = true): String =
+internal inline fun <reified T: Node> T.stringifyLikeDataClass(vararg properties: KProperty0<*>, pretty: Boolean = true): String =
     stringify(*properties, pretty=pretty, className=className)
 
 private fun stringify(vararg properties: KProperty0<*>, pretty: Boolean, className: String): String =
     if (pretty) {
+        // if all properties are neither Node nor Collection, return same result as pretty=false
         if (properties.all {
             val value = it.get()
             value !is Node && value !is Collection<*>

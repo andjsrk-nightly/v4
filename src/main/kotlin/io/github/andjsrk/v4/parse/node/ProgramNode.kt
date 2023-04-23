@@ -1,21 +1,10 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.stringifyLikeDataClass
+import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class ProgramNode(statements: List<StatementNode>):
-    BlockStatementNode(
-        statements,
-        (
-            if (statements.isEmpty()) Range(0, 0)
-            else statements.first().range until statements.last().range
-        ),
-    )
-{
+class ProgramNode(override val statements: List<StatementNode>): BlockNode {
+    override val range = Range(0, statements.lastOrNull()?.range?.end ?: 0)
     override fun toString() =
         stringifyLikeDataClass(::statements, ::range)
-    class Unsealed: BlockStatementNode.Unsealed() {
-        override fun toSealed() =
-            ProgramNode(statements.toList())
-    }
 }

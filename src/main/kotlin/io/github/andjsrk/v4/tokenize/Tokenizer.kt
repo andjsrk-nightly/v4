@@ -346,16 +346,16 @@ class Tokenizer(sourceText: String) {
                 }
 
                 when (type) {
-                    COLON, SEMICOLON, COMMA, BIT_NOT -> {
+                    COLON, SEMICOLON, COMMA, BITWISE_NOT -> {
                         advance()
                         return build()
                     }
-                    LEFT_PAREN, LEFT_BRACE, LEFT_BRACKET -> {
+                    LEFT_PARENTHESIS, LEFT_BRACE, LEFT_BRACKET -> {
                         syntacticPairs.add(SyntacticPair.findByOpeningPart(curr.toString())!!)
                         advance()
                         return build()
                     }
-                    RIGHT_PAREN, RIGHT_BRACKET -> return (
+                    RIGHT_PARENTHESIS, RIGHT_BRACKET -> return (
                         if (syntacticPairs.isLastClosingPart(curr)) {
                             syntacticPairs.removeLast()
                             advance()
@@ -435,21 +435,21 @@ class Tokenizer(sourceText: String) {
                             else -> build(NOT)
                         }
                     }
-                    ADD -> {
+                    PLUS -> {
                         // + += ++
                         advance()
                         return when (curr) {
-                            '=' -> build(ASSIGN_ADD).alsoAdvance()
-                            '+' -> build(INC).alsoAdvance()
+                            '=' -> build(ASSIGN_PLUS).alsoAdvance()
+                            '+' -> build(INCREMENT).alsoAdvance()
                             else -> build()
                         }
                     }
-                    SUBTRACT -> {
+                    MINUS -> {
                         // - -= --
                         advance()
                         return when (curr) {
-                            '=' -> build(ASSIGN_SUBTRACT).alsoAdvance()
-                            '-' -> build(DEC).alsoAdvance()
+                            '=' -> build(ASSIGN_MINUS).alsoAdvance()
+                            '-' -> build(DECREMENT).alsoAdvance()
                             else -> build()
                         }
                     }

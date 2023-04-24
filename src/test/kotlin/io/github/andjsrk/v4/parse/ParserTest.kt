@@ -1,5 +1,8 @@
 package io.github.andjsrk.v4.parse
 
+import io.github.andjsrk.v4.Range
+import io.github.andjsrk.v4.error.Error
+import io.github.andjsrk.v4.error.SyntaxError
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.node.literal.*
 import io.github.andjsrk.v4.parse.node.literal.`object`.ObjectLiteralNode
@@ -7,162 +10,259 @@ import io.github.andjsrk.v4.tokenize.Tokenizer
 import org.junit.jupiter.api.Test
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 internal class ParserTest {
     @Test
     fun testPrimitiveLiteral() {
-        val parser = createParser("""
+        """
             123
             'abc'
             "a'"
             "a\n2"
             null
             true
-        """.trimIndent())
+        """.shouldBeValidAndAlso {
+            val exprs = statements.map { it.unwrapExprStmt<PrimitiveLiteralNode>() }
+            assert(exprs.size == 6)
 
-        val program = parser.parseProgramSuccessfully()
-
-        val exprs = program.statements.map { it.unwrapExprStmt<PrimitiveLiteralNode>() }
-        assert(exprs.size == 6)
-
-        exprs[0].assertTypeThenRun<NumberLiteralNode> { assert(raw == "123" && value == 123.0) }
-        exprs[1].assertTypeThenRun<StringLiteralNode> { assert(raw == "'abc'" && value == "abc") }
-        exprs[2].assertTypeThenRun<StringLiteralNode> { assert(raw == "\"a'\"" && value == "a'") }
-        exprs[3].assertTypeThenRun<StringLiteralNode> { assert(raw == "\"a\\n2\"" && value == "a\n2") }
-        exprs[4].assertTypeThenRun<NullLiteralNode> { assert(raw == "null") }
-        exprs[5].assertTypeThenRun<BooleanLiteralNode> { assert(raw == "true" && value) }
+            exprs[0].assertTypeThenRun<NumberLiteralNode> {
+                assert(raw == "123" && value == 123.0)
+            }
+            exprs[1].assertTypeThenRun<StringLiteralNode> {
+                assert(raw == "'abc'" && value == "abc")
+            }
+            exprs[2].assertTypeThenRun<StringLiteralNode> {
+                assert(raw == "\"a'\"" && value == "a'")
+            }
+            exprs[3].assertTypeThenRun<StringLiteralNode> {
+                assert(raw == "\"a\\n2\"" && value == "a\n2")
+            }
+            exprs[4].assertTypeThenRun<NullLiteralNode> {
+                assert(raw == "null")
+            }
+            exprs[5].assertTypeThenRun<BooleanLiteralNode> {
+                assert(raw == "true" && value)
+            }
+        }
     }
     @Test
     fun testArrayLiteral() {
-        val parser = createParser(
-            """
+        """
             [123, "abc", []]
-        """.trimIndent())
+        """.shouldBeValidAndAlso {
+            statements[0].unwrapExprStmt<ArrayLiteralNode>().run {
+                assert(items.size == 3)
 
-        val program = parser.parseProgramSuccessfully()
-
-        program.statements[0].unwrapExprStmt<ArrayLiteralNode>().run {
-            assert(items.size == 3)
-
-            items[0].assertTypeThenRun<NumberLiteralNode> { assert(raw == "123") }
-            items[1].assertTypeThenRun<StringLiteralNode> { assert(raw == "\"abc\"") }
-            items[2].assertTypeThenRun<ArrayLiteralNode> { assert(items.isEmpty()) }
+                assertIs<NumberLiteralNode>(items[0])
+                assertIs<StringLiteralNode>(items[1])
+                assertIs<ArrayLiteralNode>(items[2])
+            }
         }
     }
     @Test
     fun testDistinguishBetweenObjectLiteralAndBlockStatement() {
-        val parser = createParser("""
+        """
             {}
             [{}]
-        """.trimIndent())
+        """.shouldBeValidAndAlso {
+            assertIs<BlockStatementNode>(statements[0])
 
-        val program = parser.parseProgramSuccessfully()
-
-        assertIs<BlockStatementNode>(program.statements[0])
-
-        val obj = program.statements[1]
-            .unwrapExprStmt<ArrayLiteralNode>()
-            .items[0]
-        assertIs<ObjectLiteralNode>(obj)
+            val obj = statements[1]
+                .unwrapExprStmt<ArrayLiteralNode>()
+                .items[0]
+            assertIs<ObjectLiteralNode>(obj)
+        }
     }
     @Test
     fun testMemberExpression() {
-        val parser = createParser("""
+        """
             a.b
             a?.b
             a[b]
             a?.[b]
-            a?.b[c]
-        """.trimIndent())
+            a?.b.c
+            a?.b?.[c]
+        """.shouldBeValidAndAlso {
+            val memberExprs = statements.map { it.unwrapExprStmt<MemberExpressionNode>() }
+            assert(memberExprs.size == 6)
 
-        val program = parser.parseProgramSuccessfully()
-
-        val memberExprs = program.statements.map { it.unwrapExprStmt<MemberExpressionNode>() }
-        assert(memberExprs.size == 5)
-
-        memberExprs[0].run {
-            assert(!isComputed && !isOptionalChain)
-            `object`.assertIdentifierNamed("a")
-            property.assertIdentifierNamed("b")
-        }
-        memberExprs[1].run {
-            assert(!isComputed && isOptionalChain)
-            `object`.assertIdentifierNamed("a")
-            property.assertIdentifierNamed("b")
-        }
-        memberExprs[2].run {
-            assert(isComputed && !isOptionalChain)
-            `object`.assertIdentifierNamed("a")
-            property.assertIdentifierNamed("b")
-        }
-        memberExprs[3].run {
-            assert(isComputed && isOptionalChain)
-            `object`.assertIdentifierNamed("a")
-            property.assertIdentifierNamed("b")
-        }
-        memberExprs[4].run {
-            assert(isComputed && !isOptionalChain)
-            `object`.run {
-                assertIs<MemberExpressionNode>(this)
+            memberExprs[0].run {
+                assert(!isComputed && !isOptionalChain)
+                `object`.assertIdentifierNamed("a")
+                property.assertIdentifierNamed("b")
+            }
+            memberExprs[1].run {
                 assert(!isComputed && isOptionalChain)
                 `object`.assertIdentifierNamed("a")
                 property.assertIdentifierNamed("b")
             }
-            property.assertIdentifierNamed("c")
+            memberExprs[2].run {
+                assert(isComputed && !isOptionalChain)
+                `object`.assertIdentifierNamed("a")
+                property.assertIdentifierNamed("b")
+            }
+            memberExprs[3].run {
+                assert(isComputed && isOptionalChain)
+                `object`.assertIdentifierNamed("a")
+                property.assertIdentifierNamed("b")
+            }
+            memberExprs[4].run {
+                assert(!isComputed && !isOptionalChain)
+                `object`.run {
+                    assertIs<MemberExpressionNode>(this)
+                    assert(!isComputed && isOptionalChain)
+                    `object`.assertIdentifierNamed("a")
+                    property.assertIdentifierNamed("b")
+                }
+                property.assertIdentifierNamed("c")
+            }
+            memberExprs[5].run {
+                assert(isComputed && isOptionalChain)
+                `object`.run {
+                    assertIs<MemberExpressionNode>(this)
+                    assert(!isComputed && isOptionalChain)
+                    `object`.assertIdentifierNamed("a")
+                    property.assertIdentifierNamed("b")
+                }
+                property.assertIdentifierNamed("c")
+            }
+        }
+    }
+    @Test
+    fun testNormalCallExpression() {
+        """
+            a()
+            a.b(1, ...a)
+            a?.(1)
+        """.shouldBeValidAndAlso {
+            val calls = statements.map { it.unwrapExprStmt<NormalCallExpressionNode>() }
+            assert(calls.size == 3)
+
+            calls[0].run {
+                callee.assertIdentifierNamed("a")
+                assert(arguments.isEmpty())
+                assert(!isOptionalChain)
+            }
+            calls[1].run {
+                assertIs<MemberExpressionNode>(callee)
+                assert(arguments.size == 2)
+                assert(!isOptionalChain)
+            }
+            calls[2].run {
+                callee.assertIdentifierNamed("a")
+                assert(arguments.size == 1)
+                assert(isOptionalChain)
+            }
+        }
+    }
+    @Test
+    fun testInvalidCall() {
+        """
+            super?.()
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_SUPER)
+
+        """
+            import?.()
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, "?.")
+    }
+    @Test
+    fun testNormalCallExpressionMixedWithMemberExpression() {
+        """
+            a().b
+            a?.().b
+        """.shouldBeValidAndAlso {
+            val exprs = statements.map { it.unwrapExprStmt<MemberExpressionNode>() }
+            assert(exprs.size == 2)
+
+            exprs[0].run {
+                `object`.assertTypeThenRun<NormalCallExpressionNode> {
+                    callee.assertIdentifierNamed("a")
+                }
+                property.assertIdentifierNamed("b")
+            }
+            exprs[1].run {
+                `object`.assertTypeThenRun<NormalCallExpressionNode> {
+                    callee.assertIdentifierNamed("a")
+                    assert(isOptionalChain)
+                }
+                property.assertIdentifierNamed("b")
+            }
         }
     }
     @Test
     fun testNewExpression() {
-        val parser = createParser("""
+        """
             new A()
             new A.B(1, ...a)
-        """.trimIndent())
+        """.shouldBeValidAndAlso {
+            val newExprs = statements.map { it.unwrapExprStmt<NewExpressionNode>() }
+            assert(newExprs.size == 2)
 
-        val program = parser.parseProgramSuccessfully()
-
-        val newExprs = program.statements.map { it.unwrapExprStmt<NewExpressionNode>() }
-        assert(newExprs.size == 2)
-
-        newExprs[0].run {
-            callee.assertIdentifierNamed("A")
-            assert(arguments.isEmpty())
+            newExprs[0].run {
+                callee.assertIdentifierNamed("A")
+                assert(arguments.isEmpty())
+            }
+            newExprs[1].run {
+                callee.assertTypeThenRun<MemberExpressionNode> {
+                    `object`.assertIdentifierNamed("A")
+                    property.assertIdentifierNamed("B")
+                }
+                assert(arguments.size == 2)
+            }
         }
-        newExprs[1].run {
-            callee.assertTypeThenRun<MemberExpressionNode> {
-                `object`.assertIdentifierNamed("A")
-                property.assertIdentifierNamed("B")
-            }
-            assert(arguments.size == 2)
-            arguments[0].run {
-                assert(!isSpread)
-                assertIs<NumberLiteralNode>(expression)
-            }
-            arguments[1].run {
-                assert(isSpread)
-                assertIs<IdentifierNode>(expression)
-            }
+    }
+    @Test
+    fun testUpdateExpression() {
+        """
+            
+        """.shouldBeValidAndAlso {
+
         }
     }
 }
 
-private inline fun <reified T: ExpressionNode> StatementNode.unwrapExprStmt() =
+private inline fun <reified Expr: ExpressionNode> StatementNode.unwrapExprStmt() =
     run {
         assertIs<ExpressionStatementNode>(this)
-        assertIs<T>(expression)
-        expression as T
+        assertIs<Expr>(expression)
+        expression as Expr
     }
-private fun Node.assertIdentifierNamed(name: String) =
-    assertTypeThenRun<IdentifierNode> { assert(value == name) }
-private inline fun <reified T> Any?.assertTypeThenRun(block: T.() -> Unit) =
-    run {
-        assertIs<T>(this)
-        run(block)
+private fun Node.assertIdentifierNamed(name: String) {
+    assertTypeThenRun<IdentifierNode> {
+        assert(value == name)
     }
+}
+private inline fun <reified T> Any?.assertTypeThenRun(block: T.() -> Unit) {
+    assertIs<T>(this)
+    run(block)
+}
 private fun Parser.parseProgramSuccessfully() =
     parseProgram().let {
         assert(hasError.not())
         assertNotNull(it)
         it
     }
-private fun createParser(code: String) =
-    Parser(Tokenizer(code))
+private fun Code.shouldBeValidAndAlso(block: ProgramNode.() -> Unit) {
+    block(
+        createParser(this)
+            .parseProgramSuccessfully()
+    )
+}
+private fun Code.shouldBeInvalidWithError(kind: Error, vararg args: String, range: Range? = null) {
+    val (error, errorArgs) = createParser(this).parseProgramUnsuccessfully()
+    assert(error.kind == kind)
+    if (range != null) assert(error.range == range)
+    assert(errorArgs.contentEquals(args))
+}
+private fun Parser.parseProgramUnsuccessfully() =
+    run {
+        val program = parseProgram()
+        assertNull(program)
+        assert(hasError)
+        error!! to errorArgs
+    }
+private fun createParser(code: Code) =
+    Parser(Tokenizer(code.trimIndent()))
+
+private typealias Code = String

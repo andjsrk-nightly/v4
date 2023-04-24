@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.error.Error
 import io.github.andjsrk.v4.error.SyntaxError
 import io.github.andjsrk.v4.parse.Keyword.*
 import io.github.andjsrk.v4.parse.node.*
-import io.github.andjsrk.v4.parse.node.BinaryOperationNode
+import io.github.andjsrk.v4.parse.node.BinaryExpressionNode
 import io.github.andjsrk.v4.parse.node.ExpressionNode
 import io.github.andjsrk.v4.parse.node.IdentifierNode
 import io.github.andjsrk.v4.parse.node.ThisReferenceNode
@@ -17,6 +17,7 @@ import io.github.andjsrk.v4.tokenize.Token
 import io.github.andjsrk.v4.tokenize.TokenType
 import io.github.andjsrk.v4.tokenize.TokenType.*
 import io.github.andjsrk.v4.tokenize.Tokenizer
+import io.github.andjsrk.v4.util.isOneOf
 
 class Parser(private val tokenizer: Tokenizer) {
     private var currToken = tokenizer.getNextToken()
@@ -35,11 +36,6 @@ class Parser(private val tokenizer: Tokenizer) {
     private fun skip(tokenType: TokenType): WasSuccessful =
         (currToken.type == tokenType).thenAlso {
             advance()
-        }
-    private fun <T> elvisIfNoError(vararg values: Lazy<T?>) =
-        values.fold(null as T?) { acc, it ->
-            if (hasError) acc
-            else acc ?: it.value
         }
     private fun takeIfMatches(tokenType: TokenType) =
         if (currToken.type == tokenType) advance()
@@ -74,15 +70,19 @@ class Parser(private val tokenizer: Tokenizer) {
         return reportErrorMessage(kind, token.range)
     }
     // <editor-fold desc="primary expressions">
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Identifier
+    /**
+     * Parses [Identifier](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Identifier).
+     */
     @Careful
     private fun parseIdentifier(): IdentifierNode? {
         if (currToken.type != IDENTIFIER) return null
-        if (Keyword.values().any { it.value == currToken.rawContent }) return null
+        if (Keyword.values().any { currToken.isKeyword(it) }) return null
 
         return IdentifierNode(currToken).alsoAdvance()
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#prod-IdentifierName
+    /**
+     * Parses [IdentifierName](https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#prod-IdentifierName).
+     */
     @Careful
     private fun parseIdentifierName() =
         takeIfMatches(IDENTIFIER)?.let(::IdentifierNode)
@@ -109,7 +109,9 @@ class Parser(private val tokenizer: Tokenizer) {
                 ?.alsoAdvance()
             else -> null
         }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ArrayLiteral
+    /**
+     * Parses [ArrayLiteral](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ArrayLiteral).
+     */
     private fun parseArrayLiteral(): ArrayLiteralNode? {
         val array = ArrayLiteralNode.Unsealed()
 
@@ -125,7 +127,9 @@ class Parser(private val tokenizer: Tokenizer) {
 
         return array.toSealed()
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ComputedPropertyName
+    /**
+     * Parses [ComputedPropertyName](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ComputedPropertyName).
+     */
     private fun parseComputedPropertyName(property: PropertyNode.Unsealed): ExpressionNode? {
         property.startRange = takeIfMatches(LEFT_BRACKET)?.range ?: return null
         val expression = parseExpression() ?: return null
@@ -135,13 +139,20 @@ class Parser(private val tokenizer: Tokenizer) {
 
         return expression
     }
-    // changed; https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LiteralPropertyName
+    /**
+     * Parses [LiteralPropertyName](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LiteralPropertyName).
+     */
     @Careful
     private fun parseLiteralPropertyName() =
-        parseIdentifierName() ?: parseStringLiteral()
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-PropertyName
+        parseIdentifierName() ?: parseStringLiteral() ?: parseNumberLiteral() // no bigint literal
+    /**
+     * Parses [PropertyName](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-PropertyName).
+     */
     private fun parsePropertyName(property: PropertyNode.Unsealed) =
         parseLiteralPropertyName() ?: parseComputedPropertyName(property)
+    /**
+     * Parses [PropertyDefinition](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-PropertyDefinition).
+     */
     private fun parsePropertyDefinition(): ObjectElementNode? {
         return when (currToken.type) {
             ELLIPSIS -> {
@@ -153,24 +164,29 @@ class Parser(private val tokenizer: Tokenizer) {
                 val identifier = parseIdentifier()
                 val property = PropertyNode.Unsealed()
                 val propertyName = identifier ?: parsePropertyName(property)
-                if (currToken.type == COLON) { // { a: b }
-                    // we must check whether the key is valid first
-                    if (propertyName == null) return reportUnexpectedToken()
+                when (currToken.type) {
+                    COLON -> { // { a: b }
+                        // we must check whether the key is valid first
+                        if (propertyName == null) return reportUnexpectedToken()
 
-                    property.key = propertyName
-                    advance() // skip colon
-                    property.value = parseExpression() ?: return null // temp
-                    property.startRange = property.key.range
-                    property.toSealed()
-                } else {
-                    if (identifier == null) TODO("Method definition is not supported yet")
-                    PropertyShorthandNode(identifier)
+                        property.key = propertyName
+                        advance() // skip colon
+                        property.value = parseExpression() ?: return null // temp
+                        property.startRange = property.key.range
+                        property.toSealed()
+                    }
+                    else -> {
+                        if (identifier == null) TODO("Method definition is not supported yet")
+                        PropertyShorthandNode(identifier)
+                    }
                 }
             }
             else -> reportUnexpectedToken()
         }
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ObjectLiteral
+    /**
+     * Parses [ObjectLiteral](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ObjectLiteral).
+     */
     private fun parseObjectLiteral(): ObjectLiteralNode? {
         val obj = ObjectLiteralNode.Unsealed()
 
@@ -187,7 +203,12 @@ class Parser(private val tokenizer: Tokenizer) {
         return obj.toSealed()
     }
     private fun parseThisReference(): ThisReferenceNode? =
-        takeIfMatchesKeyword(THIS)?.let(::ThisReferenceNode)
+        takeIfMatchesKeyword(THIS)?.let {
+            ThisReferenceNode(it.range)
+        }
+    /**
+     * Parses [PrimaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-PrimaryExpression).
+     */
     private fun parsePrimaryExpression(): ExpressionNode? =
         parsePrimitiveLiteral() ?: parseIdentifier() ?: when (currToken.type) {
             IDENTIFIER -> // now there are only keywords except primitive literals
@@ -206,38 +227,38 @@ class Parser(private val tokenizer: Tokenizer) {
         val expr = parseExpression() ?: return null
         return CommaSeparatedElementNode(expr, false, expr.range)
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Arguments
+    /**
+     * Parses [Arguments](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Arguments).
+     */
     private fun parseArguments(call: FixedCalleeCallExpressionNode.Unsealed): List<CommaSeparatedElementNode>? {
         val args = mutableListOf<CommaSeparatedElementNode>()
 
-        expect(LEFT_PAREN) ?: return null
+        expect(LEFT_PARENTHESIS) ?: return null
         var skippedComma = true
-        while (currToken.type != RIGHT_PAREN) {
+        while (currToken.type != RIGHT_PARENTHESIS) {
             if (!skippedComma || currToken.type == COMMA) return reportUnexpectedToken()
             args += parseArgumentItem() ?: return null
             skippedComma = skip(COMMA)
         }
-        call.endRange = expect(RIGHT_PAREN)?.range ?: return null
+        call.endRange = expect(RIGHT_PARENTHESIS)?.range ?: return null
 
         return args.toList()
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-MemberExpression
+    /**
+     * Parses [MemberExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-MemberExpression).
+     * Returns [NewExpressionNode] or optional chained [NormalCallExpressionNode] if possible.
+     */
     private fun parseMemberExpression(`object`: ExpressionNode?, new: NewExpressionNode.Unsealed? = null): ExpressionNode? {
         val parsingNewExpression = new != null
         if (`object` == null) { // base case
-            val primary = parsePrimaryExpression() ?: run {
-                if (!hasError) reportUnexpectedToken()
-                return null
-            }
+            val primary = parsePrimaryExpression() ?: return null
             return parseMemberExpression(primary, new)
         }
 
         val member = MemberExpressionNode.Unsealed()
         member.`object` = `object`
-        val questionPeriod = takeIfMatches(QUESTION_DOT)
-        member.isOptionalChain = questionPeriod != null
-
-        if (member.isOptionalChain && parsingNewExpression) return reportUnexpectedToken(questionPeriod!!)
+        val questionDotToken = takeIfMatches(QUESTION_DOT)
+        member.isOptionalChain = questionDotToken != null
 
         when (currToken.type) {
             LEFT_BRACKET -> {
@@ -253,40 +274,36 @@ class Parser(private val tokenizer: Tokenizer) {
                 member.endRange = member.property.range
             }
             IDENTIFIER -> {
-                if (member.isOptionalChain.not()) {
-                    if (currToken.afterLineTerminator.not()) return reportUnexpectedToken()
-                    return `object`
-                }
+                if (member.isOptionalChain.not()) return `object`
                 member.property = parseIdentifierName()!!
                 member.endRange = member.property.range
             }
             else -> {
-                if (currToken.type == LEFT_PAREN) {
+                if (currToken.type == LEFT_PARENTHESIS) {
                     if (parsingNewExpression) {
                         requireNotNull(new)
                         new.callee = `object`
                         new.arguments += parseArguments(new) ?: return null
                         return new.toSealed()
-                    } else {
-                        val call = NormalCallExpressionNode.Unsealed()
-                        call.callee = `object`
-                        call.arguments += parseArguments(call) ?: return null
-                        call.isOptionalChain = member.isOptionalChain
-                        return call.toSealed()
-                    }
+                    } else return parseCallExpression(`object`, member.isOptionalChain)
                 }
+
+                // if it is neither member access nor call, it is an unexpected token
+                if (member.isOptionalChain) return reportUnexpectedToken()
 
                 return `object`
             }
         }
         return parseMemberExpression(member.toSealed(), new)
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-NewExpression
+    /**
+     * Parses [`new` expression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-MemberExpression).
+     */
     private fun parseNewExpression(new: NewExpressionNode.Unsealed? = null): ExpressionNode? {
         val isCurrTokenNew = currToken.isKeyword(NEW)
 
         return (
-            if (!isCurrTokenNew) parseMemberExpression(null, new)
+            if (!isCurrTokenNew) parseMemberExpression(null, new) ?: parseCallExpression(null)
             else {
                 val freshNew = NewExpressionNode.Unsealed()
                 freshNew.startRange = advance().range
@@ -294,55 +311,167 @@ class Parser(private val tokenizer: Tokenizer) {
             }
         )
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-SuperCall
+    /**
+     * Parses [SuperCall](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-SuperCall).
+     */
     private fun parseSuperCall(): SuperCallNode? {
         val superCall = SuperCallNode.Unsealed()
 
         val superToken = takeIfMatchesKeyword(SUPER) ?: return null
         superCall.superNode = SuperNode(superToken.range)
-        takeIfMatches(LEFT_PAREN) ?: return reportErrorMessage(SyntaxError.SUPER_NOT_CALLED, superToken.range)
+        takeIfMatches(LEFT_PARENTHESIS) ?: return reportErrorMessage(SyntaxError.UNEXPECTED_SUPER, superToken.range)
         superCall.arguments += parseArguments(superCall) ?: return null
-        expect(RIGHT_PAREN) ?: return null
+        expect(RIGHT_PARENTHESIS) ?: return null
 
         return superCall.toSealed()
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ImportCall
+    /**
+     * Parses [ImportCall](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ImportCall).
+     */
     private fun parseImportCall(): ImportCallNode? {
         val importCall = ImportCallNode.Unsealed()
 
         val importToken = takeIfMatchesKeyword(IMPORT) ?: return null
         importCall.importNode = ImportNode(importToken.range)
-        expect(LEFT_PAREN) ?: return null
+        expect(LEFT_PARENTHESIS) ?: return null
         importCall.pathSpecifier = parseExpression() ?: return null
-        importCall.endRange = expect(RIGHT_PAREN)?.range ?: return null
+        importCall.endRange = expect(RIGHT_PARENTHESIS)?.range ?: return null
 
         return importCall.toSealed()
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-CallExpression
-    private fun parseCallExpression(): CallSyntaxExpressionNode? {
-        return when {
-            currToken.isKeyword(SUPER) -> parseSuperCall()
-            currToken.isKeyword(IMPORT) -> parseImportCall()
-            else -> {
+    /**
+     * Parses [CallExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-CallExpression).
+     */
+    private fun parseCallExpression(callee: ExpressionNode?, isOptionalChain: Boolean = false): ExpressionNode? {
+        return (
+            if (callee == null)
+                when {
+                    currToken.isKeyword(SUPER) -> parseSuperCall()
+                    currToken.isKeyword(IMPORT) -> parseImportCall()
+                    else -> null
+                }
+            else {
                 val call = NormalCallExpressionNode.Unsealed()
-                call.callee = parseMemberExpression(null) ?: return null
+                call.callee = callee
+                call.isOptionalChain = isOptionalChain
+                if (currToken.type != LEFT_PARENTHESIS) {
+                    // if it is optional chain, it will be handled by parseMemberExpression
+                    return callee
+                }
                 call.arguments += parseArguments(call) ?: return null
-                call.toSealed()
+                return parseMemberExpression(call.toSealed())
+            }
+        )
+    }
+    /**
+     * Parses [LeftHandSideExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LeftHandSideExpression).
+     */
+    private fun parseLeftHandSideExpression() =
+        parseNewExpression()
+    /**
+     * Parses [UpdateExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-UpdateExpression).
+     */
+    private fun parseUpdateExpression(): ExpressionNode? {
+        return when (currToken.type) {
+            INCREMENT, DECREMENT -> {
+                val token = advance()
+                val leftHandSideExpr = parseLeftHandSideExpression() ?: return null
+                UnaryExpressionNode(
+                    leftHandSideExpr,
+                    UnaryOperationType.valueOf(token.type.name),
+                    token.range,
+                    true,
+                )
+            }
+            else -> {
+                val leftHandSideExpr = parseLeftHandSideExpression() ?: return null
+                if (currToken.afterLineTerminator.not() && currToken.type.isOneOf(INCREMENT, DECREMENT)) {
+                    val token = advance()
+                    UnaryExpressionNode(
+                        leftHandSideExpr,
+                        UnaryOperationType.valueOf(token.type.name),
+                        token.range,
+                        false,
+                    )
+                } else leftHandSideExpr
             }
         }
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LeftHandSideExpression
-    private fun parseLeftHandSideExpression() =
-        elvisIfNoError(
-            lazy { parseNewExpression() },
-            lazy { parseCallExpression() },
-        )
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-UnaryExpression
-    private fun parseUnaryExpression() {
-        TODO()
+    /**
+     * Parses [UnaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-UnaryExpression).
+     */
+    private fun parseUnaryExpression(updateExpression: ExpressionNode? = null): ExpressionNode? {
+        val operation = when {
+            currToken.isKeyword(AWAIT) -> UnaryOperationType.AWAIT
+            currToken.isKeyword(VOID) -> UnaryOperationType.VOID
+            currToken.isKeyword(TYPEOF) -> UnaryOperationType.TYPEOF
+            else -> when (currToken.type) {
+                MINUS -> UnaryOperationType.MINUS
+                NOT -> UnaryOperationType.NOT
+                BITWISE_NOT -> UnaryOperationType.BITWISE_NOT
+                else -> null
+            }
+        }
+        val operationToken = operation?.let { advance() }
+        val updateExpr = updateExpression ?: parseUpdateExpression() ?: return null
+
+        if (operation == null) return updateExpr
+
+        return UnaryExpressionNode(updateExpr, operation, operationToken!!.range)
+    }
+    /**
+     * Parses [ExponentiationExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ExponentiationExpression).
+     */
+    private fun parseExponentiationExpression(): ExpressionNode? {
+        val updateExpr = parseUpdateExpression() ?: return null
+        if (currToken.type != EXPONENTIAL) return parseUnaryExpression(updateExpr)
+        advance()
+        val exponentiationExpr = parseExponentiationExpression() ?: return null
+        return BinaryExpressionNode(updateExpr, exponentiationExpr, BinaryOperationType.EXPONENTIAL)
+    }
+    /**
+     * Parses [MultiplicativeExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-MultiplicativeExpression).
+     */
+    private fun parseMultiplicativeExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
+        val exponentiationExpr = left ?: parseExponentiationExpression() ?: return null
+        val operation = when (currToken.type) {
+            MULTIPLY -> BinaryOperationType.MULTIPLY
+            DIVIDE -> BinaryOperationType.DIVIDE
+            MOD -> BinaryOperationType.MOD
+            else -> return exponentiationExpr
+        }
+        val right = parseExponentiationExpression() ?: return null
+        return parseMultiplicativeExpression(BinaryExpressionNode(exponentiationExpr, right, operation))
+    }
+    /**
+     * Parses [AddictiveExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-AdditiveExpression).
+     */
+    private fun parseAddictiveExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
+        val multiplicativeExpr = left ?: parseMultiplicativeExpression() ?: return null
+        val operation = when (currToken.type) {
+            PLUS -> BinaryOperationType.PLUS
+            MINUS -> BinaryOperationType.MINUS
+            else -> return multiplicativeExpr
+        }
+        val right = parseMultiplicativeExpression() ?: return null
+        return parseAddictiveExpression(BinaryExpressionNode(multiplicativeExpr, right, operation))
+    }
+    /**
+     * Parses [ShiftExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ShiftExpression).
+     */
+    private fun parseShiftExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
+        val addictiveExpr = left ?: parseAddictiveExpression() ?: return null
+        val operation = when (currToken.type) {
+            SHL -> BinaryOperationType.SHL
+            SAR -> BinaryOperationType.SAR
+            SHR -> BinaryOperationType.SHR
+            else -> return addictiveExpr
+        }
+        val right = parseAddictiveExpression() ?: return null
+        return parseShiftExpression(BinaryExpressionNode(addictiveExpr, right, operation))
     }
     // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-RelationalExpression
-    private fun parseRelationalExpression(): BinaryOperationNode? {
+    private fun parseRelationalExpression(): BinaryExpressionNode? {
         TODO()
     }
     // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ConditionalExpression
@@ -360,9 +489,9 @@ class Parser(private val tokenizer: Tokenizer) {
         val `if` = IfStatementNode.Unsealed()
         `if`.startRange = expectKeyword(IF)?.range ?: return null
 
-        expect(LEFT_PAREN) ?: return null
+        expect(LEFT_PARENTHESIS) ?: return null
         `if`.test = parseExpression() ?: return null
-        expect(RIGHT_PAREN) ?: return null
+        expect(RIGHT_PARENTHESIS) ?: return null
         `if`.body = parseStatement() ?: return null
 
         return `if`.toSealed()
@@ -396,15 +525,17 @@ class Parser(private val tokenizer: Tokenizer) {
     fun parseProgram(): ProgramNode? {
         val statements = mutableListOf<StatementNode>()
 
+        var isLastNodeExpression = false
         while (currToken.type != EOS) {
-            statements += parseModuleItem() ?: return null
+            if (isLastNodeExpression && currToken.afterLineTerminator.not()) return reportUnexpectedToken()
+            val statement = parseModuleItem() ?: return null
+            isLastNodeExpression = statement is ExpressionStatementNode
+            statements += statement
         }
 
         return ProgramNode(statements)
     }
 }
 
-private inline val IdentifierNode.canBeBooleanLiteral get() =
-    value.toBooleanStrictOrNull() != null
 private inline fun Token.isKeyword(keyword: Keyword) =
     type == IDENTIFIER && rawContent == keyword.value

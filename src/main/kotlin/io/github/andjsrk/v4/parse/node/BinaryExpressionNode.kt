@@ -3,7 +3,7 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.BinaryOperationType
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class BinaryOperationNode(
+class BinaryExpressionNode(
     val left: ExpressionNode,
     val right: ExpressionNode,
     val operation: BinaryOperationType,

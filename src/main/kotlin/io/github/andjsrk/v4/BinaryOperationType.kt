@@ -1,5 +1,7 @@
 package io.github.andjsrk.v4
 
+import io.github.andjsrk.v4.tokenize.TokenType
+
 enum class BinaryOperationType {
     ASSIGN,
     ASSIGN_COALESCE,
@@ -39,5 +41,14 @@ enum class BinaryOperationType {
     LT,
     GT,
     LT_EQ,
-    GT_EQ;
+    GT_EQ,
+
+    // keywords
+    INSTANCEOF,
+    IN;
+
+    companion object {
+        fun fromTokenType(tokenType: TokenType) =
+            BinaryOperationType.valueOf(tokenType.name)
+    }
 }

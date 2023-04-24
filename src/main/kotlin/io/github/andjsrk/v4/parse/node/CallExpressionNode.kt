@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 abstract class CallExpressionNode(
     val callee: ExpressionNode,
-    arguments: List<CommaSeparatedElementNode>,
+    arguments: Arguments,
     range: Range,
 ): FixedCalleeCallExpressionNode(arguments, range) {
     override fun toString() =

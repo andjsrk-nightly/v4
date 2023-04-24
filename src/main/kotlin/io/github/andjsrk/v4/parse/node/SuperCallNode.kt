@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.Range
 
 class SuperCallNode(
     superNode: SuperNode,
-    arguments: List<CommaSeparatedElementNode>,
+    arguments: Arguments,
     range: Range,
 ): CallExpressionNode(superNode, arguments, range) {
     class Unsealed: FixedCalleeCallExpressionNode.Unsealed() {

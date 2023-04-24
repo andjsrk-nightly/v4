@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.Range
 
 class NewExpressionNode(
     callee: ExpressionNode,
-    arguments: List<CommaSeparatedElementNode>,
+    arguments: Arguments,
     range: Range,
 ): CallExpressionNode(callee, arguments, range) {
     class Unsealed: CallExpressionNode.Unsealed() {

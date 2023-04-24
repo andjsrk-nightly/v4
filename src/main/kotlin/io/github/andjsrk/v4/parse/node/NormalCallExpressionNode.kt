@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class NormalCallExpressionNode(
     callee: ExpressionNode,
-    arguments: List<CommaSeparatedElementNode>,
+    arguments: Arguments,
     val isOptionalChain: Boolean,
     range: Range,
 ): CallExpressionNode(callee, arguments, range) {

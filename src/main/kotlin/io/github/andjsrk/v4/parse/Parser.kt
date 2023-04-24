@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.parse
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.BinaryOperationType as BinaryOp
 import io.github.andjsrk.v4.WasSuccessful
 import io.github.andjsrk.v4.error.Error
 import io.github.andjsrk.v4.error.SyntaxError
@@ -248,7 +249,7 @@ class Parser(private val tokenizer: Tokenizer) {
      * Parses [MemberExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-MemberExpression).
      * Returns [NewExpressionNode] or optional chained [NormalCallExpressionNode] if possible.
      */
-    private fun parseMemberExpression(`object`: ExpressionNode?, new: NewExpressionNode.Unsealed? = null): ExpressionNode? {
+    private tailrec fun parseMemberExpression(`object`: ExpressionNode?, new: NewExpressionNode.Unsealed? = null): ExpressionNode? {
         val parsingNewExpression = new != null
         if (`object` == null) { // base case
             val primary = parsePrimaryExpression() ?: return null
@@ -299,7 +300,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [`new` expression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-MemberExpression).
      */
-    private fun parseNewExpression(new: NewExpressionNode.Unsealed? = null): ExpressionNode? {
+    private tailrec fun parseNewExpression(new: NewExpressionNode.Unsealed? = null): ExpressionNode? {
         val isCurrTokenNew = currToken.isKeyword(NEW)
 
         return (
@@ -376,7 +377,7 @@ class Parser(private val tokenizer: Tokenizer) {
             INCREMENT, DECREMENT -> {
                 val token = advance()
                 val leftHandSideExpr = parseLeftHandSideExpression() ?: return null
-                UnaryExpressionNode(
+                UpdateExpressionNode(
                     leftHandSideExpr,
                     UnaryOperationType.valueOf(token.type.name),
                     token.range,
@@ -387,7 +388,7 @@ class Parser(private val tokenizer: Tokenizer) {
                 val leftHandSideExpr = parseLeftHandSideExpression() ?: return null
                 if (currToken.afterLineTerminator.not() && currToken.type.isOneOf(INCREMENT, DECREMENT)) {
                     val token = advance()
-                    UnaryExpressionNode(
+                    UpdateExpressionNode(
                         leftHandSideExpr,
                         UnaryOperationType.valueOf(token.type.name),
                         token.range,
@@ -400,7 +401,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [UnaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-UnaryExpression).
      */
-    private fun parseUnaryExpression(updateExpression: ExpressionNode? = null): ExpressionNode? {
+    private fun parseUnaryExpression(): ExpressionNode? {
         val operation = when {
             currToken.isKeyword(AWAIT) -> UnaryOperationType.AWAIT
             currToken.isKeyword(VOID) -> UnaryOperationType.VOID
@@ -409,78 +410,181 @@ class Parser(private val tokenizer: Tokenizer) {
                 MINUS -> UnaryOperationType.MINUS
                 NOT -> UnaryOperationType.NOT
                 BITWISE_NOT -> UnaryOperationType.BITWISE_NOT
-                else -> null
+                else -> return parseUpdateExpression()
             }
         }
-        val operationToken = operation?.let { advance() }
-        val updateExpr = updateExpression ?: parseUpdateExpression() ?: return null
+        val operationToken = advance()
+        val operand = parseUnaryExpression() ?: return null
 
-        if (operation == null) return updateExpr
-
-        return UnaryExpressionNode(updateExpr, operation, operationToken!!.range)
+        return UnaryExpressionNode(operand, operation, operationToken.range)
     }
     /**
      * Parses [ExponentiationExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ExponentiationExpression).
      */
     private fun parseExponentiationExpression(): ExpressionNode? {
-        val updateExpr = parseUpdateExpression() ?: return null
-        if (currToken.type != EXPONENTIAL) return parseUnaryExpression(updateExpr)
-        advance()
+        val expr = parseUnaryExpression() ?: return null
+        if (currToken.type != EXPONENTIAL) return expr
+        val exponentialToken = advance()
+        if (expr is UnaryExpressionNode && expr !is UpdateExpressionNode) return reportErrorMessage(
+            SyntaxError.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION,
+            expr.range until exponentialToken.range,
+        )
         val exponentiationExpr = parseExponentiationExpression() ?: return null
-        return BinaryExpressionNode(updateExpr, exponentiationExpr, BinaryOperationType.EXPONENTIAL)
+        return BinaryExpressionNode(expr, exponentiationExpr, BinaryOp.EXPONENTIAL)
     }
     /**
      * Parses [MultiplicativeExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-MultiplicativeExpression).
      */
-    private fun parseMultiplicativeExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
+    private tailrec fun parseMultiplicativeExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
         val exponentiationExpr = left ?: parseExponentiationExpression() ?: return null
         val operation = when (currToken.type) {
-            MULTIPLY -> BinaryOperationType.MULTIPLY
-            DIVIDE -> BinaryOperationType.DIVIDE
-            MOD -> BinaryOperationType.MOD
+            MULTIPLY -> BinaryOp.MULTIPLY
+            DIVIDE -> BinaryOp.DIVIDE
+            MOD -> BinaryOp.MOD
             else -> return exponentiationExpr
         }
+        advance()
         val right = parseExponentiationExpression() ?: return null
         return parseMultiplicativeExpression(BinaryExpressionNode(exponentiationExpr, right, operation))
     }
     /**
      * Parses [AddictiveExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-AdditiveExpression).
      */
-    private fun parseAddictiveExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
+    private tailrec fun parseAddictiveExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
         val multiplicativeExpr = left ?: parseMultiplicativeExpression() ?: return null
         val operation = when (currToken.type) {
-            PLUS -> BinaryOperationType.PLUS
-            MINUS -> BinaryOperationType.MINUS
+            PLUS -> BinaryOp.PLUS
+            MINUS -> BinaryOp.MINUS
             else -> return multiplicativeExpr
         }
+        advance()
         val right = parseMultiplicativeExpression() ?: return null
         return parseAddictiveExpression(BinaryExpressionNode(multiplicativeExpr, right, operation))
     }
     /**
      * Parses [ShiftExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ShiftExpression).
      */
-    private fun parseShiftExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
+    private tailrec fun parseShiftExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
         val addictiveExpr = left ?: parseAddictiveExpression() ?: return null
         val operation = when (currToken.type) {
-            SHL -> BinaryOperationType.SHL
-            SAR -> BinaryOperationType.SAR
-            SHR -> BinaryOperationType.SHR
+            SHL -> BinaryOp.SHL
+            SAR -> BinaryOp.SAR
+            SHR -> BinaryOp.SHR
             else -> return addictiveExpr
         }
+        advance()
         val right = parseAddictiveExpression() ?: return null
         return parseShiftExpression(BinaryExpressionNode(addictiveExpr, right, operation))
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-RelationalExpression
-    private fun parseRelationalExpression(): BinaryExpressionNode? {
-        TODO()
+    /**
+     * Parses [RelationalExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-RelationalExpression).
+     */
+    private tailrec fun parseRelationalExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
+        val shiftExpr = left ?: parseShiftExpression() ?: return null
+        val operation = when (currToken.type) {
+            LT -> BinaryOp.LT
+            GT -> BinaryOp.GT
+            LT_EQ -> BinaryOp.LT_EQ
+            GT_EQ -> BinaryOp.GT_EQ
+            else -> when {
+                currToken.isKeyword(INSTANCEOF) -> BinaryOp.INSTANCEOF
+                currToken.isKeyword(IN) -> BinaryOp.IN
+                else -> return shiftExpr
+            }
+        }
+        advance()
+        val right = parseShiftExpression() ?: return null
+        return parseRelationalExpression(BinaryExpressionNode(shiftExpr, right, operation))
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ConditionalExpression
-    private fun parseConditionalExpression() {
-        TODO()
+    /**
+     * Parses [EqualityExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-EqualityExpression).
+     */
+    private tailrec fun parseEqualityExpression(left: BinaryExpressionNode? = null): ExpressionNode? {
+        val relationalExpr = left ?: parseRelationalExpression() ?: return null
+        val operation = when (currToken.type) {
+            EQ -> BinaryOp.EQ
+            NOT_EQ -> BinaryOp.NOT_EQ
+            EQ_STRICT -> BinaryOp.EQ_STRICT
+            NOT_EQ_STRICT -> BinaryOp.NOT_EQ_STRICT
+            else -> return relationalExpr
+        }
+        advance()
+        val right = parseRelationalExpression() ?: return null
+        return parseEqualityExpression(BinaryExpressionNode(relationalExpr, right, operation))
     }
-    // https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-AssignmentExpression
-    private fun parseAssignmentExpression() {
-        TODO()
+    private fun parseGeneralBinaryExpression(opTokenType: TokenType, parseInner: () -> ExpressionNode?): ExpressionNode? {
+        tailrec fun parse(left: BinaryExpressionNode? = null): ExpressionNode? {
+            val expr = left ?: parseInner() ?: return null
+            takeIfMatches(opTokenType) ?: return expr
+            val right = parseInner() ?: return null
+            return parse(BinaryExpressionNode(expr, right, BinaryOp.fromTokenType(opTokenType)))
+        }
+        return parse()
+    }
+    /**
+     * Parses [BitwiseANDExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-BitwiseANDExpression).
+     */
+    private fun parseBitwiseAndExpression() =
+        parseGeneralBinaryExpression(BITWISE_AND, this::parseEqualityExpression)
+    /**
+     * Parses [BitwiseXORExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-BitwiseXORExpression).
+     */
+    private fun parseBitwiseXorExpression() =
+        parseGeneralBinaryExpression(BITWISE_XOR, this::parseBitwiseAndExpression)
+    /**
+     * Parses [BitwiseORExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-BitwiseORExpression).
+     */
+    private fun parseBitwiseOrExpression() =
+        parseGeneralBinaryExpression(BITWISE_OR, this::parseBitwiseXorExpression)
+    /**
+     * Parses [LogicalANDExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LogicalANDExpression).
+     */
+    private fun parseLogicalAndExpression() =
+        parseGeneralBinaryExpression(AND, this::parseBitwiseOrExpression)
+    /**
+     * Parses [LogicalORExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LogicalORExpression).
+     */
+    private fun parseLogicalOrExpression() =
+        parseGeneralBinaryExpression(OR, this::parseLogicalAndExpression)
+    /**
+     * Parses [CoalesceExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-CoalesceExpression).
+     * Note that the method takes non-null parse result from [parseLogicalOrExpression].
+     */
+    private tailrec fun parseCoalesceExpression(left: ExpressionNode): ExpressionNode? {
+        takeIfMatches(COALESCE) ?: return left
+        if (left is BinaryExpressionNode && left.operation.isOneOf(BinaryOp.OR, BinaryOp.AND)) return reportUnexpectedToken()
+        val right = parseBitwiseOrExpression() ?: return null
+        return parseCoalesceExpression(BinaryExpressionNode(left, right, BinaryOp.COALESCE))
+    }
+    /**
+     * Parses [ShortCircuitExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ShortCircuitExpression).
+     */
+    private fun parseShortCircuitExpression() =
+        parseLogicalOrExpression()
+            ?.let(this::parseCoalesceExpression)
+    /**
+     * Parses [ConditionalExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ConditionalExpression).
+     */
+    private fun parseConditionalExpression(): ExpressionNode? {
+        val shortCircuitExpr = parseShortCircuitExpression() ?: return null
+        takeIfMatches(CONDITIONAL) ?: return shortCircuitExpr
+        val consequent = parseAssignmentExpression() ?: return null
+        expect(COLON) ?: return null
+        val alternative = parseAssignmentExpression() ?: return null
+        return ConditionalExpressionNode(shortCircuitExpr, consequent, alternative)
+    }
+    private fun parseYieldExpression(): YieldExpressionNode? {
+        val yieldTokenRange = takeIfMatchesKeyword(YIELD)?.range ?: return null
+        if (currToken.afterLineTerminator) return YieldExpressionNode(null, false, yieldTokenRange)
+        val isDelegate = takeIfMatches(MULTIPLY) != null
+        val expr = parseAssignmentExpression() ?: return null
+        return YieldExpressionNode(expr, isDelegate, yieldTokenRange until expr.range)
+    }
+    /**
+     * Parses [AssignmentExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-AssignmentExpression).
+     */
+    private fun parseAssignmentExpression(): ExpressionNode? {
+        return parseYieldExpression() ?: parseConditionalExpression()
     }
     private fun parseExpression(): ExpressionNode? {
         return parseLeftHandSideExpression() // temp

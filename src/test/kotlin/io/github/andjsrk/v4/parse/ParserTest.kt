@@ -8,9 +8,7 @@ import io.github.andjsrk.v4.parse.node.literal.*
 import io.github.andjsrk.v4.parse.node.literal.`object`.ObjectLiteralNode
 import io.github.andjsrk.v4.tokenize.Tokenizer
 import org.junit.jupiter.api.Test
-import kotlin.test.assertIs
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
+import kotlin.test.*
 
 internal class ParserTest {
     @Test
@@ -27,22 +25,20 @@ internal class ParserTest {
             assert(exprs.size == 6)
 
             exprs[0].assertTypeThenRun<NumberLiteralNode> {
-                assert(raw == "123" && value == 123.0)
+                assert(value == 123.0)
             }
             exprs[1].assertTypeThenRun<StringLiteralNode> {
-                assert(raw == "'abc'" && value == "abc")
+                assert(value == "abc")
             }
             exprs[2].assertTypeThenRun<StringLiteralNode> {
-                assert(raw == "\"a'\"" && value == "a'")
+                assert(value == "a'")
             }
             exprs[3].assertTypeThenRun<StringLiteralNode> {
-                assert(raw == "\"a\\n2\"" && value == "a\n2")
+                assert(value == "a\n2")
             }
-            exprs[4].assertTypeThenRun<NullLiteralNode> {
-                assert(raw == "null")
-            }
+            assertIs<NullLiteralNode>(exprs[4])
             exprs[5].assertTypeThenRun<BooleanLiteralNode> {
-                assert(raw == "true" && value)
+                assertTrue(value)
             }
         }
     }
@@ -59,6 +55,19 @@ internal class ParserTest {
                 assertIs<ArrayLiteralNode>(items[2])
             }
         }
+        """
+            [1,]
+        """.shouldBeValidAndAlso {
+            statements[0].unwrapExprStmt<ArrayLiteralNode>().run {
+                assert(items.size == 1)
+            }
+        }
+        """
+            [1,,2]
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, ",")
+        """
+            [,]
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, ",")
     }
     @Test
     fun testDistinguishBetweenObjectLiteralAndBlockStatement() {

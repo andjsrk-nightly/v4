@@ -31,8 +31,6 @@ class Tokenizer(sourceText: String) {
         source.advance().also {
             if (addRawContent) builder.rawContent += it
         }
-    private fun <T> T.alsoAdvance() =
-        also { advance() }
     private fun advanceWhile(addRawContent: Boolean, check: (Char) -> Boolean): Char {
         while (check(curr)) advance(addRawContent)
         return curr
@@ -65,10 +63,10 @@ class Tokenizer(sourceText: String) {
         return (
             if (curr == '\r' && peek() == '\n') {
                 advance()
+                advance()
                 '\n'
-            } else curr
+            } else curr.also { advance() }
         )
-            .alsoAdvance()
     }
     private val singleCharTokenMap =
         TokenType.values()
@@ -387,7 +385,10 @@ class Tokenizer(sourceText: String) {
                         // ? ?. ?? ??=
                         advance()
                         return when (curr) {
-                            '.' -> build(QUESTION_DOT).alsoAdvance()
+                            '.' -> {
+                                advance()
+                                build(QUESTION_DOT)
+                            }
                             '?' -> select('=', ASSIGN_COALESCE, COALESCE)
                             else -> build()
                         }
@@ -397,7 +398,10 @@ class Tokenizer(sourceText: String) {
                         // < <= << <<=
                         advance()
                         return when (curr) {
-                            '=' -> build(LT_EQ).alsoAdvance()
+                            '=' -> {
+                                advance()
+                                build(LT_EQ)
+                            }
                             '<' -> select('=', ASSIGN_SHL, SHL)
                             else -> build()
                         }
@@ -406,11 +410,17 @@ class Tokenizer(sourceText: String) {
                         // > >= >> >>= >>> >>>=
                         advance()
                         return when (curr) {
-                            '=' -> build(GT_EQ).alsoAdvance()
+                            '=' -> {
+                                advance()
+                                build(GT_EQ)
+                            }
                             '>' -> {
                                 advance()
                                 when (curr) {
-                                    '=' -> build(ASSIGN_SAR).alsoAdvance()
+                                    '=' -> {
+                                        advance()
+                                        build(ASSIGN_SAR)
+                                    }
                                     '>' -> select('=', ASSIGN_SHR, SHR)
                                     else -> build()
                                 }
@@ -423,7 +433,10 @@ class Tokenizer(sourceText: String) {
                         advance()
                         return when (curr) {
                             '=' -> select('=', EQ_STRICT, EQ)
-                            '>' -> build(ARROW).alsoAdvance()
+                            '>' -> {
+                                advance()
+                                build(ARROW)
+                            }
                             else -> build()
                         }
                     }
@@ -439,8 +452,14 @@ class Tokenizer(sourceText: String) {
                         // + += ++
                         advance()
                         return when (curr) {
-                            '=' -> build(ASSIGN_PLUS).alsoAdvance()
-                            '+' -> build(INCREMENT).alsoAdvance()
+                            '=' -> {
+                                advance()
+                                build(ASSIGN_PLUS)
+                            }
+                            '+' -> {
+                                advance()
+                                build(INCREMENT)
+                            }
                             else -> build()
                         }
                     }
@@ -448,8 +467,14 @@ class Tokenizer(sourceText: String) {
                         // - -= --
                         advance()
                         return when (curr) {
-                            '=' -> build(ASSIGN_MINUS).alsoAdvance()
-                            '-' -> build(DECREMENT).alsoAdvance()
+                            '=' -> {
+                                advance()
+                                build(ASSIGN_MINUS)
+                            }
+                            '-' -> {
+                                advance()
+                                build(DECREMENT)
+                            }
                             else -> build()
                         }
                     }
@@ -473,7 +498,10 @@ class Tokenizer(sourceText: String) {
                             //     skipMultiLineComment()
                             //     continue
                             // }
-                            '=' -> return build(ASSIGN_DIVIDE).alsoAdvance()
+                            '=' -> {
+                                advance()
+                                return build(ASSIGN_DIVIDE)
+                            }
                             else -> return build()
                         }
                     }
@@ -482,7 +510,10 @@ class Tokenizer(sourceText: String) {
                         advance()
                         return when (curr) {
                             '&' -> select('=', ASSIGN_AND, AND)
-                            '=' -> build(ASSIGN_BITWISE_AND).alsoAdvance()
+                            '=' -> {
+                                advance()
+                                build(ASSIGN_BITWISE_AND)
+                            }
                             else -> build()
                         }
                     }
@@ -491,7 +522,10 @@ class Tokenizer(sourceText: String) {
                         advance()
                         return when (curr) {
                             '|' -> select('=', ASSIGN_OR, OR)
-                            '=' -> build(ASSIGN_BITWISE_OR).alsoAdvance()
+                            '=' -> {
+                                advance()
+                                build(ASSIGN_BITWISE_OR)
+                            }
                             else -> build()
                         }
                     }
@@ -519,7 +553,10 @@ class Tokenizer(sourceText: String) {
                     WHITE_SPACE -> skipWhiteSpaceOrLineTerminator()
                     ILLEGAL -> return (
                         if (curr.isEndOfInput) return build(if (hasError) ILLEGAL else EOS)
-                        else build().alsoAdvance()
+                        else {
+                            advance()
+                            build()
+                        }
                     )
                     else -> TODO()
                 }

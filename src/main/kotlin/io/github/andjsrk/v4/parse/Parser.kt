@@ -218,23 +218,10 @@ class Parser(private val tokenizer: Tokenizer) {
         }
     private fun parseParenthesizedExpression(): ExpressionNode? {
         val leftParenRange = takeIfMatches(LEFT_PARENTHESIS)?.range ?: return null
-        val exprs = mutableListOf<ExpressionNode>()
-        var skippedComma = false
-        while (currToken.type != RIGHT_PARENTHESIS) {
-            // prevent double comma
-            if (skippedComma && currToken.type == COMMA) return reportUnexpectedToken()
-            exprs += parseExpression() ?: return null
-            skippedComma = skip(COMMA)
-        }
-        if (skippedComma) return reportUnexpectedToken()
-        val rightParenRange = expect(RIGHT_PARENTHESIS)?.range ?: throw Error("This can never happen")
+        val expr = parseExpression() ?: return null
+        val rightParenRange = expect(RIGHT_PARENTHESIS)?.range ?: return null
 
-        val range = leftParenRange..rightParenRange
-
-        return (
-            exprs.singleOrNull()?.let { expr -> ParenthesizedExpressionNode(expr, range) }
-                ?: SequenceExpressionNode(exprs.toList(), range)
-        )
+        return ParenthesizedExpressionNode(expr, leftParenRange..rightParenRange)
     }
     /**
      * Parses [PrimaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-PrimaryExpression).
@@ -616,8 +603,23 @@ class Parser(private val tokenizer: Tokenizer) {
     private fun parseAssignmentExpression(): ExpressionNode? {
         return parseYieldExpression() ?: parseConditionalExpression()
     }
+    /**
+     * Parses [Expression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Expression).
+     */
     private fun parseExpression(): ExpressionNode? {
-        return parseAssignmentExpression() // temp
+        val expr = parseAssignmentExpression() ?: return null
+
+        val exprs = mutableListOf(expr)
+        var lastExpr = expr
+        while (takeIfMatches(COMMA) != null) {
+            lastExpr = parseAssignmentExpression() ?: return null
+            exprs += lastExpr
+        }
+
+        return (
+            if (exprs.size == 1) expr
+            else SequenceExpressionNode(exprs, expr.range..lastExpr.range)
+        )
     }
     private fun parseIfStatement(): IfStatementNode? {
         val `if` = IfStatementNode.Unsealed()

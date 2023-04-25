@@ -167,7 +167,7 @@ class Parser(private val tokenizer: Tokenizer) {
         return when (currToken.type) {
             ELLIPSIS -> {
                 val spreadToken = advance()
-                val expression = parseExpression() ?: return null // temp
+                val expression = parseAssignmentExpression() ?: return null // temp
                 CommaSeparatedElementNode(expression, true, spreadToken.range..expression.range)
             }
             IDENTIFIER -> {
@@ -181,7 +181,7 @@ class Parser(private val tokenizer: Tokenizer) {
 
                         property.key = propertyName
                         advance() // skip colon
-                        property.value = parseExpression() ?: return null // temp
+                        property.value = parseAssignmentExpression() ?: return null // temp
                         property.startRange = property.key.range
                         property.toSealed()
                     }
@@ -239,10 +239,10 @@ class Parser(private val tokenizer: Tokenizer) {
     private fun parseArgument(): Argument? {
         if (currToken.type == ELLIPSIS) { // spread
             val spreadToken = advance()
-            val expr = parseExpression() ?: return null
+            val expr = parseAssignmentExpression() ?: return null
             return Argument(expr, true, spreadToken.range..expr.range)
         }
-        val expr = parseExpression() ?: return null
+        val expr = parseAssignmentExpression() ?: return null
         return Argument(expr, false, expr.range)
     }
     /**
@@ -643,6 +643,11 @@ class Parser(private val tokenizer: Tokenizer) {
 
         return block.toSealed()
     }
+    private fun parseExpressionStatement(): ExpressionStatementNode? {
+        val expr = parseExpression() ?: return null
+        takeIfMatches(SEMICOLON)
+        return ExpressionStatementNode(expr)
+    }
     private fun parseStatement(
         allowModuleItem: Boolean = false,
         allowDeclaration: Boolean = true,
@@ -650,10 +655,10 @@ class Parser(private val tokenizer: Tokenizer) {
         return when (currToken.type) {
             IDENTIFIER -> when (currToken.rawContent) {
                 "if" -> parseIfStatement()
-                else -> parseExpression()?.let(::ExpressionStatementNode)
+                else -> parseExpressionStatement()
             }
             LEFT_BRACE -> parseBlockStatement()
-            else -> parseExpression()?.let(::ExpressionStatementNode)
+            else -> parseExpressionStatement()
         }
     }
     private fun parseModuleItem() =

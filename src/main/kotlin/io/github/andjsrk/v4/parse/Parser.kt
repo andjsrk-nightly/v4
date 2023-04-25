@@ -641,5 +641,5 @@ class Parser(private val tokenizer: Tokenizer) {
     }
 }
 
-private inline fun Token.isKeyword(keyword: Keyword) =
+private fun Token.isKeyword(keyword: Keyword) =
     type == IDENTIFIER && rawContent == keyword.value

@@ -27,7 +27,7 @@ class Tokenizer(sourceText: String) {
     private val syntacticPairs = ArrayDeque<SyntacticPair>()
     private fun ArrayDeque<SyntacticPair>.isLastClosingPart(value: Char) =
         lastOrNull()?.closingPart == value.toString()
-    private inline fun advance(addRawContent: Boolean = true) =
+    private fun advance(addRawContent: Boolean = true) =
         source.advance().also {
             if (addRawContent) builder.rawContent += it
         }

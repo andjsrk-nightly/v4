@@ -225,10 +225,40 @@ internal class ParserTest {
     }
     @Test
     fun testUpdateExpression() {
-        """
-            
-        """.shouldBeValidAndAlso {
+        fun ExpressionNode.assertUpdateExprThenRun(block: UpdateExpressionNode.() -> Unit) =
+            assertTypeThenRun(block)
 
+        """
+            a++
+            
+            ++a
+            
+            a
+            ++
+            b
+            
+            a
+            ++b
+        """.shouldBeValidAndAlso {
+            val exprs = statements.map { it.unwrapExprStmt<ExpressionNode>() }
+
+            exprs[0].assertUpdateExprThenRun {
+                assert(!isPrefixed)
+            }
+
+            exprs[1].assertUpdateExprThenRun {
+                assert(isPrefixed)
+            }
+
+            exprs[2].assertIdentifierNamed("a")
+            exprs[3].assertUpdateExprThenRun {
+                assert(isPrefixed)
+            }
+
+            exprs[4].assertIdentifierNamed("a")
+            exprs[5].assertUpdateExprThenRun {
+                assert(isPrefixed)
+            }
         }
     }
 }

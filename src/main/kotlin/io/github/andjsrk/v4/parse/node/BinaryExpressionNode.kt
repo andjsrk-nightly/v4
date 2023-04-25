@@ -8,7 +8,7 @@ class BinaryExpressionNode(
     val right: ExpressionNode,
     val operation: BinaryOperationType,
 ): ExpressionNode {
-    override val range = left.range until right.range
+    override val range = left.range..right.range
     override fun toString() =
         stringifyLikeDataClass(::left, ::right, ::operation, ::range)
 }

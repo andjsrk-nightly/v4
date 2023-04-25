@@ -14,6 +14,6 @@ class ImportCallNode(
         lateinit var importNode: ImportNode
         lateinit var pathSpecifier: ExpressionNode
         override fun toSealed() =
-            ImportCallNode(importNode, pathSpecifier, importNode.range until endRange)
+            ImportCallNode(importNode, pathSpecifier, importNode.range..endRange)
     }
 }

@@ -15,6 +15,6 @@ class IfStatementNode(
         lateinit var test: ExpressionNode
         lateinit var body: StatementNode
         override fun toSealed() =
-            IfStatementNode(test, body, startRange until body.range)
+            IfStatementNode(test, body, startRange..body.range)
     }
 }

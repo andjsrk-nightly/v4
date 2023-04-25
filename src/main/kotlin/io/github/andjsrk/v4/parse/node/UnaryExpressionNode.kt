@@ -11,8 +11,8 @@ open class UnaryExpressionNode(
     val isPrefixed: Boolean = true
 ): ExpressionNode {
     override val range =
-        if (isPrefixed) operationTokenRange until operand.range
-        else operand.range until operationTokenRange
+        if (isPrefixed) operationTokenRange..operand.range
+        else operand.range..operationTokenRange
     override fun toString() =
         stringifyLikeDataClass(::operand, ::operation, ::range)
 }

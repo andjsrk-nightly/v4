@@ -10,6 +10,6 @@ class SuperCallNode(
     class Unsealed: FixedCalleeCallExpressionNode.Unsealed() {
         lateinit var superNode: SuperNode
         override fun toSealed() =
-            SuperCallNode(superNode, arguments.toList(), superNode.range until endRange)
+            SuperCallNode(superNode, arguments.toList(), superNode.range..endRange)
     }
 }

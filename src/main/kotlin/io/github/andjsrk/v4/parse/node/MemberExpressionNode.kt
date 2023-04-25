@@ -24,7 +24,7 @@ class MemberExpressionNode(
                 property,
                 isOptionalChain,
                 isComputed,
-                `object`.range until endRange,
+                `object`.range..endRange,
             )
     }
 }

@@ -110,23 +110,32 @@ class Parser(private val tokenizer: Tokenizer) {
                 ?.alsoAdvance()
             else -> null
         }
+    private fun parseArrayElement(): CommaSeparatedElementNode? {
+        val ellipsisToken = takeIfMatches(ELLIPSIS)
+        val isSpread = ellipsisToken != null
+        val expr = parseAssignmentExpression() ?: return null
+        val range =
+            if (isSpread) ellipsisToken!!.range..expr.range
+            else expr.range
+        return CommaSeparatedElementNode(expr, isSpread, range)
+    }
     /**
      * Parses [ArrayLiteral](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ArrayLiteral).
      */
     private fun parseArrayLiteral(): ArrayLiteralNode? {
-        val array = ArrayLiteralNode.Unsealed()
+        val elements = mutableListOf<CommaSeparatedElementNode>()
 
-        array.startToken = expect(LEFT_BRACKET) ?: return null
+        val leftBracketTokenRange = expect(LEFT_BRACKET)?.range ?: return null
         // allow trailing comma, but disallow sparse array
         var skippedComma = true
         while (currToken.type != RIGHT_BRACKET) {
             if (!skippedComma || currToken.type == COMMA) return reportUnexpectedToken()
-            array.items += parseExpression() ?: return null
+            elements += parseArrayElement() ?: return null
             skippedComma = skip(COMMA)
         }
-        array.endToken = expect(RIGHT_BRACKET) ?: return null
+        val rightBracketTokenRange = expect(RIGHT_BRACKET)?.range ?: return null
 
-        return array.toSealed()
+        return ArrayLiteralNode(elements.toList(), leftBracketTokenRange..rightBracketTokenRange)
     }
     /**
      * Parses [ComputedPropertyName](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ComputedPropertyName).
@@ -159,7 +168,7 @@ class Parser(private val tokenizer: Tokenizer) {
             ELLIPSIS -> {
                 val spreadToken = advance()
                 val expression = parseExpression() ?: return null // temp
-                CommaSeparatedElementNode(expression, true, spreadToken.range until expression.range)
+                CommaSeparatedElementNode(expression, true, spreadToken.range..expression.range)
             }
             IDENTIFIER -> {
                 val identifier = parseIdentifier()
@@ -189,19 +198,19 @@ class Parser(private val tokenizer: Tokenizer) {
      * Parses [ObjectLiteral](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ObjectLiteral).
      */
     private fun parseObjectLiteral(): ObjectLiteralNode? {
-        val obj = ObjectLiteralNode.Unsealed()
+        val elements = mutableListOf<ObjectElementNode>()
 
-        obj.startToken = expect(LEFT_BRACE) ?: return null
+        val leftBraceTokenRange = expect(LEFT_BRACE)?.range ?: return null
         var skippedComma = true
         while (currToken.type != RIGHT_BRACE) {
             if (!skippedComma || currToken.type == COMMA) return reportUnexpectedToken()
             val element = parsePropertyDefinition() ?: return null
-            obj.elements += element
+            elements += element
             skippedComma = skip(COMMA)
         }
-        obj.endToken = expect(RIGHT_BRACE) ?: return null
+        val rightBraceTokenRange = expect(RIGHT_BRACE)?.range ?: return null
 
-        return obj.toSealed()
+        return ObjectLiteralNode(elements.toList(), leftBraceTokenRange..rightBraceTokenRange)
     }
     private fun parseThisReference(): ThisReferenceNode? =
         takeIfMatchesKeyword(THIS)?.let {
@@ -219,26 +228,26 @@ class Parser(private val tokenizer: Tokenizer) {
             else -> null
         }
     // </editor-fold>
-    private fun parseArgumentItem(): CommaSeparatedElementNode? {
+    private fun parseArgument(): Argument? {
         if (currToken.type == ELLIPSIS) { // spread
             val spreadToken = advance()
             val expr = parseExpression() ?: return null
-            return CommaSeparatedElementNode(expr, true, spreadToken.range until expr.range)
+            return Argument(expr, true, spreadToken.range..expr.range)
         }
         val expr = parseExpression() ?: return null
-        return CommaSeparatedElementNode(expr, false, expr.range)
+        return Argument(expr, false, expr.range)
     }
     /**
      * Parses [Arguments](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Arguments).
      */
-    private fun parseArguments(call: FixedCalleeCallExpressionNode.Unsealed): List<CommaSeparatedElementNode>? {
-        val args = mutableListOf<CommaSeparatedElementNode>()
+    private fun parseArguments(call: FixedCalleeCallExpressionNode.Unsealed): Arguments? {
+        val args = mutableListOf<Argument>()
 
         expect(LEFT_PARENTHESIS) ?: return null
         var skippedComma = true
         while (currToken.type != RIGHT_PARENTHESIS) {
             if (!skippedComma || currToken.type == COMMA) return reportUnexpectedToken()
-            args += parseArgumentItem() ?: return null
+            args += parseArgument() ?: return null
             skippedComma = skip(COMMA)
         }
         call.endRange = expect(RIGHT_PARENTHESIS)?.range ?: return null
@@ -427,7 +436,7 @@ class Parser(private val tokenizer: Tokenizer) {
         val exponentialToken = advance()
         if (expr is UnaryExpressionNode && expr !is UpdateExpressionNode) return reportErrorMessage(
             SyntaxError.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION,
-            expr.range until exponentialToken.range,
+            expr.range..exponentialToken.range,
         )
         val exponentiationExpr = parseExponentiationExpression() ?: return null
         return BinaryExpressionNode(expr, exponentiationExpr, BinaryOp.EXPONENTIAL)
@@ -578,7 +587,7 @@ class Parser(private val tokenizer: Tokenizer) {
         if (currToken.afterLineTerminator) return YieldExpressionNode(null, false, yieldTokenRange)
         val isDelegate = takeIfMatches(MULTIPLY) != null
         val expr = parseAssignmentExpression() ?: return null
-        return YieldExpressionNode(expr, isDelegate, yieldTokenRange until expr.range)
+        return YieldExpressionNode(expr, isDelegate, yieldTokenRange..expr.range)
     }
     /**
      * Parses [AssignmentExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-AssignmentExpression).

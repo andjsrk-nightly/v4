@@ -10,6 +10,6 @@ class NewExpressionNode(
     class Unsealed: CallExpressionNode.Unsealed() {
         lateinit var startRange: Range
         override fun toSealed() =
-            NewExpressionNode(callee, arguments.toList(), startRange until endRange)
+            NewExpressionNode(callee, arguments.toList(), startRange..endRange)
     }
 }

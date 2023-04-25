@@ -14,6 +14,6 @@ class NormalCallExpressionNode(
     class Unsealed: CallExpressionNode.Unsealed() {
         var isOptionalChain = false
         override fun toSealed() =
-            NormalCallExpressionNode(callee, arguments.toList(), isOptionalChain, callee.range until endRange)
+            NormalCallExpressionNode(callee, arguments.toList(), isOptionalChain, callee.range..endRange)
     }
 }

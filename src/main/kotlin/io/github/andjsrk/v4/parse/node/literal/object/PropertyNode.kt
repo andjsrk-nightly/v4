@@ -19,6 +19,6 @@ open class PropertyNode(
         lateinit var value: ExpressionNode
         var isComputed = false
         override fun toSealed() =
-            PropertyNode(key, value, isComputed, startRange until value.range)
+            PropertyNode(key, value, isComputed, startRange..value.range)
     }
 }

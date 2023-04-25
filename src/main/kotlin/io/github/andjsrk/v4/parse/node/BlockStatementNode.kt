@@ -16,7 +16,7 @@ class BlockStatementNode(
         override fun toSealed() =
             BlockStatementNode(
                 statements.toList(),
-                startRange until endRange,
+                startRange..endRange,
             )
     }
 }

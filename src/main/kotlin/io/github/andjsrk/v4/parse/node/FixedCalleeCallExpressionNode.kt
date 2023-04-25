@@ -10,7 +10,7 @@ abstract class FixedCalleeCallExpressionNode(
     override fun toString() =
         stringifyLikeDataClass(::arguments, ::range)
     abstract class Unsealed: CallSyntaxExpressionNode.Unsealed() {
-        var arguments = mutableListOf<CommaSeparatedElementNode<ExpressionNode>>()
+        var arguments = mutableListOf<Argument>()
         abstract override fun toSealed(): FixedCalleeCallExpressionNode
     }
 }

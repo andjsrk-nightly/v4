@@ -7,7 +7,7 @@ class ConditionalExpressionNode(
     val consequent: ExpressionNode,
     val alternative: ExpressionNode,
 ): ExpressionNode {
-    override val range = test.range until alternative.range
+    override val range = test.range..alternative.range
     override fun toString() =
         stringifyLikeDataClass(::test, ::consequent, ::alternative)
 }

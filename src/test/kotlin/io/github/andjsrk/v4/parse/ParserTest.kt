@@ -280,7 +280,7 @@ private inline fun <reified T> Any?.assertTypeThenRun(block: T.() -> Unit) {
 }
 private fun Parser.parseProgramSuccessfully() =
     parseProgram().let {
-        assert(hasError.not())
+        assert(hasError.not()) { "Error occurred: $error" }
         assertNotNull(it)
         it
     }

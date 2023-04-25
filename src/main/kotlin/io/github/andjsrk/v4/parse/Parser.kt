@@ -560,8 +560,8 @@ class Parser(private val tokenizer: Tokenizer) {
      * Note that the method takes non-null parse result from [parseLogicalOrExpression].
      */
     private tailrec fun parseCoalesceExpression(left: ExpressionNode): ExpressionNode? {
-        takeIfMatches(COALESCE) ?: return left
-        if (left is BinaryExpressionNode && left.operation.isOneOf(BinaryOp.OR, BinaryOp.AND)) return reportUnexpectedToken()
+        val coalesceToken = takeIfMatches(COALESCE) ?: return left
+        if (left is BinaryExpressionNode && left.operation.isOneOf(BinaryOp.OR, BinaryOp.AND)) return reportUnexpectedToken(coalesceToken)
         val right = parseBitwiseOrExpression() ?: return null
         return parseCoalesceExpression(BinaryExpressionNode(left, right, BinaryOp.COALESCE))
     }

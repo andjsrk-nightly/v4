@@ -216,6 +216,26 @@ class Parser(private val tokenizer: Tokenizer) {
         takeIfMatchesKeyword(THIS)?.let {
             ThisReferenceNode(it.range)
         }
+    private fun parseParenthesizedExpression(): ExpressionNode? {
+        val leftParenRange = takeIfMatches(LEFT_PARENTHESIS)?.range ?: return null
+        val exprs = mutableListOf<ExpressionNode>()
+        var skippedComma = false
+        while (currToken.type != RIGHT_PARENTHESIS) {
+            // prevent double comma
+            if (skippedComma && currToken.type == COMMA) return reportUnexpectedToken()
+            exprs += parseExpression() ?: return null
+            skippedComma = skip(COMMA)
+        }
+        if (skippedComma) return reportUnexpectedToken()
+        val rightParenRange = expect(RIGHT_PARENTHESIS)?.range ?: throw Error("This can never happen")
+
+        val range = leftParenRange..rightParenRange
+
+        return (
+            exprs.singleOrNull()?.let { expr -> ParenthesizedExpressionNode(expr, range) }
+                ?: SequenceExpressionNode(exprs.toList(), range)
+        )
+    }
     /**
      * Parses [PrimaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-PrimaryExpression).
      */
@@ -223,8 +243,9 @@ class Parser(private val tokenizer: Tokenizer) {
         parsePrimitiveLiteral() ?: parseIdentifier() ?: when (currToken.type) {
             IDENTIFIER -> // now there are only keywords except primitive literals
                 parseThisReference() // temp
-            LEFT_BRACKET -> parseArrayLiteral()
+            LEFT_PARENTHESIS -> parseParenthesizedExpression()
             LEFT_BRACE -> parseObjectLiteral()
+            LEFT_BRACKET -> parseArrayLiteral()
             else -> null
         }
     // </editor-fold>

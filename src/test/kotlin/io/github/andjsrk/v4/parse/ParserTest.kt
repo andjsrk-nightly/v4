@@ -49,10 +49,11 @@ internal class ParserTest {
         """.shouldBeValidAndAlso {
             statements[0].unwrapExprStmt<ArrayLiteralNode>().run {
                 assert(items.size == 3)
+                val exprs = items.map { it.expression }
 
-                assertIs<NumberLiteralNode>(items[0])
-                assertIs<StringLiteralNode>(items[1])
-                assertIs<ArrayLiteralNode>(items[2])
+                assertIs<NumberLiteralNode>(exprs[0])
+                assertIs<StringLiteralNode>(exprs[1])
+                assertIs<ArrayLiteralNode>(exprs[2])
             }
         }
         """
@@ -80,6 +81,7 @@ internal class ParserTest {
             val obj = statements[1]
                 .unwrapExprStmt<ArrayLiteralNode>()
                 .items[0]
+                .expression
             assertIs<ObjectLiteralNode>(obj)
         }
     }

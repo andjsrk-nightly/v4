@@ -596,7 +596,7 @@ class Parser(private val tokenizer: Tokenizer) {
         return parseYieldExpression() ?: parseConditionalExpression()
     }
     private fun parseExpression(): ExpressionNode? {
-        return parseLeftHandSideExpression() // temp
+        return parseAssignmentExpression() // temp
     }
     private fun parseIfStatement(): IfStatementNode? {
         val `if` = IfStatementNode.Unsealed()

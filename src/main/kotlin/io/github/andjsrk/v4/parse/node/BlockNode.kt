@@ -1,5 +1,5 @@
 package io.github.andjsrk.v4.parse.node
 
-interface BlockNode: ComplexNode {
+sealed interface BlockNode: Node {
     val statements: List<StatementNode>
 }

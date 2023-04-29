@@ -83,7 +83,6 @@ enum class SyntaxError(override val message: String): Error {
     MULTIPLE_DEFAULTS_IN_SWITCH("More than one default clause in switch statement"),
     NEWLINE_AFTER_THROW("Illegal newline after throw"),
     NO_CATCH_OR_FINALLY("Missing catch or finally after try"),
-    PARAM_AFTER_REST("Rest parameter must be last formal parameter"),
     FLATTEN_PAST_SAFE_LENGTH("Flattening % elements on an array-like of length %  is disallowed, as the total surpasses 2**53-1"),
     PUSH_PAST_SAFE_LENGTH("Pushing % elements on an array-like of length %  is disallowed, as the total surpasses 2**53-1"),
     ELEMENT_AFTER_REST("Rest element must be last element"),

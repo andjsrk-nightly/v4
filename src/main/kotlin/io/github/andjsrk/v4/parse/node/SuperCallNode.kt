@@ -4,10 +4,10 @@ import io.github.andjsrk.v4.Range
 
 class SuperCallNode(
     superNode: SuperNode,
-    arguments: Arguments,
+    arguments: List<MaybeSpreadNode>,
     range: Range,
-): CallExpressionNode(superNode, arguments, range) {
-    class Unsealed: FixedCalleeCallExpressionNode.Unsealed() {
+): CallNode(superNode, arguments, range) {
+    class Unsealed: FixedCalleeCallNode.Unsealed() {
         lateinit var superNode: SuperNode
         override fun toSealed() =
             SuperCallNode(superNode, arguments.toList(), superNode.range..endRange)

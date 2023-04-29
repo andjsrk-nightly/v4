@@ -1,13 +1,12 @@
-package io.github.andjsrk.v4.parse.node.literal.`object`
+package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.parse.node.literal.LiteralNode
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class ObjectLiteralNode(
-    val elements: List<ObjectElementNode>,
+class ArrayLiteralNode(
+    override val elements: List<MaybeSpreadNode>,
     override val range: Range,
-): LiteralNode {
+): CollectionLiteralNode {
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
 }

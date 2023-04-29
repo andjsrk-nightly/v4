@@ -48,6 +48,9 @@ enum class BinaryOperationType {
     IN;
 
     companion object {
+        /**
+         * Warning: call this function only if you are sure of the operation is included in this enum.
+         */
         fun fromTokenType(tokenType: TokenType) =
             BinaryOperationType.valueOf(tokenType.name)
     }

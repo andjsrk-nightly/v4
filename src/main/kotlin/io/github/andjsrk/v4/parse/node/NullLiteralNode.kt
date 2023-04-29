@@ -1,4 +1,4 @@
-package io.github.andjsrk.v4.parse.node.literal
+package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 import io.github.andjsrk.v4.tokenize.Token

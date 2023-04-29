@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.parse
 
 enum class Keyword {
+    ASYNC,
     AWAIT,
     BREAK,
     CASE,

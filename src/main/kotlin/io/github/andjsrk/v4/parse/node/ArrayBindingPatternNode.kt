@@ -3,10 +3,10 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class BlockStatementNode(
-    override val statements: List<StatementNode>,
+class ArrayBindingPatternNode(
+    override val elements: List<MaybeRestNode>,
     override val range: Range,
-): StatementNode, BlockNode {
+): BindingPatternNode {
     override fun toString() =
-        stringifyLikeDataClass(::statements, ::range)
+        stringifyLikeDataClass(::elements, ::range)
 }

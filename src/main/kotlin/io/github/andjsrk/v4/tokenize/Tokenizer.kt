@@ -75,17 +75,17 @@ class Tokenizer(sourceText: String) {
     private fun skipWhiteSpaceOrLineTerminator() {
         advanceWhile(false) {
             val isSpecLineTerminator = it.isSpecLineTerminator
-            if (isSpecLineTerminator) builder.afterLineTerminator = true
+            if (isSpecLineTerminator) builder.isPrevLineTerminator = true
             it.isSpecWhiteSpace || isSpecLineTerminator
         }
     }
     private fun skipSingleLineComment() {
-        advanceWhile { it.isSpecLineTerminator.not() }
+        advanceWhile { it.not { isSpecLineTerminator } }
     }
     private fun readHexDigits(maxLength: Int): String {
         var res = ""
         repeat(maxLength) {
-            if (curr.isSpecHexDigit.not()) return res
+            if (curr.not { isSpecHexDigit }) return res
             res += curr
             advance()
         }
@@ -249,8 +249,8 @@ class Tokenizer(sourceText: String) {
             }
         }
     }
-    private fun Token.Builder.addDigitsWithNumericSeparators(check: (Char) -> Boolean): WasSuccessful {
-        if (!check(curr)) return false
+    private fun Token.Builder.addDigitsWithNumericSeparators(check: (Char) -> Boolean, checkFirst: Boolean = true): WasSuccessful {
+        if (checkFirst && !check(curr)) return false
 
         var separatorSeen = false
 
@@ -287,7 +287,7 @@ class Tokenizer(sourceText: String) {
                 NumberKind.BINARY -> addDigitsWithNumericSeparators(Char::isSpecBinaryDigit)
                 NumberKind.OCTAL -> addDigitsWithNumericSeparators(Char::isSpecOctalDigit)
                 NumberKind.HEX -> addDigitsWithNumericSeparators(Char::isSpecHexDigit)
-                NumberKind.DECIMAL -> addDigitsWithNumericSeparators(Char::isSpecDecimalDigit).also {
+                NumberKind.DECIMAL -> addDigitsWithNumericSeparators(Char::isSpecDecimalDigit, false).also {
                     if (curr == '.') {
                         seenPeriod = true
                         val peeked = peek()
@@ -316,7 +316,7 @@ class Tokenizer(sourceText: String) {
                 if (kind != NumberKind.DECIMAL) return buildIllegal()
                 addLiteralAdvance()
                 if (curr == '+' || curr == '-') addLiteralAdvance()
-                if (curr.isSpecDecimalDigit.not()) return buildIllegal()
+                if (curr.not { isSpecDecimalDigit }) return buildIllegal()
                 val successful = addDigitsWithNumericSeparators(Char::isSpecDecimalDigit)
                 if (!successful) return buildIllegal()
             }

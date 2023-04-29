@@ -1,14 +1,12 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.parse.node.literal.`object`.ObjectElementNode
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class CommaSeparatedElementNode(
+class ComputedObjectKeyNode(
     val expression: ExpressionNode,
-    val isSpread: Boolean,
     override val range: Range,
-): ObjectElementNode {
+): ObjectLiteralKeyNode {
     override fun toString() =
-        stringifyLikeDataClass(::expression, ::isSpread, ::range)
+        stringifyLikeDataClass(::expression, ::range)
 }

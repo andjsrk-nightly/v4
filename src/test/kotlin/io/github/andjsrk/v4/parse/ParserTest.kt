@@ -1,11 +1,13 @@
 package io.github.andjsrk.v4.parse
 
+import io.github.andjsrk.v4.BinaryOperationType
 import io.github.andjsrk.v4.Range
+import io.github.andjsrk.v4.UnaryOperationType
 import io.github.andjsrk.v4.error.Error
 import io.github.andjsrk.v4.error.SyntaxError
 import io.github.andjsrk.v4.parse.node.*
-import io.github.andjsrk.v4.parse.node.literal.*
-import io.github.andjsrk.v4.parse.node.literal.`object`.ObjectLiteralNode
+import io.github.andjsrk.v4.parse.node.ArrayLiteralNode
+import io.github.andjsrk.v4.parse.node.ObjectLiteralNode
 import io.github.andjsrk.v4.tokenize.Tokenizer
 import org.junit.jupiter.api.Test
 import kotlin.test.*
@@ -24,20 +26,20 @@ internal class ParserTest {
             val exprs = statements.map { it.unwrapExprStmt<PrimitiveLiteralNode>() }
             assert(exprs.size == 6)
 
-            exprs[0].assertTypeThenRun<NumberLiteralNode> {
+            exprs[0].assertTypeThen<NumberLiteralNode> {
                 assert(value == 123.0)
             }
-            exprs[1].assertTypeThenRun<StringLiteralNode> {
+            exprs[1].assertTypeThen<StringLiteralNode> {
                 assert(value == "abc")
             }
-            exprs[2].assertTypeThenRun<StringLiteralNode> {
+            exprs[2].assertTypeThen<StringLiteralNode> {
                 assert(value == "a'")
             }
-            exprs[3].assertTypeThenRun<StringLiteralNode> {
+            exprs[3].assertTypeThen<StringLiteralNode> {
                 assert(value == "a\n2")
             }
             assertIs<NullLiteralNode>(exprs[4])
-            exprs[5].assertTypeThenRun<BooleanLiteralNode> {
+            exprs[5].assertTypeThen<BooleanLiteralNode> {
                 assertTrue(value)
             }
         }
@@ -47,28 +49,57 @@ internal class ParserTest {
         """
             [123, "abc", []]
         """.shouldBeValidAndAlso {
-            statements[0].unwrapExprStmt<ArrayLiteralNode>().run {
-                assert(items.size == 3)
-                val exprs = items.map { it.expression }
+            firstStmt.unwrapExprStmt<ArrayLiteralNode>().run {
+                assert(elements.size == 3)
+                val exprs = elements.map { it.expression }
 
                 assertIs<NumberLiteralNode>(exprs[0])
                 assertIs<StringLiteralNode>(exprs[1])
                 assertIs<ArrayLiteralNode>(exprs[2])
             }
         }
+
         """
             [1,]
         """.shouldBeValidAndAlso {
-            statements[0].unwrapExprStmt<ArrayLiteralNode>().run {
-                assert(items.size == 1)
+            firstStmt.unwrapExprStmt<ArrayLiteralNode>().run {
+                assert(elements.size == 1)
             }
         }
+
         """
             [1,,2]
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, ",")
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf(","))
+
         """
             [,]
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, ",")
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf(","))
+    }
+    @Test
+    fun testObjectLiteral() {
+        """
+            {}
+        """.shouldBeValidAndAlso {
+            firstStmt.unwrapExprStmt<ObjectLiteralNode>().run {
+                assert(elements.isEmpty())
+            }
+        }
+
+        """
+            { a: 1, b, ...c }
+        """.shouldBeValidAndAlso {
+            firstStmt.unwrapExprStmt<ObjectLiteralNode>().run {
+
+            }
+        }
+
+        """
+            { a, }
+        """.shouldBeValidAndAlso {
+            firstStmt.unwrapExprStmt<ObjectLiteralNode>().run {
+
+            }
+        }
     }
     @Test
     fun testDistinguishBetweenObjectLiteralAndBlockStatement() {
@@ -80,7 +111,7 @@ internal class ParserTest {
 
             val obj = statements[1]
                 .unwrapExprStmt<ArrayLiteralNode>()
-                .items[0]
+                .elements[0]
                 .expression
             assertIs<ObjectLiteralNode>(obj)
         }
@@ -141,13 +172,13 @@ internal class ParserTest {
         }
     }
     @Test
-    fun testNormalCallExpression() {
+    fun testNormalCall() {
         """
             a()
             a.b(1, ...a)
             a?.(1)
         """.shouldBeValidAndAlso {
-            val calls = statements.map { it.unwrapExprStmt<NormalCallExpressionNode>() }
+            val calls = statements.map { it.unwrapExprStmt<NormalCallNode>() }
             assert(calls.size == 3)
 
             calls[0].run {
@@ -175,10 +206,10 @@ internal class ParserTest {
 
         """
             import?.()
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, "?.")
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("?."))
     }
     @Test
-    fun testNormalCallExpressionMixedWithMemberExpression() {
+    fun testNormalCallMixedWithMemberExpression() {
         """
             a().b
             a?.().b
@@ -187,13 +218,13 @@ internal class ParserTest {
             assert(exprs.size == 2)
 
             exprs[0].run {
-                `object`.assertTypeThenRun<NormalCallExpressionNode> {
+                `object`.assertTypeThen<NormalCallNode> {
                     callee.assertIdentifierNamed("a")
                 }
                 property.assertIdentifierNamed("b")
             }
             exprs[1].run {
-                `object`.assertTypeThenRun<NormalCallExpressionNode> {
+                `object`.assertTypeThen<NormalCallNode> {
                     callee.assertIdentifierNamed("a")
                     assert(isOptionalChain)
                 }
@@ -215,7 +246,7 @@ internal class ParserTest {
                 assert(arguments.isEmpty())
             }
             newExprs[1].run {
-                callee.assertTypeThenRun<MemberExpressionNode> {
+                callee.assertTypeThen<MemberExpressionNode> {
                     `object`.assertIdentifierNamed("A")
                     property.assertIdentifierNamed("B")
                 }
@@ -226,7 +257,7 @@ internal class ParserTest {
     @Test
     fun testUpdateExpression() {
         fun ExpressionNode.assertUpdateExprThenRun(block: UpdateExpressionNode.() -> Unit) =
-            assertTypeThenRun(block)
+            assertTypeThen(block)
 
         """
             a++
@@ -261,40 +292,306 @@ internal class ParserTest {
             }
         }
     }
+    @Test
+    fun testUnaryExpression() {
+        """
+            void 0
+            typeof ++a
+            typeof typeof a
+        """.shouldBeValidAndAlso {
+            val exprs = statements.map { it.unwrapExprStmt<UnaryExpressionNode>() }
+
+            exprs[0].run {
+                assert(operation == UnaryOperationType.VOID)
+                assertTrue(isPrefixed)
+                assertIs<NumberLiteralNode>(operand)
+            }
+            exprs[1].run {
+                assert(operation == UnaryOperationType.TYPEOF)
+                assertIs<UpdateExpressionNode>(operand)
+            }
+        }
+    }
+    @Test
+    fun testExponentiationExpression() {
+        """
+            ++a ** 1
+        """.shouldBeValidAndAlso {
+            firstStmt.unwrapExprStmt<BinaryExpressionNode>().run {
+                assert(operation == BinaryOperationType.EXPONENTIAL)
+                assertIs<UpdateExpressionNode>(left)
+            }
+        }
+
+        """
+            -1 ** 1
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION)
+    }
+    @Test
+    fun testMultiplicativeExpression() {
+        """
+            1 ** 1 * 1 ** 1
+        """.shouldBeValidAndAlso {
+            firstStmt.unwrapExprStmt<BinaryExpressionNode>().run {
+                assert(operation == BinaryOperationType.MULTIPLY)
+                arrayOf(left, right).forEach {
+                    assertIs<BinaryExpressionNode>(it)
+                    assert(it.operation == BinaryOperationType.EXPONENTIAL)
+                }
+            }
+        }
+    }
+    @Test
+    fun testCoalesceExpression() {
+        """
+            a | a ?? a
+        """.shouldBeValidAndAlso {
+            firstStmt.unwrapExprStmt<BinaryExpressionNode>().run {
+                assert(operation == BinaryOperationType.COALESCE)
+                assertIs<BinaryExpressionNode>(left)
+            }
+        }
+
+        """
+            a && a ?? a
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("??"))
+    }
+    @Test
+    fun testConditionalExpression() {
+        """
+            ++a ? a = a : a = a
+        """.shouldBeValidAndAlso {
+            firstStmt.unwrapExprStmt<ConditionalExpressionNode>().run {
+                assertIs<UpdateExpressionNode>(test)
+                assertIs<BinaryExpressionNode>(consequent)
+                assertIs<BinaryExpressionNode>(alternative)
+            }
+        }
+    }
+    @Test
+    fun testArrowFunction() {
+        /**
+         * Note: async cases must be second statement.
+         */
+        fun ProgramNode.forBothSyncAndAsync(block: ArrowFunctionNode.(Boolean) -> Unit) {
+            (0..1).forEach {
+                val isAsyncCase = it == 1
+
+                block(statements[it].unwrapExprStmt(), isAsyncCase)
+            }
+        }
+
+        """
+            () => 0
+            async () => 0
+        """.shouldBeValidAndAlso {
+            forBothSyncAndAsync { isAsyncCase ->
+                assert(isAsyncCase == isAsync && !isGenerator)
+                assert(parameters.isEmpty())
+                assertIs<NumberLiteralNode>(body)
+            }
+        }
+
+        """
+            () => {
+                0
+            }
+            async () => {
+                0
+            }
+        """.shouldBeValidAndAlso {
+            forBothSyncAndAsync {
+                body.assertTypeThen<BlockStatementNode> {
+                    assert(statements.size == 1)
+                }
+            }
+        }
+
+        """
+            x => 0
+            async x => 0
+        """.shouldBeValidAndAlso {
+            forBothSyncAndAsync { isAsyncCase ->
+                assert(isAsyncCase == isAsync)
+                assert(parameters.size == 1)
+            }
+        }
+
+        """
+            (a, ...b) => 0
+        """.shouldBeValidAndAlso {
+            firstStmt.unwrapExprStmt<ArrowFunctionNode>().run {
+                assert(parameters.size == 2)
+                parameters[0].unwrapNonRest<IdentifierNode>()
+                parameters[1].unwrapRest<IdentifierNode>()
+            }
+        }
+
+        """
+            (...a, b) => 0
+        """.shouldBeInvalidWithError(SyntaxError.ELEMENT_AFTER_REST)
+
+        """
+            ([a, b = 1]) => 0
+            async ([a, b = 1]) => 0
+        """.shouldBeValidAndAlso {
+            forBothSyncAndAsync {
+                assert(parameters.size == 1)
+                parameters[0].unwrapNonRest<ArrayBindingPatternNode>().run {
+                    assert(elements.size == 2)
+                    elements[0].unwrapNonRest<IdentifierNode>()
+                    elements[1].assertTypeThen<NonRestNode> {
+                        assertIs<IdentifierNode>(`as`)
+                        assertIs<NumberLiteralNode>(default)
+                    }
+                }
+            }
+        }
+
+        """
+            ([0]) => 0
+        """.shouldBeInvalidWithError(SyntaxError.INVALID_DESTRUCTURING_TARGET)
+
+        """
+            async ([0]) => 0
+        """.shouldBeInvalidWithError(SyntaxError.INVALID_DESTRUCTURING_TARGET)
+
+        """
+            ([]) => 0
+            async ([]) => 0
+        """.shouldBeValidAndAlso {
+            forBothSyncAndAsync {
+                assert(
+                    parameters[0].unwrapNonRest<ArrayBindingPatternNode>()
+                        .elements.isEmpty()
+                )
+            }
+        }
+
+        """
+            ([[[a]]]) => 0
+            async ([[[a]]]) => 0
+        """.shouldBeValidAndAlso {
+            forBothSyncAndAsync {
+                parameters[0].unwrapNonRest<ArrayBindingPatternNode>()
+                    .elements[0].unwrapNonRest<ArrayBindingPatternNode>()
+                    .elements[0].unwrapNonRest<ArrayBindingPatternNode>()
+                    .elements[0].`as`.assertIdentifierNamed("a")
+            }
+        }
+
+        """
+            (...{ a }) => 0
+            async (...{ a }) => 0
+        """.shouldBeValidAndAlso {
+            forBothSyncAndAsync {
+                parameters[0].unwrapRest<ObjectBindingPatternNode>()
+                    .elements[0].unwrapNonRest<IdentifierNode>()
+            }
+        }
+
+        """
+            ({ ab: a, b = 1, c, ...d }) => 0
+            async ({ ab: a, b = 1, c, ...d }) => 0
+        """.shouldBeValidAndAlso {
+            forBothSyncAndAsync {
+                assert(parameters.size == 1)
+                parameters[0].unwrapNonRest<ObjectBindingPatternNode>().run {
+                    assert(elements.size == 4)
+                    elements[0].assertTypeThen<NonRestObjectPropertyNode> {
+                        key.assertIdentifierNamed("ab")
+                        `as`.assertIdentifierNamed("a")
+                    }
+                    elements[1].assertTypeThen<NonRestNode> {
+                        `as`.assertIdentifierNamed("b")
+                        assertIs<NumberLiteralNode>(default)
+                    }
+                    elements[2].assertTypeThen<NonRestObjectPropertyNode> {
+                        `as`.assertIdentifierNamed("c")
+                        assert(`as` == key)
+                    }
+                    elements[3].unwrapRest<IdentifierNode>()
+                }
+            }
+        }
+
+        """
+            ()
+            => 0
+        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("=>"))
+
+        """
+            ({ ...{} }) => 0
+        """.shouldBeInvalidWithError(SyntaxError.INVALID_REST_BINDING_PATTERN)
+
+        """
+            *() => 0
+            async *() => 0
+        """.shouldBeValidAndAlso {
+            forBothSyncAndAsync { isAsyncCase ->
+                assert(isAsyncCase == isAsync && isGenerator)
+            }
+        }
+    }
+    @Test
+    fun testAssignment() {
+        """
+            a = a = a
+        """.shouldBeValidAndAlso {
+            statements[0].unwrapExprStmt<BinaryExpressionNode>().run {
+                assert(operation == BinaryOperationType.ASSIGN)
+                assertTypeThen<BinaryExpressionNode> {
+                    assert(operation == BinaryOperationType.ASSIGN)
+                }
+            }
+        }
+    }
 }
 
+private inline fun <reified T: Node> MaybeRestNode.unwrapNonRest() =
+    run {
+        assertIs<NonRestNode>(this)
+        `as` as T
+    }
+private inline fun <reified T: Node> MaybeRestNode.unwrapRest() =
+    run {
+        assertIs<RestNode>(this)
+        `as` as T
+    }
 private inline fun <reified Expr: ExpressionNode> StatementNode.unwrapExprStmt() =
     run {
         assertIs<ExpressionStatementNode>(this)
         assertIs<Expr>(expression)
         expression as Expr
     }
+private val ProgramNode.firstStmt get() =
+    statements[0]
 private fun Node.assertIdentifierNamed(name: String) {
-    assertTypeThenRun<IdentifierNode> {
+    assertTypeThen<IdentifierNode> {
         assert(value == name)
     }
 }
-private inline fun <reified T> Any?.assertTypeThenRun(block: T.() -> Unit) {
+private inline fun <reified T> Any?.assertTypeThen(block: T.() -> Unit) {
     assertIs<T>(this)
     run(block)
 }
 private fun Parser.parseProgramSuccessfully() =
     parseProgram().let {
-        assert(hasError.not()) { "Error occurred: $error" }
+        assert(!hasError) { "Error occurred: $error" }
         assertNotNull(it)
         it
     }
-private fun Code.shouldBeValidAndAlso(block: ProgramNode.() -> Unit) {
+private inline fun Code.shouldBeValidAndAlso(block: ProgramNode.() -> Unit) {
     block(
         createParser(this)
             .parseProgramSuccessfully()
     )
 }
-private fun Code.shouldBeInvalidWithError(kind: Error, vararg args: String, range: Range? = null) {
+private fun Code.shouldBeInvalidWithError(kind: Error, args: Array<String>? = null, range: Range? = null) {
     val (error, errorArgs) = createParser(this).parseProgramUnsuccessfully()
-    assert(error.kind == kind)
+    assert(error.kind == kind) { "Actual error was: $error" }
     if (range != null) assert(error.range == range)
-    assert(errorArgs.contentEquals(args))
+    if (args != null) assert(errorArgs.contentEquals(args))
 }
 private fun Parser.parseProgramUnsuccessfully() =
     run {

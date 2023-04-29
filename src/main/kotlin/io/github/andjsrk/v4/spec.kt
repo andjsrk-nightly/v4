@@ -18,7 +18,7 @@ val Char.isSpecAsciiLetter get() =
     this in 'a'..'z' || this in 'A'..'Z'
 // changed; 12.7 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#prod-IdentifierName)
 val Char.isSpecIdentifierName get() =
-    this.isSpecAsciiLetter
+    this.isSpecAsciiLetter || this == '_' || this == '$'
 
 // 12.9.3 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-literals-numeric-literals)
 val Char.isSpecNumericLiteralSeparator get() =

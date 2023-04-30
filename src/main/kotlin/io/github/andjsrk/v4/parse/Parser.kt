@@ -973,7 +973,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [Expression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Expression).
      */
-    private fun parseExpression(): ExpressionNode? {
+    fun parseExpression(): ExpressionNode? {
         val expr = parseAssignmentExpression() ?: return null
 
         val exprs = mutableListOf(expr)

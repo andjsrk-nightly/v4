@@ -854,7 +854,7 @@ class Parser(private val tokenizer: Tokenizer) {
     private fun CoverParenthesizedExpressionAndArrowParameterListNode.findInvalidDestructuringRange() =
         items.foldElvis { it.invalidDestructuringRange }
     @ReportsErrorDirectly
-    private fun CoverParenthesizedExpressionAndArrowParameterListNode.toArrowParameters(): List<MaybeRestNode?>? {
+    private fun CoverParenthesizedExpressionAndArrowParameterListNode.toArrowParameters(): List<MaybeRestNode>? {
         val invalidRange = findInvalidDestructuringRange()
         if (invalidRange != null) {
             if (!hasError) reportErrorMessage(SyntaxError.INVALID_DESTRUCTURING_TARGET, invalidRange)
@@ -865,9 +865,9 @@ class Parser(private val tokenizer: Tokenizer) {
             when (it) {
                 is IdentifierNode -> it.wrapNonRest()
                 is BinaryExpressionNode -> NonRestNode(it.left, it.right)
-                is CollectionLiteralNode -> it.toBindingPattern()?.wrapNonRest()
+                is CollectionLiteralNode -> it.toBindingPattern()?.wrapNonRest() ?: return null
                 is RestNode -> it
-                else -> reportErrorMessage(SyntaxError.INVALID_DESTRUCTURING_TARGET, it.range)
+                else -> return reportErrorMessage(SyntaxError.INVALID_DESTRUCTURING_TARGET, it.range)
             }
         }
     }

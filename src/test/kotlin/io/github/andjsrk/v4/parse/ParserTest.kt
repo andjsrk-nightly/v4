@@ -22,7 +22,7 @@ internal class ParserTest {
             "a\n2"
             null
             true
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             val exprs = statements.map { it.unwrapExprStmt<PrimitiveLiteralNode>() }
             assert(exprs.size == 6)
 
@@ -48,57 +48,47 @@ internal class ParserTest {
     fun testArrayLiteral() {
         """
             [123, "abc", []]
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<ArrayLiteralNode>().run {
-                assert(elements.size == 3)
-                val exprs = elements.map { it.expression }
+        """.shouldBeValidExpressionAnd<ArrayLiteralNode> {
+            assert(elements.size == 3)
+            val exprs = elements.map { it.expression }
 
-                assertIs<NumberLiteralNode>(exprs[0])
-                assertIs<StringLiteralNode>(exprs[1])
-                assertIs<ArrayLiteralNode>(exprs[2])
-            }
+            assertIs<NumberLiteralNode>(exprs[0])
+            assertIs<StringLiteralNode>(exprs[1])
+            assertIs<ArrayLiteralNode>(exprs[2])
         }
 
         """
             [1,]
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<ArrayLiteralNode>().run {
-                assert(elements.size == 1)
-            }
+        """.shouldBeValidExpressionAnd<ArrayLiteralNode> {
+            assert(elements.size == 1)
         }
 
         """
             [1,,2]
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf(","))
+        """.shouldBeInvalidExpressionWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf(","))
 
         """
             [,]
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf(","))
+        """.shouldBeInvalidExpressionWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf(","))
     }
     @Test
     fun testObjectLiteral() {
         """
             {}
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<ObjectLiteralNode>().run {
-                assert(elements.isEmpty())
-            }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            assert(elements.isEmpty())
         }
 
         """
             { a: 1, b, ...c }
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<ObjectLiteralNode>().run {
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
 
-            }
         }
 
         """
             { a, }
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<ObjectLiteralNode>().run {
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
 
-            }
         }
     }
     @Test
@@ -106,7 +96,7 @@ internal class ParserTest {
         """
             {}
             [{}]
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             assertIs<BlockStatementNode>(statements[0])
 
             val obj = statements[1]
@@ -125,7 +115,7 @@ internal class ParserTest {
             a?.[b]
             a?.b.c
             a?.b?.[c]
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             val memberExprs = statements.map { it.unwrapExprStmt<MemberExpressionNode>() }
             assert(memberExprs.size == 6)
 
@@ -177,7 +167,7 @@ internal class ParserTest {
             a()
             a.b(1, ...a)
             a?.(1)
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             val calls = statements.map { it.unwrapExprStmt<NormalCallNode>() }
             assert(calls.size == 3)
 
@@ -202,18 +192,18 @@ internal class ParserTest {
     fun testInvalidCall() {
         """
             super?.()
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_SUPER)
+        """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_SUPER)
 
         """
             import?.()
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("?."))
+        """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("?."))
     }
     @Test
     fun testNormalCallMixedWithMemberExpression() {
         """
             a().b
             a?.().b
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             val exprs = statements.map { it.unwrapExprStmt<MemberExpressionNode>() }
             assert(exprs.size == 2)
 
@@ -237,7 +227,7 @@ internal class ParserTest {
         """
             new A()
             new A.B(1, ...a)
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             val newExprs = statements.map { it.unwrapExprStmt<NewExpressionNode>() }
             assert(newExprs.size == 2)
 
@@ -270,7 +260,7 @@ internal class ParserTest {
             
             a
             ++b
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             val exprs = statements.map { it.unwrapExprStmt<ExpressionNode>() }
 
             exprs[0].assertUpdateExprThenRun {
@@ -298,7 +288,7 @@ internal class ParserTest {
             void 0
             typeof ++a
             typeof typeof a
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             val exprs = statements.map { it.unwrapExprStmt<UnaryExpressionNode>() }
 
             exprs[0].run {
@@ -316,28 +306,24 @@ internal class ParserTest {
     fun testExponentiationExpression() {
         """
             ++a ** 1
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<BinaryExpressionNode>().run {
-                assert(operation == BinaryOperationType.EXPONENTIAL)
-                assertIs<UpdateExpressionNode>(left)
-            }
+        """.shouldBeValidExpressionAnd<BinaryExpressionNode> {
+            assert(operation == BinaryOperationType.EXPONENTIAL)
+            assertIs<UpdateExpressionNode>(left)
         }
 
         """
             -1 ** 1
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION)
+        """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION)
     }
     @Test
     fun testMultiplicativeExpression() {
         """
             1 ** 1 * 1 ** 1
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<BinaryExpressionNode>().run {
-                assert(operation == BinaryOperationType.MULTIPLY)
-                arrayOf(left, right).forEach {
-                    assertIs<BinaryExpressionNode>(it)
-                    assert(it.operation == BinaryOperationType.EXPONENTIAL)
-                }
+        """.shouldBeValidExpressionAnd<BinaryExpressionNode> {
+            assert(operation == BinaryOperationType.MULTIPLY)
+            arrayOf(left, right).forEach {
+                assertIs<BinaryExpressionNode>(it)
+                assert(it.operation == BinaryOperationType.EXPONENTIAL)
             }
         }
     }
@@ -345,27 +331,23 @@ internal class ParserTest {
     fun testCoalesceExpression() {
         """
             a | a ?? a
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<BinaryExpressionNode>().run {
-                assert(operation == BinaryOperationType.COALESCE)
-                assertIs<BinaryExpressionNode>(left)
-            }
+        """.shouldBeValidExpressionAnd<BinaryExpressionNode> {
+            assert(operation == BinaryOperationType.COALESCE)
+            assertIs<BinaryExpressionNode>(left)
         }
 
         """
             a && a ?? a
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("??"))
+        """.shouldBeInvalidExpressionWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("??"))
     }
     @Test
     fun testConditionalExpression() {
         """
             ++a ? a = a : a = a
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<ConditionalExpressionNode>().run {
-                assertIs<UpdateExpressionNode>(test)
-                assertIs<BinaryExpressionNode>(consequent)
-                assertIs<BinaryExpressionNode>(alternative)
-            }
+        """.shouldBeValidExpressionAnd<ConditionalExpressionNode> {
+            assertIs<UpdateExpressionNode>(test)
+            assertIs<BinaryExpressionNode>(consequent)
+            assertIs<BinaryExpressionNode>(alternative)
         }
     }
     @Test
@@ -384,7 +366,7 @@ internal class ParserTest {
         """
             () => 0
             async () => 0
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             forBothSyncAndAsync { isAsyncCase ->
                 assert(isAsyncCase == isAsync && !isGenerator)
                 assert(parameters.isEmpty())
@@ -399,7 +381,7 @@ internal class ParserTest {
             async () => {
                 0
             }
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
                 body.assertTypeThen<BlockStatementNode> {
                     assert(statements.size == 1)
@@ -410,7 +392,7 @@ internal class ParserTest {
         """
             x => 0
             async x => 0
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             forBothSyncAndAsync { isAsyncCase ->
                 assert(isAsyncCase == isAsync)
                 assert(parameters.size == 1)
@@ -419,22 +401,20 @@ internal class ParserTest {
 
         """
             (a, ...b) => 0
-        """.shouldBeValidAndAlso {
-            firstStmt.unwrapExprStmt<ArrowFunctionNode>().run {
-                assert(parameters.size == 2)
-                parameters[0].unwrapNonRest<IdentifierNode>()
-                parameters[1].unwrapRest<IdentifierNode>()
-            }
+        """.shouldBeValidExpressionAnd<ArrowFunctionNode> {
+            assert(parameters.size == 2)
+            parameters[0].unwrapNonRest<IdentifierNode>()
+            parameters[1].unwrapRest<IdentifierNode>()
         }
 
         """
             (...a, b) => 0
-        """.shouldBeInvalidWithError(SyntaxError.ELEMENT_AFTER_REST)
+        """.shouldBeInvalidProgramWithError(SyntaxError.ELEMENT_AFTER_REST)
 
         """
             ([a, b = 1]) => 0
             async ([a, b = 1]) => 0
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
                 assert(parameters.size == 1)
                 parameters[0].unwrapNonRest<ArrayBindingPatternNode>().run {
@@ -450,16 +430,16 @@ internal class ParserTest {
 
         """
             ([0]) => 0
-        """.shouldBeInvalidWithError(SyntaxError.INVALID_DESTRUCTURING_TARGET)
+        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_DESTRUCTURING_TARGET)
 
         """
             async ([0]) => 0
-        """.shouldBeInvalidWithError(SyntaxError.INVALID_DESTRUCTURING_TARGET)
+        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_DESTRUCTURING_TARGET)
 
         """
             ([]) => 0
             async ([]) => 0
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
                 assert(
                     parameters[0].unwrapNonRest<ArrayBindingPatternNode>()
@@ -471,7 +451,7 @@ internal class ParserTest {
         """
             ([[[a]]]) => 0
             async ([[[a]]]) => 0
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
                 parameters[0].unwrapNonRest<ArrayBindingPatternNode>()
                     .elements[0].unwrapNonRest<ArrayBindingPatternNode>()
@@ -483,7 +463,7 @@ internal class ParserTest {
         """
             (...{ a }) => 0
             async (...{ a }) => 0
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
                 parameters[0].unwrapRest<ObjectBindingPatternNode>()
                     .elements[0].unwrapNonRest<IdentifierNode>()
@@ -493,7 +473,7 @@ internal class ParserTest {
         """
             ({ ab: a, b = 1, c, ...d }) => 0
             async ({ ab: a, b = 1, c, ...d }) => 0
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
                 assert(parameters.size == 1)
                 parameters[0].unwrapNonRest<ObjectBindingPatternNode>().run {
@@ -518,16 +498,16 @@ internal class ParserTest {
         """
             ()
             => 0
-        """.shouldBeInvalidWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("=>"))
+        """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("=>"))
 
         """
             ({ ...{} }) => 0
-        """.shouldBeInvalidWithError(SyntaxError.INVALID_REST_BINDING_PATTERN)
+        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_REST_BINDING_PATTERN)
 
         """
             *() => 0
             async *() => 0
-        """.shouldBeValidAndAlso {
+        """.shouldBeValidProgramAnd {
             forBothSyncAndAsync { isAsyncCase ->
                 assert(isAsyncCase == isAsync && isGenerator)
             }
@@ -537,12 +517,10 @@ internal class ParserTest {
     fun testAssignment() {
         """
             a = a = a
-        """.shouldBeValidAndAlso {
-            statements[0].unwrapExprStmt<BinaryExpressionNode>().run {
+        """.shouldBeValidExpressionAnd<BinaryExpressionNode> {
+            assert(operation == BinaryOperationType.ASSIGN)
+            assertTypeThen<BinaryExpressionNode> {
                 assert(operation == BinaryOperationType.ASSIGN)
-                assertTypeThen<BinaryExpressionNode> {
-                    assert(operation == BinaryOperationType.ASSIGN)
-                }
             }
         }
     }
@@ -564,8 +542,6 @@ private inline fun <reified Expr: ExpressionNode> StatementNode.unwrapExprStmt()
         assertIs<Expr>(expression)
         expression as Expr
     }
-private val ProgramNode.firstStmt get() =
-    statements[0]
 private fun Node.assertIdentifierNamed(name: String) {
     assertTypeThen<IdentifierNode> {
         assert(value == name)
@@ -575,28 +551,35 @@ private inline fun <reified T> Any?.assertTypeThen(block: T.() -> Unit) {
     assertIs<T>(this)
     run(block)
 }
-private fun Parser.parseProgramSuccessfully() =
-    parseProgram().let {
-        assert(!hasError) { "Error occurred: $error" }
-        assertNotNull(it)
-        it
-    }
-private inline fun Code.shouldBeValidAndAlso(block: ProgramNode.() -> Unit) {
+private inline fun <N: Node> Code.shouldBeValidAnd(parseFn: Parser.() -> N?, block: N.() -> Unit) {
     block(
         createParser(this)
-            .parseProgramSuccessfully()
+            .parseSuccessfully(parseFn)
     )
 }
-private fun Code.shouldBeInvalidWithError(kind: Error, args: Array<String>? = null, range: Range? = null) {
-    val (error, errorArgs) = createParser(this).parseProgramUnsuccessfully()
+private inline fun <reified Expr: ExpressionNode> Code.shouldBeValidExpressionAnd(block: Expr.() -> Unit) =
+    shouldBeValidAnd(Parser::parseExpression as Parser.() -> Expr, block)
+private inline fun Code.shouldBeValidProgramAnd(block: ProgramNode.() -> Unit) =
+    shouldBeValidAnd(Parser::parseProgram, block)
+private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: Error, args: Array<String>? = null, range: Range? = null) {
+    val (error, errorArgs) = createParser(this).parseUnsuccessfully(parseFn)
     assert(error.kind == kind) { "Actual error was: $error" }
     if (range != null) assert(error.range == range)
     if (args != null) assert(errorArgs.contentEquals(args))
 }
-private fun Parser.parseProgramUnsuccessfully() =
+private fun Code.shouldBeInvalidExpressionWithError(kind: Error, args: Array<String>? = null, range: Range? = null) =
+    shouldBeInvalidWithError(Parser::parseExpression, kind, args, range)
+private fun Code.shouldBeInvalidProgramWithError(kind: Error, args: Array<String>? = null, range: Range? = null) =
+    shouldBeInvalidWithError(Parser::parseProgram, kind, args, range)
+private inline fun <N: Node> Parser.parseSuccessfully(parseFn: Parser.() -> N?) =
+    parseFn().let {
+        assert(!hasError) { "Error occurred: $error" }
+        assertNotNull(it)
+        it
+    }
+private inline fun Parser.parseUnsuccessfully(parseFn: Parser.() -> Node?) =
     run {
-        val program = parseProgram()
-        assertNull(program)
+        assertNull(parseFn())
         assert(hasError)
         error!! to errorArgs
     }

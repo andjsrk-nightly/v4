@@ -3,7 +3,7 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class NormalCallNode(
+class OrdinaryCallNode(
     callee: ExpressionNode,
     arguments: List<MaybeSpreadNode>,
     val isOptionalChain: Boolean,
@@ -14,6 +14,6 @@ class NormalCallNode(
     class Unsealed: CallNode.Unsealed() {
         var isOptionalChain = false
         override fun toSealed() =
-            NormalCallNode(callee, arguments.toList(), isOptionalChain, callee.range..endRange)
+            OrdinaryCallNode(callee, arguments.toList(), isOptionalChain, callee.range..endRange)
     }
 }

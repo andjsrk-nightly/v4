@@ -162,13 +162,13 @@ internal class ParserTest {
         }
     }
     @Test
-    fun testNormalCall() {
+    fun testOrdinaryCall() {
         """
             a()
             a.b(1, ...a)
             a?.(1)
         """.shouldBeValidProgramAnd {
-            val calls = statements.map { it.unwrapExprStmt<NormalCallNode>() }
+            val calls = statements.map { it.unwrapExprStmt<OrdinaryCallNode>() }
             assert(calls.size == 3)
 
             calls[0].run {
@@ -199,7 +199,7 @@ internal class ParserTest {
         """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("?."))
     }
     @Test
-    fun testNormalCallMixedWithMemberExpression() {
+    fun testOrdinaryCallMixedWithMemberExpression() {
         """
             a().b
             a?.().b
@@ -208,13 +208,13 @@ internal class ParserTest {
             assert(exprs.size == 2)
 
             exprs[0].run {
-                `object`.assertTypeThen<NormalCallNode> {
+                `object`.assertTypeThen<OrdinaryCallNode> {
                     callee.assertIdentifierNamed("a")
                 }
                 property.assertIdentifierNamed("b")
             }
             exprs[1].run {
-                `object`.assertTypeThen<NormalCallNode> {
+                `object`.assertTypeThen<OrdinaryCallNode> {
                     callee.assertIdentifierNamed("a")
                     assert(isOptionalChain)
                 }
@@ -245,8 +245,8 @@ internal class ParserTest {
         }
     }
     @Test
-    fun testUpdateExpression() {
-        fun ExpressionNode.assertUpdateExprThenRun(block: UpdateExpressionNode.() -> Unit) =
+    fun testUpdate() {
+        fun ExpressionNode.assertUpdateExprThenRun(block: UpdateNode.() -> Unit) =
             assertTypeThen(block)
 
         """
@@ -298,17 +298,17 @@ internal class ParserTest {
             }
             exprs[1].run {
                 assert(operation == UnaryOperationType.TYPEOF)
-                assertIs<UpdateExpressionNode>(operand)
+                assertIs<UpdateNode>(operand)
             }
         }
     }
     @Test
-    fun testExponentiationExpression() {
+    fun testExponentiation() {
         """
             ++a ** 1
         """.shouldBeValidExpressionAnd<BinaryExpressionNode> {
             assert(operation == BinaryOperationType.EXPONENTIAL)
-            assertIs<UpdateExpressionNode>(left)
+            assertIs<UpdateNode>(left)
         }
 
         """
@@ -316,7 +316,7 @@ internal class ParserTest {
         """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION)
     }
     @Test
-    fun testMultiplicativeExpression() {
+    fun testMultiplication() {
         """
             1 ** 1 * 1 ** 1
         """.shouldBeValidExpressionAnd<BinaryExpressionNode> {
@@ -328,7 +328,7 @@ internal class ParserTest {
         }
     }
     @Test
-    fun testCoalesceExpression() {
+    fun testCoalesce() {
         """
             a | a ?? a
         """.shouldBeValidExpressionAnd<BinaryExpressionNode> {
@@ -345,7 +345,7 @@ internal class ParserTest {
         """
             ++a ? a = a : a = a
         """.shouldBeValidExpressionAnd<ConditionalExpressionNode> {
-            assertIs<UpdateExpressionNode>(test)
+            assertIs<UpdateNode>(test)
             assertIs<BinaryExpressionNode>(consequent)
             assertIs<BinaryExpressionNode>(alternative)
         }

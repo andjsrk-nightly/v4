@@ -81,7 +81,7 @@ class Parser(private val tokenizer: Tokenizer) {
     @Careful
     private fun parseIdentifier(): IdentifierNode? {
         if (currToken.type != IDENTIFIER) return null
-        if (Keyword.values().any { currToken.isKeyword(it) }) return null
+        if (Keyword.values().any { currToken.isKeyword(it, true) }) return null
 
         return IdentifierNode(currToken).alsoAdvance()
     }
@@ -106,9 +106,9 @@ class Parser(private val tokenizer: Tokenizer) {
             STRING -> parseStringLiteral()
             NUMBER -> parseNumberLiteral()
             BIGINT -> parseBigintLiteral()
-            IDENTIFIER -> when (currToken.rawContent) {
-                "null" -> NullLiteralNode(currToken)
-                "true", "false" -> BooleanLiteralNode(currToken)
+            IDENTIFIER -> when {
+                currToken.isKeyword(NULL, true) -> NullLiteralNode(currToken)
+                currToken.isKeyword(TRUE, true) || currToken.isKeyword(FALSE, true) -> BooleanLiteralNode(currToken)
                 else -> null
             }
                 ?.alsoAdvance()

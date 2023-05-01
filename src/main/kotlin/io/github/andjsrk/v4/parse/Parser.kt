@@ -163,7 +163,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [PropertyName](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-PropertyName).
      */
-    @Careful(completely=false)
+    @Careful(false)
     private fun parsePropertyName() =
         parseLiteralPropertyName() ?: parseComputedPropertyName()
     /**
@@ -285,7 +285,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [BindingProperty](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-BindingProperty).
      */
-    @Careful(completely=false)
+    @Careful(false)
     private fun parseBindingProperty(): NonRestObjectPropertyNode? {
         // PropertyName contains BindingIdentifier, so it is not need to parse BindingIdentifier separately
         val left = parsePropertyName() ?: return null
@@ -324,7 +324,7 @@ class Parser(private val tokenizer: Tokenizer) {
 
         return ObjectBindingPatternNode(items.toList(), startRange..endRange)
     }
-    @Careful(completely=false)
+    @Careful(false)
     private fun parseBindingPattern() =
         when (currToken.type) {
             LEFT_BRACE -> parseObjectBindingPattern()
@@ -452,6 +452,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [`new` expression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-MemberExpression).
      */
+    @Careful(false)
     private tailrec fun parseNewExpression(new: NewExpressionNode.Unsealed? = null): ExpressionNode? {
         val isCurrTokenNew = currToken.isKeyword(NEW)
 
@@ -497,6 +498,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [CallExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-CallExpression).
      */
+    @Careful(false)
     private fun parseCall(callee: ExpressionNode?, isOptionalChain: Boolean = false): ExpressionNode? {
         return (
             if (callee == null)
@@ -521,6 +523,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [LeftHandSideExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LeftHandSideExpression).
      */
+    @Careful(false)
     private fun parseLeftHandSideExpression() =
         parseNewExpression()
     /**
@@ -556,6 +559,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [UnaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-UnaryExpression).
      */
+    @Careful(false)
     private fun parseUnaryExpression(): ExpressionNode? {
         val operation = when {
             currToken.isKeyword(AWAIT) -> UnaryOperationType.AWAIT
@@ -692,6 +696,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [BitwiseORExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-BitwiseORExpression).
      */
+    @Careful(false)
     private fun parseBitwiseOrExpression() =
         parseGeneralBinaryExpression(BITWISE_OR, this::parseBitwiseXor)
     /**
@@ -753,6 +758,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [ConciseBody](https://tc39.es/ecma262/multipage/ecmascript-language-functions-and-classes.html#prod-ConciseBody).
      */
+    @Careful(false)
     private fun parseConciseBody() =
         if (currToken.type == LEFT_BRACE) parseBlockStatement()
         else parseAssignment()
@@ -786,8 +792,10 @@ class Parser(private val tokenizer: Tokenizer) {
                 null
             }
         }
+    @Careful(false)
     private fun Node.toNonRest(carefully: Boolean = false) =
         this.toNonRestNodeRight(carefully)?.wrapNonRest()
+    @Careful(false)
     private fun MaybeSpreadNode.toMaybeRest(): MaybeRestNode? {
         return when (this) {
             is NonSpreadNode -> when (val expr = expression) {
@@ -801,6 +809,7 @@ class Parser(private val tokenizer: Tokenizer) {
             is SpreadNode -> RestNode(expression, range)
         }
     }
+    @ReportsErrorDirectly
     private fun ArrayLiteralNode.toArrayBindingPattern(): ArrayBindingPatternNode? {
         return ArrayBindingPatternNode(
             elements.map {
@@ -839,6 +848,7 @@ class Parser(private val tokenizer: Tokenizer) {
             range,
         )
     }
+    @Careful(false)
     private fun CollectionLiteralNode.toBindingPattern() =
         when (this) {
             is ArrayLiteralNode -> this.toArrayBindingPattern()
@@ -942,10 +952,12 @@ class Parser(private val tokenizer: Tokenizer) {
         val body = parseConciseBody() ?: return null
         return ArrowFunctionNode(parameters, body, isAsync, isGenerator, nonNullStartRange..body.range)
     }
+    @Careful(false)
     private fun parseGeneratorArrowFunction(isAsync: Boolean = false, startRange: Range? = currToken.range): ArrowFunctionNode? {
         val starToken = takeIfMatches(MULTIPLY)
         return parseArrowFunction(isAsync, starToken != null, startRange ?: starToken?.range)
     }
+    @Careful(false)
     private fun parseAsyncArrowFunction(): ArrowFunctionNode? {
         val asyncToken = takeIfMatchesKeyword(ASYNC)
         return parseGeneratorArrowFunction(asyncToken != null, startRange=asyncToken?.range)
@@ -989,6 +1001,7 @@ class Parser(private val tokenizer: Tokenizer) {
     /**
      * Parses [Expression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Expression).
      */
+    @Careful(false)
     fun parseExpression(): ExpressionNode? {
         val expr = parseAssignment() ?: return null
 

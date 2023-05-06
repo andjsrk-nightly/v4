@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.BinaryOperationType as BinaryOp
 import io.github.andjsrk.v4.WasSuccessful
 import io.github.andjsrk.v4.error.Error
 import io.github.andjsrk.v4.error.SyntaxError
-import io.github.andjsrk.v4.parse.Keyword.*
+import io.github.andjsrk.v4.parse.ReservedWord.*
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.node.BinaryExpressionNode
 import io.github.andjsrk.v4.parse.node.ExpressionNode
@@ -43,13 +43,13 @@ class Parser(private val tokenizer: Tokenizer) {
     private fun takeIfMatches(tokenType: TokenType) =
         if (currToken.type == tokenType) advance()
         else null
-    private fun takeIfMatchesKeyword(keyword: Keyword) =
+    private fun takeIfMatchesKeyword(keyword: ReservedWord) =
         if (currToken.isKeyword(keyword)) advance()
         else null
     private fun expect(tokenType: TokenType, check: (Token) -> Boolean = { true }) =
         if (currToken.type == tokenType && check(currToken)) advance()
         else reportUnexpectedToken()
-    private fun expectKeyword(keyword: Keyword) =
+    private fun expectKeyword(keyword: ReservedWord) =
         expect(IDENTIFIER) { it.rawContent == keyword.value }
     private fun reportErrorMessage(kind: Error, range: Range = currToken.range, vararg args: String): Nothing? {
         error = ErrorWithRange(kind, range)
@@ -81,7 +81,7 @@ class Parser(private val tokenizer: Tokenizer) {
     @Careful
     private fun parseIdentifier(): IdentifierNode? {
         if (currToken.type != IDENTIFIER) return null
-        if (Keyword.values().any { currToken.isKeyword(it, true) }) return null
+        if (ReservedWord.values().any { it.not { isContextual } && currToken.isKeyword(it, true) }) return null
 
         return IdentifierNode(currToken).alsoAdvance()
     }
@@ -1080,7 +1080,7 @@ private fun IdentifierOrBindingElementNode.wrapNonRest() =
 private fun <T, R> Iterable<T>.foldElvis(operation: (T) -> R?) =
     fold(null as R?) { acc, it -> acc ?: operation(it) }
 
-private fun Token.isKeyword(keyword: Keyword, verifiedTokenType: Boolean = false) =
+private fun Token.isKeyword(keyword: ReservedWord, verifiedTokenType: Boolean = false) =
     (verifiedTokenType || type == IDENTIFIER) && rawContent == keyword.value
 
 private fun neverHappens(): Nothing =

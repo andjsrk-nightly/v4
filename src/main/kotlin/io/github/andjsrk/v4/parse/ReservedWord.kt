@@ -1,13 +1,13 @@
 package io.github.andjsrk.v4.parse
 
-enum class Keyword {
+enum class ReservedWord(val isContextual: Boolean = false) {
+    AS(isContextual=true),
     ASYNC,
     AWAIT,
     BREAK,
     CASE,
     CATCH,
     CLASS,
-    CONST,
     CONTINUE,
     DEFAULT,
     ELSE,
@@ -16,13 +16,19 @@ enum class Keyword {
     FALSE,
     FINALLY,
     FOR,
+    FROM(isContextual=true),
+    GENERATOR,
+    GET(isContextual=true),
     IF,
     IMPORT,
     IN,
     INSTANCEOF,
+    LET,
     NEW,
     NULL,
     RETURN,
+    SET(isContextual=true),
+    STATIC,
     SUPER,
     SWITCH,
     THIS,
@@ -30,6 +36,7 @@ enum class Keyword {
     TRUE,
     TRY,
     TYPEOF,
+    VAR,
     VOID,
     WHILE,
     YIELD;

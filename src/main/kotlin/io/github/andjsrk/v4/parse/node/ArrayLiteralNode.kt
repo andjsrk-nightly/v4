@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 class ArrayLiteralNode(
     override val elements: List<MaybeSpreadNode>,
     override val range: Range,
-): CollectionLiteralNode {
+): CollectionLiteralNode<MaybeSpreadNode> {
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
 }

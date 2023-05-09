@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class RestNode(
-    override val `as`: Node,
+    override val `as`: IdentifierOrBindingPatternNode,
     override val range: Range,
 ): MaybeRestNode {
     override fun toString() =

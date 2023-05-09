@@ -72,7 +72,7 @@ internal class ParserTest {
         """.shouldBeInvalidExpressionWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf(","))
     }
     @Test
-    fun testObjectLiteral() {
+    fun testBasicObjectLiteral() {
         """
             {}
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
@@ -82,13 +82,123 @@ internal class ParserTest {
         """
             { a: 1, b, ...c }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-
+            assert(elements.size == 3)
+            elements[0].assertTypeThen<PropertyNode> {
+                key.assertIdentifierNamed("a")
+                assertIs<NumberLiteralNode>(value)
+            }
+            elements[1].assertTypeThen<PropertyShorthandNode> {
+                name.assertIdentifierNamed("b")
+            }
+            elements[2].assertTypeThen<SpreadNode> {
+                expression.assertIdentifierNamed("c")
+            }
         }
 
         """
-            { a, }
+            { a }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<PropertyShorthandNode> {
+                name.assertIdentifierNamed("a")
+            }
+        }
 
+        """
+            { a = 1 }
+        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_COVER_INITIALIZED_NAME)
+
+        """
+            { a: [ { a = 1 } ] }
+        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_COVER_INITIALIZED_NAME)
+    }
+    @Test
+    fun testMethodLike() {
+        """
+            { a() {} }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<ObjectMethodNode> {
+                name.assertIdentifierNamed("a")
+                assert(parameters.elements.isEmpty())
+                assert(!isAsync && !isGenerator)
+            }
+        }
+
+        """
+            { async a() {} }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<ObjectMethodNode> {
+                name.assertIdentifierNamed("a")
+                assert(isAsync)
+            }
+        }
+
+        """
+            { gen a() {} }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<ObjectMethodNode> {
+                name.assertIdentifierNamed("a")
+                assert(isGenerator)
+            }
+        }
+
+        """
+            { async gen a() {} }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<ObjectMethodNode> {
+                name.assertIdentifierNamed("a")
+                assert(isAsync && isGenerator)
+            }
+        }
+
+        """
+            { gen async a() {} }
+        """.shouldBeInvalidExpressionWithError(SyntaxError.UNEXPECTED_TOKEN_IDENTIFIER)
+
+        """
+            { async() {} }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<ObjectMethodNode> {
+                name.assertIdentifierNamed("async")
+                assert(!isAsync)
+            }
+        }
+
+        """
+            { get a() {} }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<ObjectGetterNode> {
+                name.assertIdentifierNamed("a")
+            }
+        }
+
+        """
+            { get a(x) {} }
+        """.shouldBeInvalidExpressionWithError(SyntaxError.BAD_GETTER_ARITY)
+
+        """
+            { set a(x) {} }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<ObjectSetterNode> {
+                name.assertIdentifierNamed("a")
+                parameter.`as`.assertIdentifierNamed("x")
+            }
+        }
+
+        """
+            { set a() {} }
+        """.shouldBeInvalidExpressionWithError(SyntaxError.BAD_SETTER_ARITY)
+
+        """
+            { set a(...x) {} }
+        """.shouldBeInvalidExpressionWithError(SyntaxError.BAD_SETTER_REST_PARAMETER)
+
+        """
+            { async get() {} }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<ObjectMethodNode> {
+                name.assertIdentifierNamed("get")
+                assert(isAsync)
+            }
         }
     }
     @Test
@@ -369,7 +479,7 @@ internal class ParserTest {
         """.shouldBeValidProgramAnd {
             forBothSyncAndAsync { isAsyncCase ->
                 assert(isAsyncCase == isAsync && !isGenerator)
-                assert(parameters.isEmpty())
+                assert(parameters.elements.isEmpty())
                 assertIs<NumberLiteralNode>(body)
             }
         }
@@ -395,16 +505,17 @@ internal class ParserTest {
         """.shouldBeValidProgramAnd {
             forBothSyncAndAsync { isAsyncCase ->
                 assert(isAsyncCase == isAsync)
-                assert(parameters.size == 1)
+                assert(parameters.elements.size == 1)
             }
         }
 
         """
             (a, ...b) => 0
         """.shouldBeValidExpressionAnd<ArrowFunctionNode> {
-            assert(parameters.size == 2)
-            parameters[0].unwrapNonRest<IdentifierNode>()
-            parameters[1].unwrapRest<IdentifierNode>()
+            val params = parameters.elements
+            assert(params.size == 2)
+            params[0].unwrapNonRest<IdentifierNode>()
+            params[1].unwrapRest<IdentifierNode>()
         }
 
         """
@@ -416,8 +527,9 @@ internal class ParserTest {
             async ([a, b = 1]) => 0
         """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
-                assert(parameters.size == 1)
-                parameters[0].unwrapNonRest<ArrayBindingPatternNode>().run {
+                val params = parameters.elements
+                assert(params.size == 1)
+                params[0].unwrapNonRest<ArrayBindingPatternNode>().run {
                     assert(elements.size == 2)
                     elements[0].unwrapNonRest<IdentifierNode>()
                     elements[1].assertTypeThen<NonRestNode> {
@@ -442,7 +554,7 @@ internal class ParserTest {
         """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
                 assert(
-                    parameters[0].unwrapNonRest<ArrayBindingPatternNode>()
+                    parameters.elements[0].unwrapNonRest<ArrayBindingPatternNode>()
                         .elements.isEmpty()
                 )
             }
@@ -453,7 +565,7 @@ internal class ParserTest {
             async ([[[a]]]) => 0
         """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
-                parameters[0].unwrapNonRest<ArrayBindingPatternNode>()
+                parameters.elements[0].unwrapNonRest<ArrayBindingPatternNode>()
                     .elements[0].unwrapNonRest<ArrayBindingPatternNode>()
                     .elements[0].unwrapNonRest<ArrayBindingPatternNode>()
                     .elements[0].`as`.assertIdentifierNamed("a")
@@ -465,7 +577,7 @@ internal class ParserTest {
             async (...{ a }) => 0
         """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
-                parameters[0].unwrapRest<ObjectBindingPatternNode>()
+                parameters.elements[0].unwrapRest<ObjectBindingPatternNode>()
                     .elements[0].unwrapNonRest<IdentifierNode>()
             }
         }
@@ -475,8 +587,9 @@ internal class ParserTest {
             async ({ ab: a, b = 1, c, ...d }) => 0
         """.shouldBeValidProgramAnd {
             forBothSyncAndAsync {
-                assert(parameters.size == 1)
-                parameters[0].unwrapNonRest<ObjectBindingPatternNode>().run {
+                val params = parameters.elements
+                assert(params.size == 1)
+                params[0].unwrapNonRest<ObjectBindingPatternNode>().run {
                     assert(elements.size == 4)
                     elements[0].assertTypeThen<NonRestObjectPropertyNode> {
                         key.assertIdentifierNamed("ab")
@@ -501,12 +614,19 @@ internal class ParserTest {
         """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("=>"))
 
         """
+            (a = await 0) => 0
+        """.shouldBeInvalidExpressionWithError(SyntaxError.AWAIT_EXPRESSION_FORMAL_PARAMETER)
+        """
+            (a = yield 0) => 0
+        """.shouldBeInvalidProgramWithError(SyntaxError.YIELD_IN_PARAMETER)
+
+        """
             ({ ...{} }) => 0
         """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_REST_BINDING_PATTERN)
 
         """
-            *() => 0
-            async *() => 0
+            gen () => 0
+            async gen () => 0
         """.shouldBeValidProgramAnd {
             forBothSyncAndAsync { isAsyncCase ->
                 assert(isAsyncCase == isAsync && isGenerator)

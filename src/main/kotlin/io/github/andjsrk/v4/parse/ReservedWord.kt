@@ -17,7 +17,7 @@ enum class ReservedWord(val isContextual: Boolean = false) {
     FINALLY,
     FOR,
     FROM(isContextual=true),
-    GENERATOR,
+    GEN,
     GET(isContextual=true),
     IF,
     IMPORT,

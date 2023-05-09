@@ -3,17 +3,15 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class ArrowFunctionNode(
+class ObjectMethodNode(
+    override val name: ObjectLiteralKeyNode,
     override val parameters: FormalParametersNode,
-    override val body: Node,
+    override val body: BlockStatementNode,
     override val isAsync: Boolean,
     override val isGenerator: Boolean,
     startRange: Range,
-): FunctionNode, ExpressionNode {
-    init {
-        require(body is ExpressionNode || body is BlockStatementNode)
-    }
+): MethodNode, ObjectElementNode {
     override val range = startRange..body.range
     override fun toString() =
-        stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator, ::range)
+        stringifyLikeDataClass(::name, ::parameters, ::body, ::isAsync, ::isGenerator, ::range)
 }

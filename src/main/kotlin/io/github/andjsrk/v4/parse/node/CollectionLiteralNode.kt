@@ -1,5 +1,5 @@
 package io.github.andjsrk.v4.parse.node
 
-sealed interface CollectionLiteralNode: LiteralNode {
-    val elements: List<MaybeSpreadNode>
+sealed interface CollectionLiteralNode<E: Node>: LiteralNode {
+    val elements: List<E>
 }

@@ -8,7 +8,8 @@ internal typealias ExpressionOrBindingPatternNode = Node
 internal class CoverParenthesizedExpressionAndArrowParameterListNode(
     val elements: List<ExpressionOrBindingPatternNode>,
     override val range: Range,
-): ExpressionNode/* for compatibility */ {
+): ExpressionNode/* for compatibility */, NonAtomicNode {
+    override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements)
 }

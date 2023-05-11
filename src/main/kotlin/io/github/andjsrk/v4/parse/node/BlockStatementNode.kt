@@ -7,6 +7,7 @@ class BlockStatementNode(
     override val statements: List<StatementNode>,
     override val range: Range,
 ): StatementNode, BlockNode {
+    override val childNodes = statements
     override fun toString() =
         stringifyLikeDataClass(::statements, ::range)
 }

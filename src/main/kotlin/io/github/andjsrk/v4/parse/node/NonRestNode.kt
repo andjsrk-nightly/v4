@@ -5,10 +5,11 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 typealias IdentifierOrBindingPatternNode = Node
 
 open class NonRestNode(
-    override val `as`: IdentifierOrBindingPatternNode,
+    override val binding: IdentifierOrBindingPatternNode,
     val default: ExpressionNode?,
 ): MaybeRestNode {
-    override val range = `as`.range..(default ?: `as`).range
+    override val childNodes by lazy { listOf(binding, default) }
+    override val range by lazy { binding.range..(default ?: binding).range }
     override fun toString() =
-        stringifyLikeDataClass(::`as`, ::default, ::range)
+        stringifyLikeDataClass(::binding, ::default, ::range)
 }

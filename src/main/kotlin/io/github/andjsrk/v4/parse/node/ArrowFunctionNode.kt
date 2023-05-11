@@ -13,6 +13,7 @@ class ArrowFunctionNode(
     init {
         require(body is ExpressionNode || body is BlockStatementNode)
     }
+    override val childNodes = listOf(parameters, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator, ::range)

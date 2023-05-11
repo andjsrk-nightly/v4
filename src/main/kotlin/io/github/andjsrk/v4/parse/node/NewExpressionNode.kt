@@ -4,12 +4,8 @@ import io.github.andjsrk.v4.Range
 
 class NewExpressionNode(
     callee: ExpressionNode,
-    arguments: List<MaybeSpreadNode>,
-    range: Range,
-): CallNode(callee, arguments, range) {
-    class Unsealed: CallNode.Unsealed() {
-        lateinit var startRange: Range
-        override fun toSealed() =
-            NewExpressionNode(callee, arguments.toList(), startRange..endRange)
-    }
+    arguments: ArgumentsNode,
+    startRange: Range,
+): CallNode(callee, arguments) {
+    override val range = startRange..arguments.range
 }

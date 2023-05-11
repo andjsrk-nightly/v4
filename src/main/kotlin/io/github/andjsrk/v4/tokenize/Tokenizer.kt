@@ -58,7 +58,7 @@ class Tokenizer(sourceText: String) {
     private fun Token.Builder.selectIf(expected: Char, then: TokenType) =
         select(expected, then, type)
     private fun takeCrLfNormalizedLineTerminator(): Char {
-        require(curr.isSpecLineTerminator)
+        require(curr.isLineTerminator)
 
         return (
             if (curr == '\r' && peek() == '\n') {
@@ -74,18 +74,18 @@ class Tokenizer(sourceText: String) {
             .associateBy { it.staticContent!!.single() }
     private fun skipWhiteSpaceOrLineTerminator() {
         advanceWhile(false) {
-            val isSpecLineTerminator = it.isSpecLineTerminator
+            val isSpecLineTerminator = it.isLineTerminator
             if (isSpecLineTerminator) builder.isPrevLineTerminator = true
-            it.isSpecWhiteSpace || isSpecLineTerminator
+            it.isWhiteSpace || isSpecLineTerminator
         }
     }
     private fun skipSingleLineComment() {
-        advanceWhile { it.not { isSpecLineTerminator } }
+        advanceWhile { it.not { isLineTerminator } }
     }
     private fun readHexDigits(maxLength: Int): String {
         var res = ""
         repeat(maxLength) {
-            if (curr.not { isSpecHexDigit }) return res
+            if (curr.not { isHexDigit }) return res
             res += curr
             advance()
         }
@@ -100,7 +100,7 @@ class Tokenizer(sourceText: String) {
     }
     private fun Token.Builder.addUnescapedHex4DigitsUnicodeEscapeSequence(beginPos: Int): WasSuccessful {
         val (digitCount, mv) = readHexIntOrNull(4)
-        if (mv == null || mv > specMaxCodePoint) return reportError(
+        if (mv == null || mv > maxCodePoint) return reportError(
             SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE,
             Range.since(beginPos, digitCount + unicodeEscapeSequencePrefix.length),
         )
@@ -111,12 +111,12 @@ class Tokenizer(sourceText: String) {
         // { have already been read
         var hexDigits = ""
         advanceWhile {
-            it.isSpecHexDigit.thenAlso {
+            it.isHexDigit.thenAlso {
                 hexDigits += it
             }
         }
         val mv = hexDigits.toHexIntOrNull()
-        if (mv == null || mv > specMaxCodePoint || curr != '}') return reportError(
+        if (mv == null || mv > maxCodePoint || curr != '}') return reportError(
             SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE,
             Range(beginPos, source.pos),
         )
@@ -129,7 +129,7 @@ class Tokenizer(sourceText: String) {
         if (curr.isEndOfInput) return false
 
         when (curr) {
-            in specSingleEscapeCharacterMap -> addLiteralAdvance(specSingleEscapeCharacterMap[curr]!!)
+            in singleEscapeCharacterMap -> addLiteralAdvance(singleEscapeCharacterMap[curr]!!)
             'u' -> {
                 val begin = source.pos - unicodeEscapeSequencePrefix.length
                 advance()
@@ -177,7 +177,7 @@ class Tokenizer(sourceText: String) {
                     return build(STRING)
                 }
 
-                if (curr.isEndOfInput || curr.isSpecLineTerminator) return buildIllegal()
+                if (curr.isEndOfInput || curr.isLineTerminator) return buildIllegal()
 
                 addLiteralAdvance()
             }
@@ -206,7 +206,7 @@ class Tokenizer(sourceText: String) {
                             syntacticPairs.add(SyntacticPair.TEMPLATE_LITERAL)
                             return build()
                         }
-                        if (curr.isSpecLineTerminator) {
+                        if (curr.isLineTerminator) {
                             literal += takeCrLfNormalizedLineTerminator()
                             continue
                         }
@@ -239,7 +239,7 @@ class Tokenizer(sourceText: String) {
                             syntacticPairs.add(SyntacticPair.TEMPLATE_LITERAL)
                             return build(TEMPLATE_MIDDLE)
                         }
-                        if (curr.isSpecLineTerminator) {
+                        if (curr.isLineTerminator) {
                             literal += takeCrLfNormalizedLineTerminator()
                             continue
                         }
@@ -254,10 +254,10 @@ class Tokenizer(sourceText: String) {
 
         var separatorSeen = false
 
-        while (check(curr) || curr.isSpecNumericLiteralSeparator) {
-            if (curr.isSpecNumericLiteralSeparator) {
+        while (check(curr) || curr.isNumericLiteralSeparator) {
+            if (curr.isNumericLiteralSeparator) {
                 advance()
-                if (curr.isSpecNumericLiteralSeparator) return reportError(RangeError.CONTINUOUS_NUMERIC_SEPARATOR)
+                if (curr.isNumericLiteralSeparator) return reportError(RangeError.CONTINUOUS_NUMERIC_SEPARATOR)
                 separatorSeen = true
                 continue
             }
@@ -284,21 +284,21 @@ class Tokenizer(sourceText: String) {
                     }
                 } else NumberKind.DECIMAL
             val added = when (kind) {
-                NumberKind.BINARY -> addDigitsWithNumericSeparators(Char::isSpecBinaryDigit)
-                NumberKind.OCTAL -> addDigitsWithNumericSeparators(Char::isSpecOctalDigit)
-                NumberKind.HEX -> addDigitsWithNumericSeparators(Char::isSpecHexDigit)
-                NumberKind.DECIMAL -> addDigitsWithNumericSeparators(Char::isSpecDecimalDigit, false).also {
+                NumberKind.BINARY -> addDigitsWithNumericSeparators(Char::isBinaryDigit)
+                NumberKind.OCTAL -> addDigitsWithNumericSeparators(Char::isOctalDigit)
+                NumberKind.HEX -> addDigitsWithNumericSeparators(Char::isHexDigit)
+                NumberKind.DECIMAL -> addDigitsWithNumericSeparators(Char::isDecimalDigit, false).also {
                     if (curr == '.') {
                         seenPeriod = true
                         val peeked = peek()
                         when {
-                            peeked.isSpecNumericLiteralSeparator -> {
+                            peeked.isNumericLiteralSeparator -> {
                                 addLiteralAdvance()
                                 return buildIllegal()
                             }
-                            peeked.isSpecDecimalDigit -> {
+                            peeked.isDecimalDigit -> {
                                 addLiteralAdvance()
-                                val added = addDigitsWithNumericSeparators(Char::isSpecDecimalDigit)
+                                val added = addDigitsWithNumericSeparators(Char::isDecimalDigit)
                                 if (!added) return buildIllegal()
                             }
                             else -> return build(NUMBER)
@@ -312,16 +312,16 @@ class Tokenizer(sourceText: String) {
             if (curr == 'n' && !seenPeriod) {
                 isBigint = true
                 advance()
-            } else if (curr.isSpecExponentIndicator) {
+            } else if (curr.isExponentIndicator) {
                 if (kind != NumberKind.DECIMAL) return buildIllegal()
                 addLiteralAdvance()
                 if (curr == '+' || curr == '-') addLiteralAdvance()
-                if (curr.not { isSpecDecimalDigit }) return buildIllegal()
-                val successful = addDigitsWithNumericSeparators(Char::isSpecDecimalDigit)
+                if (curr.not { isDecimalDigit }) return buildIllegal()
+                val successful = addDigitsWithNumericSeparators(Char::isDecimalDigit)
                 if (!successful) return buildIllegal()
             }
 
-            if (curr.isSpecDecimalDigit || curr.isSpecIdentifierName) return buildIllegal()
+            if (curr.isDecimalDigit || curr.isIdentifierName) return buildIllegal()
 
             return build(if (isBigint) BIGINT else NUMBER)
         }
@@ -336,9 +336,9 @@ class Tokenizer(sourceText: String) {
                     '"', '\'' -> STRING
                     '`' -> TEMPLATE_HEAD
                     else -> singleCharTokenMap[curr] ?: when {
-                        curr.isSpecWhiteSpace || curr.isSpecLineTerminator -> WHITE_SPACE
-                        curr.isSpecDecimalDigit -> NUMBER
-                        curr.isSpecIdentifierName -> IDENTIFIER
+                        curr.isWhiteSpace || curr.isLineTerminator -> WHITE_SPACE
+                        curr.isDecimalDigit -> NUMBER
+                        curr.isIdentifierName -> IDENTIFIER
                         else -> ILLEGAL
                     }
                 }
@@ -546,7 +546,7 @@ class Tokenizer(sourceText: String) {
                     }
                     PRIVATE_NAME -> TODO()
                     IDENTIFIER -> {
-                        advanceWhile { it.isSpecIdentifierName }
+                        advanceWhile { it.isIdentifierName }
                         return build(IDENTIFIER)
                     }
                     NUMBER -> return getNumberToken()

@@ -1,5 +1,5 @@
 package io.github.andjsrk.v4.parse.node
 
-sealed interface BindingPatternNode: Node {
+sealed interface BindingPatternNode: NonAtomicNode {
     val elements: List<MaybeRestNode>
 }

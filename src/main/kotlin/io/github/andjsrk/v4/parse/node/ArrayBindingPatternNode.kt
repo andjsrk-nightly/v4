@@ -7,6 +7,7 @@ class ArrayBindingPatternNode(
     override val elements: List<MaybeRestNode>,
     override val range: Range,
 ): BindingPatternNode {
+    override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
 }

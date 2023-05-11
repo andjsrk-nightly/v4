@@ -7,7 +7,8 @@ class BinaryExpressionNode(
     val left: ExpressionNode,
     val right: ExpressionNode,
     val operation: BinaryOperationType,
-): ExpressionNode {
+): ExpressionNode, NonAtomicNode {
+    override val childNodes = listOf(left, right)
     override val range = left.range..right.range
     override fun toString() =
         stringifyLikeDataClass(::left, ::right, ::operation, ::range)

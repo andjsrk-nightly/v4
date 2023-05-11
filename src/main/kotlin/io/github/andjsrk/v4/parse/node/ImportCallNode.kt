@@ -4,16 +4,12 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ImportCallNode(
-    val importNode: ImportNode,
+    importNode: ImportNode,
     val pathSpecifier: ExpressionNode,
-    range: Range,
-): CallSyntaxExpressionNode(range) {
+    endRange: Range,
+): FixedArgumentCallNode(importNode) {
+    override val range = importNode.range..endRange
+    override val childNodes = super.childNodes + pathSpecifier
     override fun toString() =
-        stringifyLikeDataClass(::importNode, ::pathSpecifier, ::range)
-    class Unsealed: CallSyntaxExpressionNode.Unsealed() {
-        lateinit var importNode: ImportNode
-        lateinit var pathSpecifier: ExpressionNode
-        override fun toSealed() =
-            ImportCallNode(importNode, pathSpecifier, importNode.range..endRange)
-    }
+        stringifyLikeDataClass(::callee, ::pathSpecifier, ::range)
 }

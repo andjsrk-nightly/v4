@@ -9,6 +9,7 @@ open class LexicalDeclarationWithoutInitializerNode(
     val binding: IdentifierOrBindingPatternNode,
     startRange: Range,
 ): DeclarationNode {
+    override val childNodes: List<Node?> = listOf(binding)
     override val range = startRange..binding.range
     override fun toString() =
         stringifyLikeDataClass(::kind, ::binding, ::range)

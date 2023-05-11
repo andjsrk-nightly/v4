@@ -20,21 +20,18 @@ private fun stringify(vararg properties: KProperty0<*>, pretty: Boolean, classNa
         }) stringify(*properties, pretty=false, className=className)
         else "$className(\n${
             properties
-                .map(stringifyProperty { value ->
+                .joinToString(",\n", transform=stringifyProperty { value ->
                     when (value) {
                         is List<*> -> "[\n${value.joinToString(",\n").indentEachLines()}\n]"
                         is String -> Json.encodeToString(value)
                         else -> value.toString()
                     }
                 })
-                .joinToString(",\n")
                 .indentEachLines()
         }\n)"
     } else {
         "$className(${
-            properties
-                .map(stringifyProperty { it.toString() })
-                .joinToString(", ")
+            properties.joinToString(", ", transform=stringifyProperty { it.toString() })
         })"
     }
 

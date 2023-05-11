@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.parse.node
 
-sealed interface MethodLikeNode: Node {
+sealed interface MethodLikeNode: NonAtomicNode {
     val name: ObjectLiteralKeyNode
     val body: BlockStatementNode
 }

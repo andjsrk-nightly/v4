@@ -1,5 +1,5 @@
 package io.github.andjsrk.v4.parse.node
 
-sealed interface MaybeSpreadNode: Node, ObjectElementNode {
+sealed interface MaybeSpreadNode: NonAtomicNode, ObjectElementNode {
     val expression: ExpressionNode
 }

@@ -9,7 +9,8 @@ class ClassSetterNode(
     override val body: BlockStatementNode,
     override val isStatic: Boolean,
     startRange: Range,
-): SetterNode, ClassElementNode {
+): SetterNode, NormalClassElementNode {
+    override val childNodes = listOf(name, parameter, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::parameter, ::body, ::isStatic, ::range)

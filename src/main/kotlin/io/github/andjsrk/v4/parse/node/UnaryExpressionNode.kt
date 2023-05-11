@@ -9,7 +9,8 @@ open class UnaryExpressionNode(
     val operation: UnaryOperationType,
     operationTokenRange: Range,
     val isPrefixed: Boolean = true
-): ExpressionNode {
+): ExpressionNode, NonAtomicNode {
+    override val childNodes = listOf(operand)
     override val range =
         if (isPrefixed) operationTokenRange..operand.range
         else operand.range..operationTokenRange

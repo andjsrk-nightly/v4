@@ -3,7 +3,8 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 open class NonSpreadNode(override val expression: ExpressionNode): MaybeSpreadNode {
-    override val range = expression.range
+    override val childNodes by lazy { listOf(expression) }
+    override val range by lazy { expression.range }
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
 }

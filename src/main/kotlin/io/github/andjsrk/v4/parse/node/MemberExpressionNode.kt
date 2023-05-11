@@ -9,9 +9,10 @@ class MemberExpressionNode(
     val isOptionalChain: Boolean,
     val isComputed: Boolean,
     override val range: Range,
-): ExpressionNode, ComplexNode {
+): ExpressionNode, NonAtomicNode, ComplexNode {
+    override val childNodes = listOf(`object`, property)
     override fun toString() =
-        stringifyLikeDataClass(::`object`, ::property, ::isComputed, ::isOptionalChain, ::range)
+        stringifyLikeDataClass(::`object`, ::property, ::isOptionalChain, ::isComputed, ::range)
     class Unsealed: ComplexNode.Unsealed {
         lateinit var endRange: Range
         lateinit var `object`: ExpressionNode

@@ -6,7 +6,8 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 class ParenthesizedExpressionNode(
     val expression: ExpressionNode,
     override val range: Range,
-): ExpressionNode {
+): ExpressionNode, NonAtomicNode {
+    override val childNodes = listOf(expression)
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
 }

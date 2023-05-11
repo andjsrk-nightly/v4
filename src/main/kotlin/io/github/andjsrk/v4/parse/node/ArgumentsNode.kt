@@ -3,10 +3,11 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class ComputedObjectKeyNode(
-    val expression: ExpressionNode,
+class ArgumentsNode(
+    val elements: List<MaybeSpreadNode>,
     override val range: Range,
-): ObjectLiteralKeyNode {
+): NonAtomicNode {
+    override val childNodes = elements
     override fun toString() =
-        stringifyLikeDataClass(::expression, ::range)
+        stringifyLikeDataClass(::elements, ::range)
 }

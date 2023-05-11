@@ -7,6 +7,7 @@ class ObjectLiteralNode(
     override val elements: List<ObjectElementNode>,
     override val range: Range,
 ): CollectionLiteralNode<ObjectElementNode> {
+    override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
 }

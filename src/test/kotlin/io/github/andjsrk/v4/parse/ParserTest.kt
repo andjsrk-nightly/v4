@@ -3,8 +3,8 @@ package io.github.andjsrk.v4.parse
 import io.github.andjsrk.v4.BinaryOperationType
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.UnaryOperationType
-import io.github.andjsrk.v4.error.Error
-import io.github.andjsrk.v4.error.SyntaxError
+import io.github.andjsrk.v4.error.ErrorKind
+import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.node.ArrayLiteralNode
 import io.github.andjsrk.v4.parse.node.ObjectLiteralNode
@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 internal class ParserTest {
+    // <editor-fold desc="expressions">
     @Test
     fun testPrimitiveLiteral() {
         """
@@ -70,11 +71,11 @@ internal class ParserTest {
 
         """
             [1,,2]
-        """.shouldBeInvalidExpressionWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf(","))
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf(","))
 
         """
             [,]
-        """.shouldBeInvalidExpressionWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf(","))
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf(","))
     }
     @Test
     fun testBasicObjectLiteral() {
@@ -110,11 +111,11 @@ internal class ParserTest {
 
         """
             { a = 1 }
-        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_COVER_INITIALIZED_NAME)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.INVALID_COVER_INITIALIZED_NAME)
 
         """
             { a: [ { a = 1 } ] }
-        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_COVER_INITIALIZED_NAME)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.INVALID_COVER_INITIALIZED_NAME)
     }
     @Test
     fun testMethodLike() {
@@ -157,7 +158,7 @@ internal class ParserTest {
 
         """
             { gen async a() {} }
-        """.shouldBeInvalidExpressionWithError(SyntaxError.UNEXPECTED_TOKEN_IDENTIFIER)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_TOKEN_IDENTIFIER)
 
         """
             { async() {} }
@@ -178,7 +179,7 @@ internal class ParserTest {
 
         """
             { get a(x) {} }
-        """.shouldBeInvalidExpressionWithError(SyntaxError.BAD_GETTER_ARITY)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.BAD_GETTER_ARITY)
 
         """
             { set a(x) {} }
@@ -191,11 +192,11 @@ internal class ParserTest {
 
         """
             { set a() {} }
-        """.shouldBeInvalidExpressionWithError(SyntaxError.BAD_SETTER_ARITY)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.BAD_SETTER_ARITY)
 
         """
             { set a(...x) {} }
-        """.shouldBeInvalidExpressionWithError(SyntaxError.BAD_SETTER_REST_PARAMETER)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.BAD_SETTER_REST_PARAMETER)
 
         """
             { async get() {} }
@@ -311,11 +312,11 @@ internal class ParserTest {
     fun testInvalidCall() {
         """
             super?.()
-        """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_SUPER)
+        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
 
         """
             import?.()
-        """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("?."))
+        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf("?."))
     }
     @Test
     fun testOrdinaryCallMixedWithMemberExpression() {
@@ -431,7 +432,7 @@ internal class ParserTest {
 
         """
             -1 ** 1
-        """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION)
+        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION)
     }
     @Test
     fun testMultiplication() {
@@ -456,7 +457,7 @@ internal class ParserTest {
 
         """
             a && a ?? a
-        """.shouldBeInvalidExpressionWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("??"))
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf("??"))
     }
     @Test
     fun testConditionalExpression() {
@@ -528,7 +529,7 @@ internal class ParserTest {
 
         """
             (...a, b) => 0
-        """.shouldBeInvalidProgramWithError(SyntaxError.ELEMENT_AFTER_REST)
+        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.ELEMENT_AFTER_REST)
 
         """
             ([a, b = 1]) => 0
@@ -550,11 +551,11 @@ internal class ParserTest {
 
         """
             ([0]) => 0
-        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_DESTRUCTURING_TARGET)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.INVALID_DESTRUCTURING_TARGET)
 
         """
             async ([0]) => 0
-        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_DESTRUCTURING_TARGET)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.INVALID_DESTRUCTURING_TARGET)
 
         """
             ([]) => 0
@@ -617,20 +618,29 @@ internal class ParserTest {
         }
 
         """
+            (a, a) => 0
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.DUPLICATE_PARAMETER_NAMES, range=Range(4, 5))
+
+        """
+            (a, [a]) => 0
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.DUPLICATE_PARAMETER_NAMES, range=Range(5, 6))
+
+        """
             ()
             => 0
-        """.shouldBeInvalidProgramWithError(SyntaxError.UNEXPECTED_TOKEN, arrayOf("=>"))
+        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf("=>"))
 
         """
             (a = await 0) => 0
-        """.shouldBeInvalidExpressionWithError(SyntaxError.AWAIT_EXPRESSION_FORMAL_PARAMETER)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.AWAIT_EXPRESSION_FORMAL_PARAMETER)
+
         """
             (a = yield 0) => 0
-        """.shouldBeInvalidProgramWithError(SyntaxError.YIELD_IN_PARAMETER)
+        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.YIELD_IN_PARAMETER)
 
         """
             ({ ...{} }) => 0
-        """.shouldBeInvalidExpressionWithError(SyntaxError.INVALID_REST_BINDING_PATTERN)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.INVALID_REST_BINDING_PATTERN)
 
         """
             gen () => 0
@@ -651,6 +661,37 @@ internal class ParserTest {
                 assert(operation == BinaryOperationType.ASSIGN)
             }
         }
+    }
+    // </editor-fold>
+    @Test
+    fun testLexicalDeclaration() {
+        """
+            var a = 1
+        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
+            assert(kind == LexicalDeclarationKind.VAR)
+            binding.assertIdentifierNamed("a")
+            assertIs<NumberLiteralNode>(value)
+        }
+
+        """
+            let a = 1
+        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
+            assert(kind == LexicalDeclarationKind.LET)
+        }
+
+        """
+            var a
+        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
+            assertNull(value)
+        }
+
+        """
+            let a
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER)
+
+        """
+            var {}
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER)
     }
 }
 
@@ -679,25 +720,33 @@ private inline fun <reified T> Any?.assertTypeThen(block: T.() -> Unit) {
     assertIs<T>(this)
     run(block)
 }
-private inline fun <N: Node> Code.shouldBeValidAnd(parseFn: Parser.() -> N?, block: N.() -> Unit) {
+private inline fun <RN: Node, N: Node> Code.shouldBeValidAnd(parseFn: Parser.() -> RN?, block: N.() -> Unit) {
     block(
         createParser(this)
-            .parseSuccessfully(parseFn)
+            .parseSuccessfully(parseFn) as N
     )
 }
 private inline fun <reified Expr: ExpressionNode> Code.shouldBeValidExpressionAnd(block: Expr.() -> Unit) =
-    shouldBeValidAnd(Parser::parseExpression as Parser.() -> Expr, block)
+    shouldBeValidAnd(Parser::parseExpression, block)
+private inline fun <reified Stmt: StatementNode> Code.shouldBeValidStatementAnd(block: Stmt.() -> Unit) =
+    shouldBeValidAnd(Parser::parseStatement, block)
 private inline fun Code.shouldBeValidProgramAnd(block: ProgramNode.() -> Unit) =
     shouldBeValidAnd(Parser::parseProgram, block)
-private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: Error, args: Array<String>? = null, range: Range? = null) {
-    val (error, errorArgs) = createParser(this).parseUnsuccessfully(parseFn)
+private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: ErrorKind, args: List<String>? = null, range: Range? = null) {
+    val error = createParser(this).parseUnsuccessfully(parseFn)
     assert(error.kind == kind) { "Expected: $kind, Actual: $error" }
     if (range != null) assert(error.range == range)
-    if (args != null) assert(errorArgs.contentEquals(args))
+    if (args != null) {
+        val errorArgs = error.args
+        assertNotNull(errorArgs)
+        assert(errorArgs == args)
+    }
 }
-private fun Code.shouldBeInvalidExpressionWithError(kind: Error, args: Array<String>? = null, range: Range? = null) =
+private fun Code.shouldBeInvalidExpressionWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
     shouldBeInvalidWithError(Parser::parseExpression, kind, args, range)
-private fun Code.shouldBeInvalidProgramWithError(kind: Error, args: Array<String>? = null, range: Range? = null) =
+private fun Code.shouldBeInvalidStatementWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
+    shouldBeInvalidWithError(Parser::parseStatement, kind, args, range)
+private fun Code.shouldBeInvalidProgramWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
     shouldBeInvalidWithError(Parser::parseProgram, kind, args, range)
 private inline fun <N: Node> Parser.parseSuccessfully(parseFn: Parser.() -> N?) =
     parseFn().let {
@@ -709,9 +758,11 @@ private inline fun Parser.parseUnsuccessfully(parseFn: Parser.() -> Node?) =
     run {
         assertNull(parseFn())
         assert(hasError)
-        error!! to errorArgs
+        error!!
     }
 private fun createParser(code: Code) =
-    Parser(Tokenizer(code.trimIndent()))
+    code.trimIndent()
+        .let(::Tokenizer)
+        .let(::Parser)
 
 private typealias Code = String

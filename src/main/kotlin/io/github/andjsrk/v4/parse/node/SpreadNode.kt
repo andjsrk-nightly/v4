@@ -5,9 +5,10 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class SpreadNode(
     override val expression: ExpressionNode,
-    override val range: Range,
+    startRange: Range,
 ): MaybeSpreadNode {
     override val childNodes = listOf(expression)
+    override val range = startRange..expression.range
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
 }

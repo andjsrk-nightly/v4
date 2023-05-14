@@ -4,5 +4,5 @@ import io.github.andjsrk.v4.Range
 
 class DelegatedYieldNode(
     override val expression: ExpressionNode,
-    range: Range,
-): YieldNode(expression, range)
+    startRange: Range,
+): YieldNode(expression, startRange)

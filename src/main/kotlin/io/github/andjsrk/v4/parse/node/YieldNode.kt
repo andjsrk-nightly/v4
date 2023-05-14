@@ -5,8 +5,9 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 open class YieldNode(
     open val expression: ExpressionNode?,
-    override val range: Range,
+    startRange: Range,
 ): ExpressionNode, NonAtomicNode {
+    override val range by lazy { startRange..(expression?.range ?: startRange) }
     override val childNodes by lazy { listOf(expression) }
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)

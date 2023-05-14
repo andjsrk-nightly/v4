@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.error
 
-enum class SyntaxError(override val message: String): Error {
+enum class SyntaxErrorKind(override val message: String): ErrorKind {
     AMBIGUOUS_EXPORT("The requested module '%' contains conflicting star exports for name '%'"),
     ARG_STRING_TERMINATES_PARAMETERS_EARLY("Arg string terminates parameters early"),
     ASYNC_FUNCTION_IN_SINGLE_STATEMENT_CONTEXT("Async functions can only be declared at the top level or inside a block."),
@@ -17,7 +17,7 @@ enum class SyntaxError(override val message: String): Error {
     DERIVED_CONSTRUCTOR_RETURNED_NON_OBJECT("Derived constructors may only return object or undefined"),
     DUPLICATE_CONSTRUCTOR("A class may only have one constructor"),
     DUPLICATE_EXPORT("Duplicate export of '%'"),
-    DUPLICATE_PARAMETER_NAMES("Duplicate parameter name not allowed in this context"),
+    DUPLICATE_PARAMETER_NAMES("Duplicate parameter name not allowed"),
     DUPLICATE_PROTO("Duplicate __proto__ fields are not allowed in object literals"),
     ELEMENT_AFTER_REST("Rest element must be last element"),
     FOUND_NON_CALLABLE_HAS_INSTANCE("Found non-callable @@hasInstance"),
@@ -118,5 +118,6 @@ enum class SyntaxError(override val message: String): Error {
     UNTERMINATED_REG_EXP("Invalid regular expression: missing /"),
     UNTERMINATED_TEMPLATE("Unterminated template literal"),
     UNTERMINATED_TEMPLATE_EXPR("Missing } in template expression"),
+    VAR_REDECLARATION("Identifier '%' has already been declared"),
     YIELD_IN_PARAMETER("Yield expression not allowed in formal parameter"),
 }

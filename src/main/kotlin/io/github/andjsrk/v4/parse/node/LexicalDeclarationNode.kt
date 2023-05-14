@@ -9,9 +9,10 @@ class LexicalDeclarationNode(
     binding: IdentifierOrBindingPatternNode,
     val value: ExpressionNode?,
     startRange: Range,
+    semicolonRange: Range?,
 ): LexicalDeclarationWithoutInitializerNode(kind, binding, startRange) {
     override val childNodes = super.childNodes + value
-    override val range = startRange..(value?.range ?: startRange)
+    override val range = startRange..(semicolonRange ?: value?.range ?: binding.range)
     override fun toString() =
         stringifyLikeDataClass(::kind, ::binding, ::value, ::range)
 }

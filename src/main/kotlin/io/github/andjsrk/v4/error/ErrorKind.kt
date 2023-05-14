@@ -1,5 +1,5 @@
 package io.github.andjsrk.v4.error
 
-interface Error {
+interface ErrorKind {
     val message: String
 }

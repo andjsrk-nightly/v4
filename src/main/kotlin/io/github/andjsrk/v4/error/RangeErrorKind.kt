@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.error
 
-enum class RangeError(override val message: String): Error {
+enum class RangeErrorKind(override val message: String): ErrorKind {
     BIGINT_DIV_ZERO("Division by zero"),
     BIGINT_TOO_BIG("Maximum BigInt size exceeded"),
     CANT_SET_OPTION_X_WHEN_Y_IS_USED("Can't set option % when % is used"),

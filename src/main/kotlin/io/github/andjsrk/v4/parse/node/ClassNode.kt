@@ -1,6 +1,19 @@
 package io.github.andjsrk.v4.parse.node
 
-sealed interface ClassNode: NonAtomicNode {
-    val parent: ExpressionNode?
-    val elements: List<ClassElementNode>
+import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.parse.ClassElementKind
+import io.github.andjsrk.v4.parse.stringifyLikeDataClass
+
+sealed class ClassNode: NonAtomicNode {
+    abstract val name: IdentifierNode?
+    abstract val parent: ExpressionNode?
+    abstract val elements: List<ClassElementNode>
+    override val childNodes by lazy { listOf(name, parent) + elements }
+    override fun toString() =
+        stringifyLikeDataClass(::name, ::parent, ::elements, ::range)
+
+    @EsSpec("ConstructorMethod")
+    val constructor by lazy {
+        elements.find { it.kind == ClassElementKind.CONSTRUCTOR } as ConstructorNode?
+    }
 }

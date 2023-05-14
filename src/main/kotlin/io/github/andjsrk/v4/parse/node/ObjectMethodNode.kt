@@ -10,7 +10,7 @@ class ObjectMethodNode(
     override val isAsync: Boolean,
     override val isGenerator: Boolean,
     startRange: Range,
-): MethodNode, ObjectElementNode {
+): NormalMethodNode, ObjectElementNode {
     override val childNodes = listOf(name, parameters, body)
     override val range = startRange..body.range
     override fun toString() =

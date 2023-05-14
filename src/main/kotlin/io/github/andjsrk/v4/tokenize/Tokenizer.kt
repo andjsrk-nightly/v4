@@ -1,21 +1,21 @@
 package io.github.andjsrk.v4.tokenize
 
 import io.github.andjsrk.v4.*
-import io.github.andjsrk.v4.error.Error
-import io.github.andjsrk.v4.error.RangeError
-import io.github.andjsrk.v4.error.SyntaxError
+import io.github.andjsrk.v4.error.ErrorKind
+import io.github.andjsrk.v4.error.RangeErrorKind
+import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.tokenize.TokenType.*
 
 private typealias Length = Int
 
 class Tokenizer(sourceText: String) {
     private val source = Source(sourceText)
-    var error: ErrorWithRange? = null
+    var error: Error? = null
         private set
     val hasError get() =
         error != null
-    private fun reportError(kind: Error, range: Range = Range.since(source.pos, 1)): Boolean {
-        if (!hasError) error = ErrorWithRange(kind, range)
+    private fun reportError(kind: ErrorKind, range: Range = Range.since(source.pos, 1)): Boolean {
+        if (!hasError) error = Error(kind, range)
         return false
     }
     // for use by methods
@@ -100,8 +100,8 @@ class Tokenizer(sourceText: String) {
     }
     private fun Token.Builder.addUnescapedHex4DigitsUnicodeEscapeSequence(beginPos: Int): WasSuccessful {
         val (digitCount, mv) = readHexIntOrNull(4)
-        if (mv == null || mv > maxCodePoint) return reportError(
-            SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE,
+        if (mv == null || mv > MAX_CODE_POINT) return reportError(
+            SyntaxErrorKind.INVALID_UNICODE_ESCAPE_SEQUENCE,
             Range.since(beginPos, digitCount + unicodeEscapeSequencePrefix.length),
         )
         literal += mv.toChar()
@@ -116,8 +116,8 @@ class Tokenizer(sourceText: String) {
             }
         }
         val mv = hexDigits.toHexIntOrNull()
-        if (mv == null || mv > maxCodePoint || curr != '}') return reportError(
-            SyntaxError.INVALID_UNICODE_ESCAPE_SEQUENCE,
+        if (mv == null || mv > MAX_CODE_POINT || curr != '}') return reportError(
+            SyntaxErrorKind.INVALID_UNICODE_ESCAPE_SEQUENCE,
             Range(beginPos, source.pos),
         )
         advance()
@@ -143,7 +143,7 @@ class Tokenizer(sourceText: String) {
                 advance()
                 val (_, charCode) = readHexIntOrNull(2)
                 if (charCode == null) return reportError(
-                    SyntaxError.INVALID_HEX_ESCAPE_SEQUENCE,
+                    SyntaxErrorKind.INVALID_HEX_ESCAPE_SEQUENCE,
                     Range(begin, source.pos),
                 )
                 literal += charCode.toChar()
@@ -257,7 +257,7 @@ class Tokenizer(sourceText: String) {
         while (check(curr) || curr.isNumericLiteralSeparator) {
             if (curr.isNumericLiteralSeparator) {
                 advance()
-                if (curr.isNumericLiteralSeparator) return reportError(RangeError.CONTINUOUS_NUMERIC_SEPARATOR)
+                if (curr.isNumericLiteralSeparator) return reportError(RangeErrorKind.CONTINUOUS_NUMERIC_SEPARATOR)
                 separatorSeen = true
                 continue
             }
@@ -265,7 +265,7 @@ class Tokenizer(sourceText: String) {
             addLiteralAdvance()
         }
 
-        if (separatorSeen) return reportError(RangeError.TRAILING_NUMERIC_SEPARATOR)
+        if (separatorSeen) return reportError(RangeErrorKind.TRAILING_NUMERIC_SEPARATOR)
 
         return true
     }
@@ -321,7 +321,7 @@ class Tokenizer(sourceText: String) {
                 if (!successful) return buildIllegal()
             }
 
-            if (curr.isDecimalDigit || curr.isIdentifierName) return buildIllegal()
+            if (curr.isDecimalDigit || curr.isIdentifierChar) return buildIllegal()
 
             return build(if (isBigint) BIGINT else NUMBER)
         }
@@ -338,7 +338,7 @@ class Tokenizer(sourceText: String) {
                     else -> singleCharTokenMap[curr] ?: when {
                         curr.isWhiteSpace || curr.isLineTerminator -> WHITE_SPACE
                         curr.isDecimalDigit -> NUMBER
-                        curr.isIdentifierName -> IDENTIFIER
+                        curr.isIdentifierChar -> IDENTIFIER
                         else -> ILLEGAL
                     }
                 }
@@ -359,7 +359,7 @@ class Tokenizer(sourceText: String) {
                             advance()
                             build()
                         } else {
-                            reportError(SyntaxError.UNEXPECTED_TOKEN, Range.since(source.pos, 1))
+                            reportError(SyntaxErrorKind.UNEXPECTED_TOKEN, Range.since(source.pos, 1))
                             advance()
                             buildIllegal()
                         }
@@ -376,7 +376,7 @@ class Tokenizer(sourceText: String) {
                             build()
                         }
                         else -> {
-                            reportError(SyntaxError.UNEXPECTED_TOKEN, Range.since(source.pos, 1))
+                            reportError(SyntaxErrorKind.UNEXPECTED_TOKEN, Range.since(source.pos, 1))
                             advance()
                             buildIllegal()
                         }
@@ -546,7 +546,7 @@ class Tokenizer(sourceText: String) {
                     }
                     PRIVATE_NAME -> TODO()
                     IDENTIFIER -> {
-                        advanceWhile { it.isIdentifierName }
+                        advanceWhile { it.isIdentifierChar }
                         return build(IDENTIFIER)
                     }
                     NUMBER -> return getNumberToken()

@@ -2,52 +2,65 @@ package io.github.andjsrk.v4
 
 import io.github.andjsrk.v4.util.isOneOf
 
-// 11.1.1 (https://tc39.es/ecma262/multipage/ecmascript-language-source-code.html#sec-utf16encodecodepoint)
-@EsSpec
-const val maxCodePoint = 0x10FFFF
+/**
+ * See [UTF16EncodeCodePoint](https://tc39.es/ecma262/multipage/ecmascript-language-source-code.html#sec-utf16encodecodepoint).
+ */
+@EsSpec("-")
+const val MAX_CODE_POINT = 0x10FFFF
 
-// 12.2 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-white-space)
-@EsSpec
+@EsSpec("WhiteSpace")
 val Char.isWhiteSpace get() =
     this.isOneOf('\t', '\u000B', '\u000C', '\uFEFF') || this in CharCategory.SPACE_SEPARATOR
 
-// 12.3 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-line-terminators)
-@EsSpec
+@EsSpec("LineTerminator")
 val Char.isLineTerminator get() =
     this.isOneOf('\n', '\r', '\u2028', '\u2029')
 
-// 12.7 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#prod-AsciiLetter)
-@EsSpec
+@EsSpec("AsciiLetter")
 val Char.isAsciiLetter get() =
     this in 'a'..'z' || this in 'A'..'Z'
-// changed; 12.7 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#prod-IdentifierName)
-@EsSpec
-val Char.isIdentifierName get() =
+
+/**
+ * modified to:
+ * ```
+ *   IdentifierChar ::
+ *     AsciiLetter
+ *     _
+ *     $
+ *   IdentifierName ::
+ *     IdentifierChar
+ *     IdentifierName IdentifierChar
+ * ```
+ */
+@EsSpec("IdentifierName")
+val Char.isIdentifierChar get() =
     this.isAsciiLetter || this == '_' || this == '$'
 
-// 12.9.3 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-literals-numeric-literals)
-@EsSpec
+@EsSpec("NumericLiteralSeparator")
 val Char.isNumericLiteralSeparator get() =
     this == '_'
-@EsSpec
+@EsSpec("ExponentIndicator")
 val Char.isExponentIndicator get() =
     this == 'e' || this == 'E'
-@EsSpec
+@EsSpec("DecimalDigit")
 val Char.isDecimalDigit get() =
     this in '0'..'9'
-@EsSpec
+@EsSpec("BinaryDigit")
 val Char.isBinaryDigit get() =
     this == '0' || this == '1'
-@EsSpec
+@EsSpec("OctalDigit")
 val Char.isOctalDigit get() =
     this in '0'..'7'
-@EsSpec
+@EsSpec("HexDigit")
 val Char.isHexDigit get() =
     this.isDecimalDigit || this in 'a'..'f' || this in 'A'..'f'
 
-// 12.9.4.2 (https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#table-string-single-character-escape-sequences)
 private typealias UnescapedChar = Char
-@EsSpec
+
+/**
+ * See [Table 37](https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#table-string-single-character-escape-sequences).
+ */
+@EsSpec("-")
 val singleEscapeCharacterMap =
     mapOf<Char, UnescapedChar>(
         '\'' to '\'',

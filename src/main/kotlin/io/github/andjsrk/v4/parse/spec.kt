@@ -2,41 +2,47 @@ package io.github.andjsrk.v4.parse
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.parse.node.*
+import io.github.andjsrk.v4.thenTake
 import io.github.andjsrk.v4.util.isOneOf
 import kotlin.reflect.KClass
 
 @EsSpec("Contains")
-fun <N: Node> Node.contains(symbol: KClass<N>, predicate: (N) -> Boolean = { true }): Boolean {
+internal fun <N: Node> Node.contains(symbol: KClass<N>, predicate: (N) -> Boolean = { true }) =
+    find(symbol, predicate) != null
+
+/**
+ * A convenient way to find a node that is matched by [contains].
+ */
+internal fun <N: Node> Node.find(symbol: KClass<N>, predicate: (N) -> Boolean = { true }): N? {
     val baseCondition = lazy { this::class == symbol && predicate(this as N) }
 
     return when (this) {
-        is ClassNode -> {
-            val parent = parent
-            if (parent != null && parent.contains(symbol, predicate)) return true
-            computedPropertyContains(symbol, predicate)
-        }
+        is ClassNode -> parent?.find(symbol, predicate) ?: computedPropertyFind(symbol, predicate)
         // TODO: static initialization block
         is ArrowFunctionNode ->
             symbol.isOneOf(
                 SuperPropertyNode::class,
                 SuperCallNode::class,
                 ThisNode::class,
-            ) && (
-                parameters.contains(symbol, predicate) || body.contains(symbol, predicate)
-            )
-        is NonAtomicNode -> baseCondition.value || childNodes.any { it?.contains(symbol, predicate) ?: false }
-        else -> baseCondition.value
+            ).thenTake {
+                parameters.find(symbol, predicate) ?: body.find(symbol, predicate)
+            }
+        is NonAtomicNode ->
+            if (baseCondition.value) this as N
+            else childNodes.foldElvis { it?.find(symbol, predicate) }
+        else -> baseCondition.value.thenTake { this as N }
     }
 }
-
-@EsSpec("ComputedPropertyContains")
-fun <N: Node> Node.computedPropertyContains(symbol: KClass<N>, predicate: (N) -> Boolean): Boolean =
+/**
+ * @see find
+ */
+internal fun <N: Node> Node.computedPropertyFind(symbol: KClass<N>, predicate: (N) -> Boolean): N? =
     when (this) {
-        is ComputedPropertyKeyNode -> this.contains(symbol, predicate)
-        is MethodNode -> name.computedPropertyContains(symbol, predicate)
-        is FieldNode -> name.computedPropertyContains(symbol, predicate)
-        is ClassNode -> elements.any { it.computedPropertyContains(symbol, predicate) }
-        else -> false
+        is ComputedPropertyKeyNode -> find(symbol, predicate)
+        is FixedParametersMethodNode -> name.computedPropertyFind(symbol, predicate)
+        is FieldNode -> name.computedPropertyFind(symbol, predicate)
+        is ClassNode -> elements.foldElvis { it.computedPropertyFind(symbol, predicate) }
+        else -> null
     }
 
 @EsSpec("BoundNames")
@@ -46,16 +52,16 @@ fun Node.boundNames(): List<IdentifierNode> =
         is LexicalDeclarationWithoutInitializerNode -> binding.boundNames()
         is MaybeRestNode -> binding.boundNames()
         is BindingPatternNode -> elements.flatMap { it.boundNames() }
-        is FormalParametersNode -> elements.flatMap { it.boundNames() }
+        is UniqueFormalParametersNode -> elements.flatMap { it.boundNames() }
         is ClassDeclarationNode -> name.boundNames()
         else -> emptyList()
     }
 
 @EsSpec("HasDirectSuper")
-fun MethodLikeNode.hasDirectSuper() =
+internal fun FixedParametersMethodNode.findDirectSuperCall() =
     when (this) {
-        is MethodNode -> listOf(parameters, body)
+        is NonSpecialMethodNode -> listOf(parameters, body)
         is GetterNode -> listOf(body)
         is SetterNode -> listOf(parameter, body)
     }
-        .any { it.contains(SuperCallNode::class) }
+        .foldElvis { it.find(SuperCallNode::class) }

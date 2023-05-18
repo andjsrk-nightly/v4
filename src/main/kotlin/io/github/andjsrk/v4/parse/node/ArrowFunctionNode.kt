@@ -4,12 +4,12 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ArrowFunctionNode(
-    override val parameters: FormalParametersNode,
+    override val parameters: UniqueFormalParametersNode,
     override val body: Node,
     override val isAsync: Boolean,
     override val isGenerator: Boolean,
     startRange: Range,
-): NormalFunctionNode, ExpressionNode {
+): SpecialFunctionNode, ExpressionNode {
     init {
         require(body is ExpressionNode || body is BlockStatementNode)
     }

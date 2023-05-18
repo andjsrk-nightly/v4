@@ -693,6 +693,103 @@ internal class ParserTest {
             var {}
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER)
     }
+    @Test
+    fun testClass() {
+        """
+            class {}
+        """.shouldBeValidExpressionAnd<ClassExpressionNode> {
+            assertNull(name)
+        }
+
+        """
+            class A {}
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            name.assertIdentifierNamed("A")
+        }
+
+        """
+            class {}
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.MISSING_CLASS_NAME)
+
+        """
+            class A {
+                a = 0
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            elements[0].assertTypeThen<FieldNode> {
+                assert(!isStatic)
+                name.assertIdentifierNamed("a")
+                assertIs<NumberLiteralNode>(value)
+            }
+        }
+
+        """
+            class A {
+                a
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            elements[0].assertTypeThen<FieldNode> {
+                assertNull(value)
+            }
+        }
+
+        """
+            class A {
+                static a = 0
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            elements[0].assertTypeThen<FieldNode> {
+                assert(isStatic)
+            }
+        }
+
+        """
+            class A {
+                a() {}
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            assertIs<ClassMethodNode>(elements[0])
+        }
+
+        """
+            class A {
+                if = 0
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            elements[0].assertTypeThen<FieldNode> {
+                name.assertIdentifierNamed("if")
+            }
+        }
+
+        """
+            class A {
+                constructor() {}
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            assertNotNull(constructor)
+        }
+
+        """
+            class A extends null {
+                constructor() {
+                    super()
+                }
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            assertIs<NullLiteralNode>(parent)
+            val constructor = constructor
+            assertNotNull(constructor)
+            assert(constructor.body.contains(SuperCallNode::class))
+        }
+
+        """
+            class A {
+                constructor() {
+                    super()
+                }
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
+    }
 }
 
 private inline fun <reified T: Node> MaybeRestNode.unwrapNonRest() =
@@ -734,7 +831,12 @@ private inline fun Code.shouldBeValidProgramAnd(block: ProgramNode.() -> Unit) =
     shouldBeValidAnd(Parser::parseProgram, block)
 private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: ErrorKind, args: List<String>? = null, range: Range? = null) {
     val error = createParser(this).parseUnsuccessfully(parseFn)
-    assert(error.kind == kind) { "Expected: $kind, Actual: $error" }
+    assert(error.kind == kind) {
+        """
+            Expected: $kind
+            Actual: $error
+        """.trimIndent()
+    }
     if (range != null) assert(error.range == range)
     if (args != null) {
         val errorArgs = error.args
@@ -749,10 +851,15 @@ private fun Code.shouldBeInvalidStatementWithError(kind: ErrorKind, args: List<S
 private fun Code.shouldBeInvalidProgramWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
     shouldBeInvalidWithError(Parser::parseProgram, kind, args, range)
 private inline fun <N: Node> Parser.parseSuccessfully(parseFn: Parser.() -> N?) =
-    parseFn().let {
-        assert(!hasError) { "Error occurred: $error" }
-        assertNotNull(it)
-        it
+    parseFn().let { node ->
+        assert(!hasError) {
+            """
+                Error occurred: $error
+                Stack trace:
+            """.trimIndent() + "\n${stackTrace?.joinToString("\n") { "    $it" }}"
+        }
+        assertNotNull(node)
+        node
     }
 private inline fun Parser.parseUnsuccessfully(parseFn: Parser.() -> Node?) =
     run {

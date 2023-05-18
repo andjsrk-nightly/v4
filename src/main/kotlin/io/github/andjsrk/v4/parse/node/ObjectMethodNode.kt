@@ -5,12 +5,12 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ObjectMethodNode(
     override val name: ObjectLiteralKeyNode,
-    override val parameters: FormalParametersNode,
+    override val parameters: UniqueFormalParametersNode,
     override val body: BlockStatementNode,
     override val isAsync: Boolean,
     override val isGenerator: Boolean,
     startRange: Range,
-): NormalMethodNode, ObjectElementNode {
+): MethodNode, ObjectElementNode {
     override val childNodes = listOf(name, parameters, body)
     override val range = startRange..body.range
     override fun toString() =

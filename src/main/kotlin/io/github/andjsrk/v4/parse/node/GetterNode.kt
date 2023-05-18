@@ -1,3 +1,3 @@
 package io.github.andjsrk.v4.parse.node
 
-sealed interface GetterNode: MethodLikeNode
+sealed interface GetterNode: FixedParametersMethodNode

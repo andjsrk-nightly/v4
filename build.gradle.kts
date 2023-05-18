@@ -23,3 +23,6 @@ tasks.test {
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "17"
 }
+tasks.withType<Test> {
+    environment("TEST", true)
+}

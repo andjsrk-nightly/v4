@@ -5,12 +5,13 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class FieldNode(
     val name: ObjectLiteralKeyNode,
-    val default: ExpressionNode,
+    val value: ExpressionNode?,
     override val isStatic: Boolean,
     startRange: Range,
+    semicolonRange: Range?,
 ): NormalClassElementNode {
-    override val childNodes = listOf(name, default)
-    override val range = startRange..default.range
+    override val childNodes = listOf(name, value)
+    override val range = startRange..(semicolonRange ?: (value ?: name).range)
     override fun toString() =
-        stringifyLikeDataClass(::name, ::default, ::isStatic, ::range)
+        stringifyLikeDataClass(::name, ::value, ::isStatic, ::range)
 }

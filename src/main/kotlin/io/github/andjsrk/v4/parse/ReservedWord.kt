@@ -8,6 +8,7 @@ enum class ReservedWord(val isContextual: Boolean = false) {
     CASE,
     CATCH,
     CLASS,
+    CONSTRUCTOR(isContextual=true),
     CONTINUE,
     DEFAULT,
     ELSE,

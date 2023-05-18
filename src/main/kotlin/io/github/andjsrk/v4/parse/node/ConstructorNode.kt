@@ -4,9 +4,9 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ConstructorNode(
     override val name: ObjectLiteralKeyNode,
-    override val parameters: FormalParametersNode,
+    override val parameters: UniqueFormalParametersNode,
     override val body: BlockStatementNode,
-): ClassElementNode, MethodNode {
+): ClassElementNode, NonSpecialMethodNode {
     override val childNodes = listOf(name, parameters, body)
     override val range = name.range..body.range
     override fun toString() =

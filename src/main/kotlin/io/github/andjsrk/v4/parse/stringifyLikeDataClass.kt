@@ -8,7 +8,7 @@ import kotlin.reflect.KProperty0
 
 // if this is declared as an extension function,
 // we do not need to pass type of this explicitly because it will be inferred
-internal inline fun <reified T: Node> T.stringifyLikeDataClass(vararg properties: KProperty0<*>, pretty: Boolean = true): String =
+internal inline fun <T: Node> T.stringifyLikeDataClass(vararg properties: KProperty0<*>, pretty: Boolean = true): String =
     stringify(*properties, pretty=pretty, className=className)
 
 private fun stringify(vararg properties: KProperty0<*>, pretty: Boolean, className: String): String =

@@ -46,7 +46,7 @@ internal fun <N: Node> Node.computedPropertyFind(symbol: KClass<N>, predicate: (
     }
 
 @EsSpec("BoundNames")
-fun Node.boundNames(): List<IdentifierNode> =
+internal fun Node.boundNames(): List<IdentifierNode> =
     when (this) {
         is IdentifierNode -> listOf(this)
         is LexicalDeclarationWithoutInitializerNode -> binding.boundNames()
@@ -65,3 +65,12 @@ internal fun FixedParametersMethodNode.findDirectSuperCall() =
         is SetterNode -> listOf(parameter, body)
     }
         .foldElvis { it.find(SuperCallNode::class) }
+
+@EsSpec("AssignmentTargetType")
+internal fun ExpressionNode.isValidAssignmentTarget(): Boolean =
+    when (this) {
+        is IdentifierNode -> true
+        is MemberExpressionNode -> true
+        is ParenthesizedExpressionNode -> expression.isValidAssignmentTarget()
+        else -> false
+    }

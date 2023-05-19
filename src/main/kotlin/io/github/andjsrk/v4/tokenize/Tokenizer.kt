@@ -9,6 +9,14 @@ import io.github.andjsrk.v4.tokenize.TokenType.*
 private typealias Length = Int
 
 class Tokenizer(sourceText: String) {
+    inner class CheckPoint {
+        private val error = this@Tokenizer.error
+        private val sourceCheckPoint = source.CheckPoint()
+        fun load() {
+            this@Tokenizer.error = error
+            sourceCheckPoint.load()
+        }
+    }
     private val source = Source(sourceText)
     var error: Error? = null
         private set
@@ -349,36 +357,22 @@ class Tokenizer(sourceText: String) {
                         return build()
                     }
                     LEFT_PARENTHESIS, LEFT_BRACE, LEFT_BRACKET -> {
-                        syntacticPairs.add(SyntacticPair.findByOpeningPart(curr.toString())!!)
                         advance()
                         return build()
                     }
-                    RIGHT_PARENTHESIS, RIGHT_BRACKET -> return (
-                        if (syntacticPairs.isLastClosingPart(curr)) {
-                            syntacticPairs.removeLast()
-                            advance()
-                            build()
-                        } else {
-                            reportError(SyntaxErrorKind.UNEXPECTED_TOKEN, Range.since(source.pos, 1))
-                            advance()
-                            buildIllegal()
-                        }
-                    )
+                    RIGHT_PARENTHESIS, RIGHT_BRACKET -> {
+                        advance()
+                        return build()
+                    }
                     RIGHT_BRACE -> return when (syntacticPairs.lastOrNull()) {
                         SyntacticPair.TEMPLATE_LITERAL -> {
                             syntacticPairs.removeLast()
                             advance()
                             getTemplateMiddleToken()
                         }
-                        SyntacticPair.BRACE -> {
-                            syntacticPairs.removeLast()
+                        else -> {
                             advance()
                             build()
-                        }
-                        else -> {
-                            reportError(SyntaxErrorKind.UNEXPECTED_TOKEN, Range.since(source.pos, 1))
-                            advance()
-                            buildIllegal()
                         }
                     }
                     CONDITIONAL -> {

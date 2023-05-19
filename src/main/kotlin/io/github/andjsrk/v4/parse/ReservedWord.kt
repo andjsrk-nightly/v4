@@ -25,6 +25,7 @@ enum class ReservedWord(val isContextual: Boolean = false) {
     IN,
     INSTANCEOF,
     LET,
+    METHOD,
     NEW,
     NULL,
     RETURN,

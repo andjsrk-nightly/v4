@@ -4,12 +4,13 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class IfNode(
-    override val test: ExpressionNode,
+    val test: ExpressionNode,
     override val body: StatementNode,
+    val elseBody: StatementNode?,
     startRange: Range,
-): ConditionalStatementNode {
-    override val childNodes = listOf(test, body)
-    override val range = startRange..body.range
+): StatementNode, HasStatementBody {
+    override val childNodes = listOf(test, body, elseBody)
+    override val range = startRange..(elseBody ?: body).range
     override fun toString() =
-        stringifyLikeDataClass(::test, ::body, ::range)
+        stringifyLikeDataClass(::test, ::body, ::elseBody, ::range)
 }

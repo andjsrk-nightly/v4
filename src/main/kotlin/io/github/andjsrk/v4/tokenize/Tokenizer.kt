@@ -9,7 +9,7 @@ import io.github.andjsrk.v4.tokenize.TokenType.*
 private typealias Length = Int
 
 class Tokenizer(sourceText: String) {
-    inner class CheckPoint {
+    internal inner class CheckPoint {
         private val error = this@Tokenizer.error
         private val sourceCheckPoint = source.CheckPoint()
         fun load() {
@@ -33,8 +33,6 @@ class Tokenizer(sourceText: String) {
      * If `false`, when got `}` it should be interpreted as start of `TEMPLATE_MIDDLE` or `TEMPLATE_TAIL`.
      */
     private val syntacticPairs = ArrayDeque<SyntacticPair>()
-    private fun ArrayDeque<SyntacticPair>.isLastClosingPart(value: Char) =
-        lastOrNull()?.closingPart == value.toString()
     private fun advance(addRawContent: Boolean = true) =
         source.advance().also {
             if (addRawContent) builder.rawContent += it
@@ -211,7 +209,6 @@ class Tokenizer(sourceText: String) {
                         if (curr == '$' && peek() == '{') {
                             advance()
                             advance()
-                            syntacticPairs.add(SyntacticPair.TEMPLATE_LITERAL)
                             return build()
                         }
                         if (curr.isLineTerminator) {
@@ -244,7 +241,6 @@ class Tokenizer(sourceText: String) {
                         if (curr == '$' && peek() == '{') {
                             advance()
                             advance()
-                            syntacticPairs.add(SyntacticPair.TEMPLATE_LITERAL)
                             return build(TEMPLATE_MIDDLE)
                         }
                         if (curr.isLineTerminator) {
@@ -352,28 +348,11 @@ class Tokenizer(sourceText: String) {
                 }
 
                 when (type) {
-                    COLON, SEMICOLON, COMMA, BITWISE_NOT -> {
+                    COLON, SEMICOLON, COMMA, BITWISE_NOT,
+                    LEFT_PARENTHESIS, LEFT_BRACE, LEFT_BRACKET,
+                    RIGHT_PARENTHESIS, RIGHT_BRACE, RIGHT_BRACKET -> {
                         advance()
                         return build()
-                    }
-                    LEFT_PARENTHESIS, LEFT_BRACE, LEFT_BRACKET -> {
-                        advance()
-                        return build()
-                    }
-                    RIGHT_PARENTHESIS, RIGHT_BRACKET -> {
-                        advance()
-                        return build()
-                    }
-                    RIGHT_BRACE -> return when (syntacticPairs.lastOrNull()) {
-                        SyntacticPair.TEMPLATE_LITERAL -> {
-                            syntacticPairs.removeLast()
-                            advance()
-                            getTemplateMiddleToken()
-                        }
-                        else -> {
-                            advance()
-                            build()
-                        }
                     }
                     CONDITIONAL -> {
                         // ? ?. ?? ??=

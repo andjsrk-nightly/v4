@@ -4,12 +4,14 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class NormalForNode(
-    override val test: ExpressionNode,
+    val init: LexicalDeclarationNode?,
+    val test: ExpressionNode?,
+    val update: ExpressionNode?,
     override val body: StatementNode,
     startRange: Range,
-): ForNode, ConditionalStatementNode {
-    override val childNodes = listOf(test, body)
+): ForNode {
+    override val childNodes = listOf(init, test, update, body)
     override val range = startRange..body.range
     override fun toString() =
-        stringifyLikeDataClass(::test, ::body, ::range)
+        stringifyLikeDataClass(::init, ::test, ::update, ::body, ::range)
 }

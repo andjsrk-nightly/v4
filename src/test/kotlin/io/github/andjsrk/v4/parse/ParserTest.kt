@@ -790,6 +790,68 @@ internal class ParserTest {
             }
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
     }
+    @Test
+    fun testIf() {
+        """
+            if (true);
+        """.shouldBeValidStatementAnd<IfNode> {
+            assertIs<BooleanLiteralNode>(test)
+            assertIs<EmptyStatementNode>(body)
+        }
+
+        """
+            if (true);
+            else;
+        """.shouldBeValidStatementAnd<IfNode> {
+            assertIs<EmptyStatementNode>(body)
+            assertIs<EmptyStatementNode>(elseBody)
+        }
+
+        """
+            if (true) var a
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_TOKEN_IDENTIFIER)
+    }
+    @Test
+    fun testFor() {
+        """
+            for (var i = 0; i < 5; i++);
+        """.shouldBeValidStatementAnd<NormalForNode> {
+            assertIs<LexicalDeclarationNode>(init)
+            assertIs<BinaryExpressionNode>(test)
+            assertIs<UpdateNode>(update)
+            assertIs<EmptyStatementNode>(body)
+        }
+
+        """
+            for ();
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_TOKEN)
+
+        """
+            for (;);
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_TOKEN)
+
+        """
+            for (;;);
+        """.shouldBeValidStatementAnd<NormalForNode> {
+            assertNull(init)
+            assertNull(test)
+            assertNull(update)
+        }
+
+        """
+            for (let elem in [1, 2]);
+        """.shouldBeValidStatementAnd<ForInNode> {
+            assert(declaration.kind == LexicalDeclarationKind.LET)
+        }
+
+        """
+            for (let elem = 0 in [1, 2]);
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_TOKEN)
+
+        """
+            for (a in [1, 2]);
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_TOKEN_IDENTIFIER)
+    }
 }
 
 private inline fun <reified T: Node> MaybeRestNode.unwrapNonRest() =
@@ -817,7 +879,7 @@ private inline fun <reified T> Any?.assertTypeThen(block: T.() -> Unit) {
     assertIs<T>(this)
     run(block)
 }
-private inline fun <RN: Node, N: Node> Code.shouldBeValidAnd(parseFn: Parser.() -> RN?, block: N.() -> Unit) {
+private inline fun <RN: Node, reified N: Node> Code.shouldBeValidAnd(parseFn: Parser.() -> RN?, block: N.() -> Unit) {
     block(
         createParser(this)
             .parseSuccessfully(parseFn) as N
@@ -826,7 +888,10 @@ private inline fun <RN: Node, N: Node> Code.shouldBeValidAnd(parseFn: Parser.() 
 private inline fun <reified Expr: ExpressionNode> Code.shouldBeValidExpressionAnd(block: Expr.() -> Unit) =
     shouldBeValidAnd(Parser::parseExpression, block)
 private inline fun <reified Stmt: StatementNode> Code.shouldBeValidStatementAnd(block: Stmt.() -> Unit) =
-    shouldBeValidAnd(Parser::parseStatement, block)
+    shouldBeValidAnd(
+        Parser::parseAnyStatement,
+        block,
+    )
 private inline fun Code.shouldBeValidProgramAnd(block: ProgramNode.() -> Unit) =
     shouldBeValidAnd(Parser::parseProgram, block)
 private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: ErrorKind, args: List<String>? = null, range: Range? = null) {
@@ -847,7 +912,12 @@ private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: Err
 private fun Code.shouldBeInvalidExpressionWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
     shouldBeInvalidWithError(Parser::parseExpression, kind, args, range)
 private fun Code.shouldBeInvalidStatementWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
-    shouldBeInvalidWithError(Parser::parseStatement, kind, args, range)
+    shouldBeInvalidWithError(
+        Parser::parseAnyStatement,
+        kind,
+        args,
+        range,
+    )
 private fun Code.shouldBeInvalidProgramWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
     shouldBeInvalidWithError(Parser::parseProgram, kind, args, range)
 private inline fun <N: Node> Parser.parseSuccessfully(parseFn: Parser.() -> N?) =
@@ -867,6 +937,8 @@ private inline fun Parser.parseUnsuccessfully(parseFn: Parser.() -> Node?) =
         assert(hasError)
         error!!
     }
+private fun Parser.parseAnyStatement() =
+    parseStatement(true, true)
 private fun createParser(code: Code) =
     code.trimIndent()
         .let(::Tokenizer)

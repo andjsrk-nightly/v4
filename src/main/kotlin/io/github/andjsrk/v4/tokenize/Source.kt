@@ -12,7 +12,7 @@ class Source(private val source: String) {
         source.getOrNull(pos) ?: endOfInput
     fun peek(relativePos: Int = 1) =
         source.getOrNull(pos + relativePos) ?: endOfInput
-    inner class CheckPoint {
+    internal inner class CheckPoint {
         private val pos = this@Source.pos
         fun load() {
             this@Source.pos = pos

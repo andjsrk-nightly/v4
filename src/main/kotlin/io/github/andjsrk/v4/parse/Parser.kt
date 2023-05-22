@@ -26,7 +26,7 @@ import io.github.andjsrk.v4.util.isOneOf
 private val testing = System.getenv("TEST")?.toBooleanStrict() ?: false
 
 class Parser(private val tokenizer: Tokenizer) {
-    inner class CheckPoint {
+    internal inner class CheckPoint {
         private val currToken = this@Parser.currToken
         private val tokenizerCheckPoint = tokenizer.CheckPoint()
         fun load() {
@@ -76,7 +76,9 @@ class Parser(private val tokenizer: Tokenizer) {
                 try {
                     throw KotlinError()
                 } catch (e: KotlinError) {
-                    stackTrace = e.stackTrace.drop(1) // drop first element because it is always this function
+                    stackTrace = e.stackTrace
+                        .drop(1) // drop first element because it is always this function
+                        .takeWhile { it.not { isNativeMethod } } // preserve meaningful elements only
                 }
             }
         }
@@ -283,11 +285,10 @@ class Parser(private val tokenizer: Tokenizer) {
                 if (identifier == null) return reportUnexpectedToken()
                 advance()
                 val default = parseAssignment() ?: return null
-                if (!allowDestructuring) return reportError(
+                reportError(
                     SyntaxErrorKind.INVALID_COVER_INITIALIZED_NAME,
                     identifier.range..default.range,
                 )
-                CoverInitializedNameNode(identifier, default)
             }
             else ->
                 listOf(
@@ -1140,7 +1141,7 @@ class Parser(private val tokenizer: Tokenizer) {
                 ?.let {
                     when {
                         it.isLeftHandSide -> {
-                            if (currToken.type !in ASSIGN..ASSIGN_MINUS) return@let it
+                            if (currToken.type.not { isAssignLike }) return@let it
                             val operation = BinaryOp.fromTokenType(currToken.type)
                             advance()
                             val right = parseAssignment() ?: return@let null
@@ -1181,7 +1182,7 @@ class Parser(private val tokenizer: Tokenizer) {
         return InitializerNode(value, startRange)
     }
     @ReportsErrorDirectly
-    private fun parseLexicalDeclaration(): LexicalDeclarationNode? {
+    private fun parseLexicalDeclarationWithoutInitializer(): LexicalDeclarationWithoutInitializerNode? {
         val kindToken = takeIfMatchesKeyword(VAR) ?: takeIfMatchesKeyword(LET) ?: return null
 
         val kind = LexicalDeclarationKind.valueOf(kindToken.rawContent.uppercase())
@@ -1189,6 +1190,20 @@ class Parser(private val tokenizer: Tokenizer) {
         val binding = withDestructuringAllow {
             parseIdentifier() ?: parseBindingPattern() ?: return reportUnexpectedToken(startToken)
         }
+
+        return LexicalDeclarationWithoutInitializerNode(kind, binding, startToken.range)
+    }
+    /**
+     * @param inNormalContext
+     * Indicates whether the lexical declaration is in normal context;
+     * There are some special context such as for statement.
+     */
+    @ReportsErrorDirectly
+    private fun parseLexicalDeclaration(givenDeclaration: LexicalDeclarationWithoutInitializerNode? = null, inNormalContext: Boolean = true): LexicalDeclarationNode? {
+        assert(givenDeclaration !is LexicalDeclarationNode)
+        val withoutInitializer = givenDeclaration ?: parseLexicalDeclarationWithoutInitializer() ?: return null
+        val kind = withoutInitializer.kind
+        val binding = withoutInitializer.binding
         val value = parseInitializer()?.value
         if (value == null) {
             if (hasError) return null
@@ -1197,7 +1212,16 @@ class Parser(private val tokenizer: Tokenizer) {
                 binding.range,
             )
         }
-        return LexicalDeclarationNode(kind, binding, value, startToken.range, takeOptionalSemicolonRange())
+
+        return LexicalDeclarationNode(
+            kind,
+            binding,
+            value,
+            withoutInitializer.range,
+            inNormalContext.thenTake {
+                takeOptionalSemicolonRange()
+            },
+        )
             .withEarlyErrorChecks()
     }
     /**
@@ -1249,17 +1273,49 @@ class Parser(private val tokenizer: Tokenizer) {
         val test = parseExpression() ?: return null
         expect(RIGHT_PARENTHESIS) ?: return null
         val body = parseStatement() ?: return null
+        takeIfMatchesKeyword(ELSE) ?: return IfNode(test, body, null, startRange)
+        val elseBody = parseStatement() ?: return null
 
-        return IfNode(test, body, startRange)
-    }
-    @Careful(false)
-    private fun parseExpressionStatement(): ExpressionStatementNode? {
-        val expr = parseExpression() ?: return null
-        return ExpressionStatementNode(expr, takeOptionalSemicolonRange())
+        return IfNode(test, body, elseBody, startRange)
     }
     private fun parseFor(): ForNode? {
+        fun parseForHeadElement(givenElement: Node? = null, after: TokenType = SEMICOLON): Node? {
+            if (takeIfMatches(after) != null) return null
+
+            val expr = givenElement ?: parseExpression() ?: return reportUnexpectedToken()
+            expect(after) ?: return null
+            return expr
+        }
+
         val startRange = takeIfMatchesKeyword(FOR)?.range ?: return null
-        TODO()
+        expect(LEFT_PARENTHESIS) ?: return null
+        val isInitOmittedNormalFor = currToken.type == SEMICOLON // do not *take* because ForDeclaration needs to be parsed on below
+        val declaration = parseLexicalDeclarationWithoutInitializer()
+        if (hasError) return null
+        return when {
+            declaration != null && currToken.isKeyword(IN) -> {
+                advance()
+                val target = parseAssignment() ?: return null
+                expect(RIGHT_PARENTHESIS) ?: return null
+                val body = parseStatement() ?: return null
+                ForInNode(declaration, target, body, startRange)
+            }
+            else -> { // normal for statement
+                val init = if (declaration == null) {
+                    if (isInitOmittedNormalFor) null
+                    else reportUnexpectedToken()
+                } else parseLexicalDeclaration(declaration, false) // ?: parseNonLastForHeadElement(declaration)
+                expect(SEMICOLON)
+                if (hasError) return null
+                val test = parseForHeadElement() as ExpressionNode?
+                if (hasError) return null
+                val update = parseForHeadElement(after=RIGHT_PARENTHESIS) as ExpressionNode?
+                if (hasError) return null
+                // right parenthesis will be handled on update parsing
+                val body = parseStatement() ?: return null
+                NormalForNode(init, test, update, body, startRange)
+            }
+        }
     }
     @ReportsErrorDirectly
     private fun parseWhile(): WhileNode? {
@@ -1279,14 +1335,19 @@ class Parser(private val tokenizer: Tokenizer) {
         )
             .foldElvisIfHasNoError()
     @Careful(false)
+    private fun parseExpressionStatement(): ExpressionStatementNode? {
+        val expr = parseExpression() ?: return null
+        return ExpressionStatementNode(expr, takeOptionalSemicolonRange())
+    }
+    @Careful(false)
     fun parseStatement(
         allowModuleItem: Boolean = false,
-        allowDeclaration: Boolean = true,
+        allowDeclaration: Boolean = false,
     ): StatementNode? =
         when (currToken.type) {
             SEMICOLON -> EmptyStatementNode(advance().range)
             IDENTIFIER -> listOf(
-                lazy { parseDeclaration() },
+                lazy { allowDeclaration.thenTake { parseDeclaration() } },
                 lazy { parseIf() },
                 lazy { parseIterationStatement() },
                 lazy { parseExpressionStatement() },
@@ -1297,7 +1358,7 @@ class Parser(private val tokenizer: Tokenizer) {
         }
     @Careful(false)
     private fun parseModuleItem() =
-        parseStatement(allowModuleItem=true)
+        parseStatement(allowModuleItem=true, allowDeclaration=true)
     @ReportsErrorDirectly
     fun parseProgram(): ProgramNode? {
         val statements = mutableListOf<StatementNode>()

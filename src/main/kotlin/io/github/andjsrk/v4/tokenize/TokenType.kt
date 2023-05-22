@@ -71,4 +71,8 @@ enum class TokenType(val staticContent: String?) {
     WHITE_SPACE(null),
     REGEXP_LITERAL(null),
     IDENTIFIER(null);
+
+    val isAssignLike by lazy {
+        this in ASSIGN..ASSIGN_MINUS
+    }
 }

@@ -28,11 +28,6 @@ class Tokenizer(sourceText: String) {
     }
     // for use by methods
     private lateinit var builder: Token.Builder
-    /**
-     * If `true`, when got `` ` `` it should be interpreted as start of `TEMPLATE_HEAD`.
-     * If `false`, when got `}` it should be interpreted as start of `TEMPLATE_MIDDLE` or `TEMPLATE_TAIL`.
-     */
-    private val syntacticPairs = ArrayDeque<SyntacticPair>()
     private fun advance(addRawContent: Boolean = true) =
         source.advance().also {
             if (addRawContent) builder.rawContent += it

@@ -1385,9 +1385,6 @@ private fun List<IdentifierNode>.findDuplicateBoundName(rawNames: List<String>/*
     return found
 }
 
-private fun IdentifierOrBindingPatternNode.wrapNonRest() =
-    NonRestNode(this, null)
-
 private val ExpressionNode.isLeftHandSide get() =
     this !is UnaryExpressionNode && this !is BinaryExpressionNode && this !is ConditionalExpressionNode
 private fun IdentifierNode.isKeyword(keyword: ReservedWord) =

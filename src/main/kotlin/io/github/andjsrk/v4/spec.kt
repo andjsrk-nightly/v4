@@ -22,15 +22,15 @@ val Char.isAsciiLetter get() =
 
 /**
  * modified to:
- * ```
- *   IdentifierChar ::
- *     AsciiLetter
- *     _
- *     $
- *   IdentifierName ::
- *     IdentifierChar
- *     IdentifierName IdentifierChar
- * ```
+ *
+ * IdentifierChar `::`
+ *   AsciiLetter
+ *   `_`
+ *   `$`
+ *
+ * IdentifierName `::`
+ *   IdentifierChar
+ *   IdentifierName IdentifierChar
  */
 @EsSpec("IdentifierName")
 val Char.isIdentifierChar get() =

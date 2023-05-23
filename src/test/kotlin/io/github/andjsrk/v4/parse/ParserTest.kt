@@ -460,14 +460,18 @@ internal class ParserTest {
         """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf("??"))
     }
     @Test
-    fun testConditionalExpression() {
+    fun testIfExpression() {
         """
-            ++a ? a = a : a = a
-        """.shouldBeValidExpressionAnd<ConditionalExpressionNode> {
-            assertIs<UpdateNode>(test)
-            assertIs<BinaryExpressionNode>(consequent)
-            assertIs<BinaryExpressionNode>(alternative)
+            if (true) a = a else a = a
+        """.shouldBeValidExpressionAnd<IfExpressionNode> {
+            assertIs<BooleanLiteralNode>(test)
+            assertIs<BinaryExpressionNode>(then)
+            assertIs<BinaryExpressionNode>(`else`)
         }
+
+        """
+            if (true) a = a
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_EOS)
     }
     @Test
     fun testArrowFunction() {
@@ -794,17 +798,17 @@ internal class ParserTest {
     fun testIf() {
         """
             if (true);
-        """.shouldBeValidStatementAnd<IfNode> {
+        """.shouldBeValidStatementAnd<IfStatementNode> {
             assertIs<BooleanLiteralNode>(test)
-            assertIs<EmptyStatementNode>(body)
+            assertIs<EmptyStatementNode>(then)
         }
 
         """
             if (true);
             else;
-        """.shouldBeValidStatementAnd<IfNode> {
-            assertIs<EmptyStatementNode>(body)
-            assertIs<EmptyStatementNode>(elseBody)
+        """.shouldBeValidStatementAnd<IfStatementNode> {
+            assertIs<EmptyStatementNode>(then)
+            assertIs<EmptyStatementNode>(`else`)
         }
 
         """
@@ -851,6 +855,24 @@ internal class ParserTest {
         """
             for (a in [1, 2]);
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_TOKEN_IDENTIFIER)
+    }
+    @Test
+    fun testWhile() {
+        """
+            while (true);
+        """.shouldBeValidStatementAnd<WhileNode> {
+            assert(!atLeastOnce)
+            assertIs<BooleanLiteralNode>(test)
+            assertIs<EmptyStatementNode>(body)
+        }
+
+        """
+            while+ (true);
+        """.shouldBeValidStatementAnd<WhileNode> {
+            assert(atLeastOnce)
+            assertIs<BooleanLiteralNode>(test)
+            assertIs<EmptyStatementNode>(body)
+        }
     }
 }
 

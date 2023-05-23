@@ -3,12 +3,13 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-open class YieldNode(
-    open val expression: ExpressionNode?,
+class YieldNode(
+    val expression: ExpressionNode,
+    val isSpread: Boolean,
     startRange: Range,
 ): ExpressionNode, NonAtomicNode {
-    override val range by lazy { startRange..(expression?.range ?: startRange) }
-    override val childNodes by lazy { listOf(expression) }
+    override val range = startRange..expression.range
+    override val childNodes = listOf(expression)
     override fun toString() =
-        stringifyLikeDataClass(::expression, ::range)
+        stringifyLikeDataClass(::expression, ::isSpread, ::range)
 }

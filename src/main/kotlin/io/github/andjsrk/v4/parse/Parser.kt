@@ -934,16 +934,20 @@ class Parser(private val tokenizer: Tokenizer) {
         parseLogicalOr()
             ?.let(::parseCoalesce)
     /**
-     * Parses [ConditionalExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ConditionalExpression).
+     * Parses IfExpression.
+     *
+     * IfExpression `::`
+     *   `if` `(` Expression `)` AssignmentExpression `else` AssignmentExpression
      */
-    @ReportsErrorDirectly
-    private fun parseConditionalExpression(): ExpressionNode? {
-        val shortCircuitExpr = parseShortCircuit() ?: return null
-        takeIfMatches(CONDITIONAL) ?: return shortCircuitExpr
-        val consequent = parseAssignment() ?: return null
-        expect(COLON) ?: return null
-        val alternative = parseAssignment() ?: return null
-        return ConditionalExpressionNode(shortCircuitExpr, consequent, alternative)
+    private fun parseIfExpression(): ExpressionNode? {
+        val startRange = takeIfMatchesKeyword(IF)?.range ?: return parseShortCircuit()
+        expect(LEFT_PARENTHESIS) ?: return null
+        val test = parseExpression() ?: return null
+        expect(RIGHT_PARENTHESIS) ?: return null
+        val then = parseAssignment() ?: return null
+        takeIfMatchesKeyword(ELSE) ?: return reportUnexpectedToken()
+        val `else` = parseAssignment() ?: return null
+        return IfExpressionNode(test, then, `else`, startRange)
     }
     /**
      * Parses [YieldExpression](https://tc39.es/ecma262/multipage/ecmascript-language-functions-and-classes.html#prod-YieldExpression).
@@ -951,16 +955,10 @@ class Parser(private val tokenizer: Tokenizer) {
     @Careful(false)
     private fun parseYield(): YieldNode? {
         val yieldTokenRange = takeIfMatchesKeyword(YIELD)?.range ?: return null
-        if (currToken.isPrevLineTerminator) return YieldNode(null, yieldTokenRange)
-        val isDelegate = takeIfMatches(MULTIPLY) != null
-        val expr = parseAssignment()
-            ?: return not { isDelegate }.thenTake {
-                YieldNode(null, yieldTokenRange)
-            }
-        return (
-            if (isDelegate) DelegatedYieldNode(expr, yieldTokenRange)
-            else YieldNode(expr, yieldTokenRange)
-        )
+        if (currToken.isPrevLineTerminator) return reportError(SyntaxErrorKind.NEWLINE_AFTER_YIELD)
+        val isSpread = takeIfMatches(ELLIPSIS) != null
+        val expr = parseAssignment() ?: return null
+        return YieldNode(expr, isSpread, yieldTokenRange)
     }
     // <editor-fold desc="arrow function">
     /**
@@ -1126,7 +1124,7 @@ class Parser(private val tokenizer: Tokenizer) {
     @Careful(false)
     private fun parseAssignment(): ExpressionNode? =
         parseYield()
-            ?: parseConditionalExpression()
+            ?: parseIfExpression()
                 ?.let {
                     when (it) {
                         is IdentifierNode ->
@@ -1171,7 +1169,7 @@ class Parser(private val tokenizer: Tokenizer) {
 
         return (
             if (exprs.size == 1) expr
-            else SequenceExpressionNode(exprs, expr.range..lastExpr.range)
+            else SequenceExpressionNode(exprs.toList(), expr.range..lastExpr.range)
         )
     }
     // </editor-fold>
@@ -1266,17 +1264,17 @@ class Parser(private val tokenizer: Tokenizer) {
         return BlockStatementNode(statements, startRange..endRange)
     }
     @ReportsErrorDirectly
-    private fun parseIf(): IfNode? {
+    private fun parseIfStatement(): IfStatementNode? {
         val startRange = takeIfMatchesKeyword(IF)?.range ?: return null
 
         expect(LEFT_PARENTHESIS) ?: return null
         val test = parseExpression() ?: return null
         expect(RIGHT_PARENTHESIS) ?: return null
         val body = parseStatement() ?: return null
-        takeIfMatchesKeyword(ELSE) ?: return IfNode(test, body, null, startRange)
+        takeIfMatchesKeyword(ELSE) ?: return IfStatementNode(test, body, null, startRange)
         val elseBody = parseStatement() ?: return null
 
-        return IfNode(test, body, elseBody, startRange)
+        return IfStatementNode(test, body, elseBody, startRange)
     }
     private fun parseFor(): ForNode? {
         fun parseForHeadElement(givenElement: Node? = null, after: TokenType = SEMICOLON): Node? {
@@ -1300,11 +1298,11 @@ class Parser(private val tokenizer: Tokenizer) {
                 val body = parseStatement() ?: return null
                 ForInNode(declaration, target, body, startRange)
             }
-            else -> { // normal for statement
+            else -> {
                 val init = if (declaration == null) {
                     if (isInitOmittedNormalFor) null
                     else reportUnexpectedToken()
-                } else parseLexicalDeclaration(declaration, false) // ?: parseNonLastForHeadElement(declaration)
+                } else parseLexicalDeclaration(declaration, false)
                 expect(SEMICOLON)
                 if (hasError) return null
                 val test = parseForHeadElement() as ExpressionNode?
@@ -1348,7 +1346,7 @@ class Parser(private val tokenizer: Tokenizer) {
             SEMICOLON -> EmptyStatementNode(advance().range)
             IDENTIFIER -> listOf(
                 lazy { allowDeclaration.thenTake { parseDeclaration() } },
-                lazy { parseIf() },
+                lazy { parseIfStatement() },
                 lazy { parseIterationStatement() },
                 lazy { parseExpressionStatement() },
             )

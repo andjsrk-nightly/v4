@@ -82,6 +82,7 @@ enum class SyntaxErrorKind(override val message: String): ErrorKind {
     MULTIPLE_DEFAULTS_IN_SWITCH("More than one default clause in switch statement"),
     NEW_OPTIONAL_CHAIN("Invalid optional chain from new expression"),
     NEWLINE_AFTER_THROW("Illegal newline after throw"),
+    NEWLINE_AFTER_YIELD("Illegal newline after yield"),
     NO_CATCH_OR_FINALLY("Missing catch or finally after try"),
     NO_ITERATION_STATEMENT("Illegal continue statement: no surrounding iteration statement"),
     REST_DEFAULT_INITIALIZER("Rest parameter may not have a default initializer"),

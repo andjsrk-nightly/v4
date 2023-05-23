@@ -1,16 +1,13 @@
 package io.github.andjsrk.v4.parse.node
 
-import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class IfNode(
+sealed class IfNode<N: Node>( // used generic parameter to coerce both `then` and `else` to be of same type
     val test: ExpressionNode,
-    override val body: StatementNode,
-    val elseBody: StatementNode?,
-    startRange: Range,
-): StatementNode, HasStatementBody {
-    override val childNodes = listOf(test, body, elseBody)
-    override val range = startRange..(elseBody ?: body).range
+    val then: N,
+    open val `else`: N?,
+): NonAtomicNode {
+    override val childNodes = listOf(test, then, `else`)
     override fun toString() =
-        stringifyLikeDataClass(::test, ::body, ::elseBody, ::range)
+        stringifyLikeDataClass(::test, ::then, ::`else`, ::range)
 }

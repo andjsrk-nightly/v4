@@ -478,7 +478,7 @@ internal class ParserTest {
         /**
          * Note: async cases must be second statement.
          */
-        fun ProgramNode.forBothSyncAndAsync(block: ArrowFunctionNode.(Boolean) -> Unit) {
+        fun ModuleNode.forBothSyncAndAsync(block: ArrowFunctionNode.(Boolean) -> Unit) {
             (0..1).forEach {
                 val isAsyncCase = it == 1
 
@@ -795,7 +795,7 @@ internal class ParserTest {
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
     }
     @Test
-    fun testIf() {
+    fun testIfStatement() {
         """
             if (true);
         """.shouldBeValidStatementAnd<IfStatementNode> {
@@ -874,6 +874,24 @@ internal class ParserTest {
             assertIs<EmptyStatementNode>(body)
         }
     }
+    @Test
+    fun testIterationFlowControlStatement() {
+        """
+            for (;;) continue
+        """.shouldBeValidStatementAnd<NormalForNode> {
+            assertIs<ContinueNode>(body)
+        }
+
+        """
+            for (;;) break
+        """.shouldBeValidStatementAnd<NormalForNode> {
+            assertIs<BreakNode>(body)
+        }
+
+        """
+            break
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_TOKEN_IDENTIFIER/* temp */)
+    }
 }
 
 private inline fun <reified T: Node> MaybeRestNode.unwrapNonRest() =
@@ -911,11 +929,11 @@ private inline fun <reified Expr: ExpressionNode> Code.shouldBeValidExpressionAn
     shouldBeValidAnd(Parser::parseExpression, block)
 private inline fun <reified Stmt: StatementNode> Code.shouldBeValidStatementAnd(block: Stmt.() -> Unit) =
     shouldBeValidAnd(
-        Parser::parseAnyStatement,
+        Parser::parseModuleItem,
         block,
     )
-private inline fun Code.shouldBeValidProgramAnd(block: ProgramNode.() -> Unit) =
-    shouldBeValidAnd(Parser::parseProgram, block)
+private inline fun Code.shouldBeValidProgramAnd(block: ModuleNode.() -> Unit) =
+    shouldBeValidAnd(Parser::parseModule, block)
 private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: ErrorKind, args: List<String>? = null, range: Range? = null) {
     val error = createParser(this).parseUnsuccessfully(parseFn)
     assert(error.kind == kind) {
@@ -935,13 +953,13 @@ private fun Code.shouldBeInvalidExpressionWithError(kind: ErrorKind, args: List<
     shouldBeInvalidWithError(Parser::parseExpression, kind, args, range)
 private fun Code.shouldBeInvalidStatementWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
     shouldBeInvalidWithError(
-        Parser::parseAnyStatement,
+        Parser::parseModuleItem,
         kind,
         args,
         range,
     )
 private fun Code.shouldBeInvalidProgramWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
-    shouldBeInvalidWithError(Parser::parseProgram, kind, args, range)
+    shouldBeInvalidWithError(Parser::parseModule, kind, args, range)
 private inline fun <N: Node> Parser.parseSuccessfully(parseFn: Parser.() -> N?) =
     parseFn().let { node ->
         assert(!hasError) {
@@ -959,8 +977,6 @@ private inline fun Parser.parseUnsuccessfully(parseFn: Parser.() -> Node?) =
         assert(hasError)
         error!!
     }
-private fun Parser.parseAnyStatement() =
-    parseStatement(true, true)
 private fun createParser(code: Code) =
     code.trimIndent()
         .let(::Tokenizer)

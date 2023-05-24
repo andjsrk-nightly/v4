@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.parse
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.mapAsSequence
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.thenTake
 import io.github.andjsrk.v4.util.isOneOf
@@ -29,7 +30,9 @@ internal fun <N: Node> Node.find(symbol: KClass<N>, predicate: (N) -> Boolean = 
             }
         is NonAtomicNode ->
             if (baseCondition.value) this as N
-            else childNodes.foldElvis { it?.find(symbol, predicate) }
+            else childNodes
+                .mapAsSequence { it?.find(symbol, predicate) }
+                .foldElvis()
         else -> baseCondition.value.thenTake { this as N }
     }
 }
@@ -41,7 +44,10 @@ internal fun <N: Node> Node.computedPropertyFind(symbol: KClass<N>, predicate: (
         is ComputedPropertyKeyNode -> find(symbol, predicate)
         is FixedParametersMethodNode -> name.computedPropertyFind(symbol, predicate)
         is FieldNode -> name.computedPropertyFind(symbol, predicate)
-        is ClassNode -> elements.foldElvis { it.computedPropertyFind(symbol, predicate) }
+        is ClassNode ->
+            elements
+                .mapAsSequence { it.computedPropertyFind(symbol, predicate) }
+                .foldElvis()
         else -> null
     }
 
@@ -64,7 +70,8 @@ internal fun FixedParametersMethodNode.findDirectSuperCall() =
         is GetterNode -> listOf(body)
         is SetterNode -> listOf(parameter, body)
     }
-        .foldElvis { it.find(SuperCallNode::class) }
+        .mapAsSequence { it.find(SuperCallNode::class) }
+        .foldElvis()
 
 @EsSpec("AssignmentTargetType")
 internal fun ExpressionNode.isValidAssignmentTarget(): Boolean =

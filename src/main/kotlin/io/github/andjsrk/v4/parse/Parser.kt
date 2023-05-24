@@ -8,14 +8,6 @@ import io.github.andjsrk.v4.error.ErrorKind
 import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.parse.ReservedWord.*
 import io.github.andjsrk.v4.parse.node.*
-import io.github.andjsrk.v4.parse.node.BinaryExpressionNode
-import io.github.andjsrk.v4.parse.node.ExpressionNode
-import io.github.andjsrk.v4.parse.node.IdentifierNode
-import io.github.andjsrk.v4.parse.node.ThisNode
-import io.github.andjsrk.v4.parse.node.ArrayBindingPatternNode
-import io.github.andjsrk.v4.parse.node.MaybeSpreadNode
-import io.github.andjsrk.v4.parse.node.NonSpreadNode
-import io.github.andjsrk.v4.parse.node.ArrayLiteralNode
 import io.github.andjsrk.v4.thenAlso
 import io.github.andjsrk.v4.tokenize.Token
 import io.github.andjsrk.v4.tokenize.TokenType
@@ -39,6 +31,19 @@ class Parser(private val tokenizer: Tokenizer) {
         private set
     val hasError get() =
         error != null
+    private val stmtParseCtxs = Stack(
+        StatementParseContext(allowModuleItem=true),
+    )
+    private inline fun <R> withStatementParseContext(ctxProvider: StatementParseContext.() -> StatementParseContext, block: () -> R): R {
+        val ctx = ctxProvider(stmtParseCtxs.top)
+        stmtParseCtxs.push(ctx)
+        return try {
+            block()
+        } finally {
+            val popped = stmtParseCtxs.pop()
+            assert(popped === ctx)
+        }
+    }
     /**
      * Represents stack trace about where the last call of [reportError] is.
      * This can be used for debugging.
@@ -46,13 +51,6 @@ class Parser(private val tokenizer: Tokenizer) {
     var stackTrace: List<StackTraceElement>? = null
         private set
     private var isLastStatementTerminated = true
-    private var allowDestructuring = false
-    private inline fun <R> withDestructuringAllow(block: () -> R): R {
-        allowDestructuring = true
-        val result = block()
-        allowDestructuring = false
-        return result
-    }
     private fun advance(): Token {
         val prev = currToken
         currToken = tokenizer.getNextToken()
@@ -104,11 +102,17 @@ class Parser(private val tokenizer: Tokenizer) {
     }
     private inline fun <R> ifHasNoError(valueProvider: () -> R) =
         not { hasError }.thenTake(valueProvider)
+    private fun <T> T?.pipeIfHasNoError(valueProvider: () -> T?) =
+        if (hasError) null
+        else this ?: valueProvider()
+    private fun <T> Iterable<Deferred<T>>.foldElvisIfHasNoError() =
+        this.asSequence().foldNull<_, T> { acc, it ->
+            acc ?: not { hasError }.thenTake { it() }
+        }
     private fun takeOptionalSemicolonRange(isEndOfStatement: Boolean = true) =
         takeIfMatches(SEMICOLON)?.range?.also {
             if (isEndOfStatement) isLastStatementTerminated = true
         }
-
     // <editor-fold desc="expressions">
     // <editor-fold desc="primary expressions">
     private fun Token.toIdentifier() =
@@ -292,8 +296,8 @@ class Parser(private val tokenizer: Tokenizer) {
             }
             else ->
                 listOf(
-                    lazy { parseMethod(propertyName) },
-                    lazy { PropertyShorthandNode(propertyName) },
+                    { parseMethod(propertyName) },
+                    { PropertyShorthandNode(propertyName) },
                 )
                     .foldElvisIfHasNoError()
         }
@@ -320,7 +324,13 @@ class Parser(private val tokenizer: Tokenizer) {
     }
     private fun ObjectLiteralNode.withEarlyErrorChecks() =
         takeIf {
-            when (val directSuperCall = elements.foldElvis { (it as? FixedParametersMethodNode)?.findDirectSuperCall() }) {
+            val directSuperCall = elements
+                .mapAsSequence {
+                    (it as? FixedParametersMethodNode)
+                        ?.findDirectSuperCall()
+                }
+                .foldElvis()
+            when (directSuperCall) {
                 null -> true
                 else -> {
                     reportError(SyntaxErrorKind.UNEXPECTED_SUPER, directSuperCall.range)
@@ -556,8 +566,8 @@ class Parser(private val tokenizer: Tokenizer) {
         parsePrimitiveLiteral() ?: parseIdentifier() ?: when (currToken.type) {
             IDENTIFIER -> // now there are only keywords except primitive literals
                 listOf(
-                    lazy { parseThis() },
-                    lazy { parseClassExpression() },
+                    { parseThis() },
+                    { parseClassExpression() },
                 )
                     .foldElvisIfHasNoError()
             LEFT_PARENTHESIS -> parseCoverParenthesizedExpressionAndArrowParameterList()
@@ -702,16 +712,14 @@ class Parser(private val tokenizer: Tokenizer) {
         val args = parseArguments() ?: return null
         return NewExpressionNode(memberExpr, args, newToken.range)
     }
-    private fun <T> Iterable<Lazy<T>>.foldElvisIfHasNoError() =
-        foldElvis { ifHasNoError { it.value } }
     /**
      * Parses [LeftHandSideExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LeftHandSideExpression).
      */
     @Careful(false)
     private fun parseLeftHandSideExpression() =
         listOf(
-            lazy { parseNewExpression() },
-            lazy { parseCall(null) },
+            { parseNewExpression() },
+            { parseCall(null) },
         )
             .foldElvisIfHasNoError()
     /**
@@ -1015,32 +1023,30 @@ class Parser(private val tokenizer: Tokenizer) {
                 encounteredInvalid = true
             }
 
-        withDestructuringAllow {
-            while (currToken.type != RIGHT_PARENTHESIS) {
-                if (!shouldBreakIfInvalid && encounteredInvalid) {
-                    // will advance until encounter right parenthesis to determine branch of CoverParenthesizedExpressionAndArrowParameterList
-                    advance()
-                    continue
-                }
-
-                if (!skippedComma) {
-                    reportUnexpectedToken()
-                    encounterInvalidOrNull() ?: return null
-                }
-
-                if (currToken.type == ELLIPSIS) {
-                    val restElement = parseBindingRestElement()
-                    if (restElement != null) {
-                        elements += restElement
-                        if (shouldBreakIfInvalid) break
-                    } else encounterInvalidOrNull() ?: return null
-                } else {
-                    val element = parseBindingElement()
-                    if (element != null) elements += element
-                    else encounterInvalidOrNull() ?: return null
-                }
-                skippedComma = skip(COMMA)
+        while (currToken.type != RIGHT_PARENTHESIS) {
+            if (!shouldBreakIfInvalid && encounteredInvalid) {
+                // will advance until encounter right parenthesis to determine branch of CoverParenthesizedExpressionAndArrowParameterList
+                advance()
+                continue
             }
+
+            if (!skippedComma) {
+                reportUnexpectedToken()
+                encounterInvalidOrNull() ?: return null
+            }
+
+            if (currToken.type == ELLIPSIS) {
+                val restElement = parseBindingRestElement()
+                if (restElement != null) {
+                    elements += restElement
+                    if (shouldBreakIfInvalid) break
+                } else encounterInvalidOrNull() ?: return null
+            } else {
+                val element = parseBindingElement()
+                if (element != null) elements += element
+                else encounterInvalidOrNull() ?: return null
+            }
+            skippedComma = skip(COMMA)
         }
         val endRange = expect(RIGHT_PARENTHESIS)?.range ?: return null
 
@@ -1124,35 +1130,40 @@ class Parser(private val tokenizer: Tokenizer) {
     @Careful(false)
     private fun parseAssignment(): ExpressionNode? =
         parseYield()
-            ?: parseIfExpression()
-                ?.let {
-                    when (it) {
-                        is IdentifierNode ->
-                            if (currToken.type == ARROW) parseArrowFunctionWithoutParenthesis(it)
-                            else it
-                        is UniqueFormalParametersNode ->
-                            // we are sure of current token is =>
-                            parseArrowFunctionByUniqueFormalParameters(it)
-                        else -> it
-                    }
-                }
-                ?.let {
-                    when {
-                        it.isLeftHandSide -> {
-                            if (currToken.type.not { isAssignLike }) return@let it
-                            val operation = BinaryOp.fromTokenType(currToken.type)
-                            advance()
-                            val right = parseAssignment() ?: return@let null
-                            BinaryExpressionNode(it, right, operation)
+            .pipeIfHasNoError {
+                parseIfExpression()
+                    ?.let {
+                        when (it) {
+                            is IdentifierNode ->
+                                if (currToken.type == ARROW) parseArrowFunctionWithoutParenthesis(it)
+                                else it
+
+                            is UniqueFormalParametersNode ->
+                                // we are sure of current token is =>
+                                parseArrowFunctionByUniqueFormalParameters(it)
+
+                            else -> it
                         }
-                        else -> it
                     }
-                }
-                ?: when {
-                    currToken.isKeyword(ASYNC) || currToken.isKeyword(GEN) -> parseSpecialFunction()
-                    currToken.isKeyword(METHOD) -> parseMethodExpression(false, false, null)
-                    else -> reportUnexpectedToken()
-                }
+                    ?.let {
+                        when {
+                            it.isLeftHandSide -> {
+                                if (currToken.type.not { isAssignLike }) return@let it
+                                val operation = BinaryOp.fromTokenType(currToken.type)
+                                advance()
+                                val right = parseAssignment() ?: return@let null
+                                BinaryExpressionNode(it, right, operation)
+                            }
+
+                            else -> it
+                        }
+                    }
+                    ?: when {
+                        currToken.isKeyword(ASYNC) || currToken.isKeyword(GEN) -> parseSpecialFunction()
+                        currToken.isKeyword(METHOD) -> parseMethodExpression(false, false, null)
+                        else -> reportUnexpectedToken()
+                    }
+            }
     /**
      * Parses [Expression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Expression).
      */
@@ -1173,25 +1184,181 @@ class Parser(private val tokenizer: Tokenizer) {
         )
     }
     // </editor-fold>
+    /**
+     * Parses [ExpressionStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ExpressionStatement).
+     */
+    @Careful(false)
+    private fun parseExpressionStatement(): ExpressionStatementNode? {
+        val expr = parseExpression() ?: return null
+        return ExpressionStatementNode(expr, takeOptionalSemicolonRange())
+    }
+    /**
+     * Parses [BlockStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-BlockStatement).
+     */
+    @ReportsErrorDirectly
+    private fun parseBlockStatement(): BlockStatementNode? {
+        val statements = mutableListOf<StatementNode>()
+
+        val startRange = expect(LEFT_BRACE)?.range ?: return null
+        while (currToken.type != RIGHT_BRACE) statements += parseStatement() ?: return null
+        val endRange = expect(RIGHT_BRACE)?.range ?: return null
+
+        return BlockStatementNode(statements, startRange..endRange)
+    }
+    /**
+     * Parses [IfStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-IfStatement).
+     */
+    @ReportsErrorDirectly
+    private fun parseIfStatement(): IfStatementNode? {
+        val startRange = takeIfMatchesKeyword(IF)?.range ?: return null
+
+        expect(LEFT_PARENTHESIS) ?: return null
+        val test = parseExpression() ?: return null
+        expect(RIGHT_PARENTHESIS) ?: return null
+        val then = parseStatement() ?: return null
+        takeIfMatchesKeyword(ELSE) ?: return IfStatementNode(test, then, null, startRange)
+        val `else` = parseStatement() ?: return null
+
+        return IfStatementNode(test, then, `else`, startRange)
+    }
+    /**
+     * Parses [ForStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ForStatement) and [ForInOfStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ForInOfStatement).
+     */
+    @ReportsErrorDirectly
+    private fun parseFor(): ForNode? {
+        fun parseForHeadElement(givenElement: Node? = null, after: TokenType = SEMICOLON): Node? {
+            if (takeIfMatches(after) != null) return null
+
+            val expr = givenElement ?: parseExpression() ?: return reportUnexpectedToken()
+            expect(after) ?: return null
+            return expr
+        }
+
+        val startRange = takeIfMatchesKeyword(FOR)?.range ?: return null
+        expect(LEFT_PARENTHESIS) ?: return null
+        val isInitOmittedNormalFor = currToken.type == SEMICOLON // do not take because ForDeclaration needs to be parsed on below
+        val declaration = parseLexicalDeclarationWithoutInitializer()
+        if (hasError) return null
+        return when {
+            declaration != null && currToken.isKeyword(IN) -> {
+                advance()
+                val target = parseAssignment() ?: return null
+                expect(RIGHT_PARENTHESIS) ?: return null
+                val body = parseStatement() ?: return null
+                ForInNode(declaration, target, body, startRange)
+            }
+            else -> {
+                val init = if (declaration == null) {
+                    if (isInitOmittedNormalFor) null
+                    else reportUnexpectedToken()
+                } else parseLexicalDeclaration(declaration, false)
+                expect(SEMICOLON)
+                if (hasError) return null
+                val test = parseForHeadElement() as ExpressionNode?
+                if (hasError) return null
+                val update = parseForHeadElement(after=RIGHT_PARENTHESIS) as ExpressionNode?
+                if (hasError) return null
+                // right parenthesis will be handled on update parsing
+                val body = parseStatement() ?: return null
+                NormalForNode(init, test, update, body, startRange)
+            }
+        }
+    }
+    /**
+     * Parses [WhileStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-WhileStatement).
+     */
+    @ReportsErrorDirectly
+    private fun parseWhile(): WhileNode? {
+        val startRange = takeIfMatchesKeyword(WHILE)?.range ?: return null
+        val atLeastOnce = takeIfMatches(PLUS) != null
+        expect(LEFT_PARENTHESIS) ?: return null
+        val test = parseExpression() ?: return null
+        expect(RIGHT_PARENTHESIS) ?: return null
+        val body = parseStatement() ?: return null
+        return WhileNode(test, body, atLeastOnce, startRange)
+    }
+    /**
+     * Parses [IterationStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-IterationStatement).
+     */
+    @Careful(false)
+    private fun parseIterationStatement(): IterationStatementNode? {
+        return withStatementParseContext({ copy(allowIterationFlowControlStatement=true) }) {
+            listOf(
+                ::parseFor,
+                ::parseWhile,
+            )
+                .foldElvisIfHasNoError()
+        }
+    }
+    /**
+     * Parses [ContinueStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ContinueStatement).
+     */
+    @Careful
+    private fun parseContinue(): ContinueNode? {
+        val continueTokenRange = takeIfMatchesKeyword(CONTINUE)?.range ?: return null
+        return ContinueNode(continueTokenRange, takeOptionalSemicolonRange())
+    }
+    /**
+     * Parses [BreakStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-BreakStatement).
+     */
+    @Careful
+    private fun parseBreak(): BreakNode? {
+        val breakTokenRange = takeIfMatchesKeyword(BREAK)?.range ?: return null
+        return BreakNode(breakTokenRange, takeOptionalSemicolonRange())
+    }
+    /**
+     * Parses [Statement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-Statement).
+     */
+    @Careful(false)
+    private fun parseStatement(): StatementNode? {
+        val ctx = stmtParseCtxs.top
+        return when (currToken.type) {
+            SEMICOLON -> EmptyStatementNode(advance().range)
+            IDENTIFIER -> listOf(
+                ::parseIfStatement,
+                ::parseIterationStatement,
+                {
+                    ctx.allowIterationFlowControlStatement.thenTake {
+                        listOf(
+                            ::parseContinue,
+                            ::parseBreak,
+                        )
+                            .foldElvisIfHasNoError()
+                    }
+                },
+                ::parseExpressionStatement,
+            )
+                .foldElvisIfHasNoError()
+            LEFT_BRACE -> parseBlockStatement()
+            else -> parseExpressionStatement()
+        }
+    }
+    /**
+     * Parses [Initializer](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Initializer).
+     */
     @Careful(false)
     private fun parseInitializer(): InitializerNode? {
         val startRange = takeIfMatches(ASSIGN)?.range ?: return null
         val value = parseAssignment() ?: return null
         return InitializerNode(value, startRange)
     }
+    /**
+     * Parses [LexicalDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-LexicalDeclaration) without [Initializer](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Initializer).
+     * @see LexicalDeclarationWithoutInitializerNode
+     */
     @ReportsErrorDirectly
     private fun parseLexicalDeclarationWithoutInitializer(): LexicalDeclarationWithoutInitializerNode? {
         val kindToken = takeIfMatchesKeyword(VAR) ?: takeIfMatchesKeyword(LET) ?: return null
 
         val kind = LexicalDeclarationKind.valueOf(kindToken.rawContent.uppercase())
         val startToken = currToken
-        val binding = withDestructuringAllow {
-            parseIdentifier() ?: parseBindingPattern() ?: return reportUnexpectedToken(startToken)
-        }
+        val binding = parseIdentifier() ?: parseBindingPattern() ?: return reportUnexpectedToken(startToken)
 
         return LexicalDeclarationWithoutInitializerNode(kind, binding, startToken.range)
+            .withEarlyErrorChecks()
     }
     /**
+     * Parses [LexicalDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-LexicalDeclaration).
      * @param inNormalContext
      * Indicates whether the lexical declaration is in normal context;
      * There are some special context such as for statement.
@@ -1220,13 +1387,12 @@ class Parser(private val tokenizer: Tokenizer) {
                 takeOptionalSemicolonRange()
             },
         )
-            .withEarlyErrorChecks()
     }
     /**
      * See [Early Errors](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-let-and-const-declarations-static-semantics-early-errors).
      */
     @ReportsErrorDirectly
-    private fun <N: LexicalDeclarationWithoutInitializerNode> N.withEarlyErrorChecks() =
+    private fun LexicalDeclarationWithoutInitializerNode.withEarlyErrorChecks() =
         takeIf {
             val names = boundNames()
             val rawNames = names.map { it.value }
@@ -1238,6 +1404,9 @@ class Parser(private val tokenizer: Tokenizer) {
                 }
             }
         }
+    /**
+     * Parses [ClassDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-functions-and-classes.html#prod-ClassDeclaration).
+     */
     @ReportsErrorDirectly
     private fun parseClassDeclaration(): ClassDeclarationNode? {
         val startRange = takeIfMatchesKeyword(CLASS)?.range ?: return null
@@ -1246,119 +1415,38 @@ class Parser(private val tokenizer: Tokenizer) {
         return ClassDeclarationNode(name, tail.parent, tail.elements, startRange..tail.range)
             .withEarlyErrorChecks()
     }
+    /**
+     * Parses [Declaration](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-Declaration).
+     */
     @Careful(false)
     private fun parseDeclaration() =
         listOf(
-            lazy { parseLexicalDeclaration() },
-            lazy { parseClassDeclaration() },
+            { parseLexicalDeclaration() },
+            ::parseClassDeclaration,
         )
             .foldElvisIfHasNoError()
-    @ReportsErrorDirectly
-    private fun parseBlockStatement(): BlockStatementNode? {
-        val statements = mutableListOf<StatementNode>()
-
-        val startRange = expect(LEFT_BRACE)?.range ?: return null
-        while (currToken.type != RIGHT_BRACE) statements += parseStatement() ?: return null
-        val endRange = expect(RIGHT_BRACE)?.range ?: return null
-
-        return BlockStatementNode(statements, startRange..endRange)
-    }
-    @ReportsErrorDirectly
-    private fun parseIfStatement(): IfStatementNode? {
-        val startRange = takeIfMatchesKeyword(IF)?.range ?: return null
-
-        expect(LEFT_PARENTHESIS) ?: return null
-        val test = parseExpression() ?: return null
-        expect(RIGHT_PARENTHESIS) ?: return null
-        val body = parseStatement() ?: return null
-        takeIfMatchesKeyword(ELSE) ?: return IfStatementNode(test, body, null, startRange)
-        val elseBody = parseStatement() ?: return null
-
-        return IfStatementNode(test, body, elseBody, startRange)
-    }
-    private fun parseFor(): ForNode? {
-        fun parseForHeadElement(givenElement: Node? = null, after: TokenType = SEMICOLON): Node? {
-            if (takeIfMatches(after) != null) return null
-
-            val expr = givenElement ?: parseExpression() ?: return reportUnexpectedToken()
-            expect(after) ?: return null
-            return expr
-        }
-
-        val startRange = takeIfMatchesKeyword(FOR)?.range ?: return null
-        expect(LEFT_PARENTHESIS) ?: return null
-        val isInitOmittedNormalFor = currToken.type == SEMICOLON // do not *take* because ForDeclaration needs to be parsed on below
-        val declaration = parseLexicalDeclarationWithoutInitializer()
-        if (hasError) return null
-        return when {
-            declaration != null && currToken.isKeyword(IN) -> {
-                advance()
-                val target = parseAssignment() ?: return null
-                expect(RIGHT_PARENTHESIS) ?: return null
-                val body = parseStatement() ?: return null
-                ForInNode(declaration, target, body, startRange)
-            }
-            else -> {
-                val init = if (declaration == null) {
-                    if (isInitOmittedNormalFor) null
-                    else reportUnexpectedToken()
-                } else parseLexicalDeclaration(declaration, false)
-                expect(SEMICOLON)
-                if (hasError) return null
-                val test = parseForHeadElement() as ExpressionNode?
-                if (hasError) return null
-                val update = parseForHeadElement(after=RIGHT_PARENTHESIS) as ExpressionNode?
-                if (hasError) return null
-                // right parenthesis will be handled on update parsing
-                val body = parseStatement() ?: return null
-                NormalForNode(init, test, update, body, startRange)
-            }
-        }
-    }
-    @ReportsErrorDirectly
-    private fun parseWhile(): WhileNode? {
-        val startRange = takeIfMatchesKeyword(WHILE)?.range ?: return null
-        val atLeastOnce = takeIfMatches(PLUS) != null
-        expect(LEFT_PARENTHESIS) ?: return null
-        val test = parseExpression() ?: return null
-        expect(RIGHT_PARENTHESIS) ?: return null
-        val body = parseStatement(allowDeclaration=false) ?: return null
-        return WhileNode(test, body, atLeastOnce, startRange)
-    }
+    /**
+     * Parses [StatementListItem](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-StatementListItem).
+     */
     @Careful(false)
-    private fun parseIterationStatement(): IterationStatementNode? =
+    private fun parseStatementListItem() =
         listOf(
-            lazy { parseFor() },
-            lazy { parseWhile() },
+            ::parseDeclaration,
+            ::parseStatement,
         )
             .foldElvisIfHasNoError()
+    /**
+     * Parses [ModuleItem](https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#prod-ModuleItem).
+     */
     @Careful(false)
-    private fun parseExpressionStatement(): ExpressionStatementNode? {
-        val expr = parseExpression() ?: return null
-        return ExpressionStatementNode(expr, takeOptionalSemicolonRange())
-    }
-    @Careful(false)
-    fun parseStatement(
-        allowModuleItem: Boolean = false,
-        allowDeclaration: Boolean = false,
-    ): StatementNode? =
-        when (currToken.type) {
-            SEMICOLON -> EmptyStatementNode(advance().range)
-            IDENTIFIER -> listOf(
-                lazy { allowDeclaration.thenTake { parseDeclaration() } },
-                lazy { parseIfStatement() },
-                lazy { parseIterationStatement() },
-                lazy { parseExpressionStatement() },
-            )
-                .foldElvisIfHasNoError()
-            LEFT_BRACE -> parseBlockStatement()
-            else -> parseExpressionStatement()
-        }
-    @Careful(false)
-    private fun parseModuleItem() =
-        parseStatement(allowModuleItem=true, allowDeclaration=true)
+    fun parseModuleItem() =
+        listOf(
+            // TODO: import/export
+            ::parseStatementListItem,
+        )
+            .foldElvisIfHasNoError()
     @ReportsErrorDirectly
-    fun parseProgram(): ProgramNode? {
+    fun parseModule(): ModuleNode? {
         val statements = mutableListOf<StatementNode>()
 
         // TODO: Strict ASI behavior
@@ -1370,7 +1458,7 @@ class Parser(private val tokenizer: Tokenizer) {
             isLastStatementTerminated = isLastStatementTerminated || currToken.isPrevLineTerminator
         }
 
-        return ProgramNode(statements)
+        return ModuleNode(statements)
     }
 }
 

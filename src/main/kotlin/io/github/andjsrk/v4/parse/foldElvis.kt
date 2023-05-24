@@ -1,4 +1,7 @@
 package io.github.andjsrk.v4.parse
 
-internal fun <T, R> Iterable<T>.foldElvis(operation: (T) -> R?) =
-    fold(null as R?) { acc, it -> acc ?: operation(it) }
+internal fun <T> Iterable<T?>.foldElvis() =
+    foldNull<_, T> { acc, it -> acc ?: it }
+
+internal fun <T> Sequence<T?>.foldElvis() =
+    foldNull<_, T> { acc, it -> acc ?: it }

@@ -208,14 +208,14 @@ internal class ParserTest {
         }
     }
     @Test
-    fun testDistinguishBetweenObjectLiteralAndBlockStatement() {
+    fun testDistinguishBetweenObjectLiteralAndBlock() {
         """
             {}
             [{}]
-        """.shouldBeValidProgramAnd {
-            assertIs<BlockStatementNode>(statements[0])
+        """.shouldBeValidModuleAnd {
+            assertIs<BlockNode>(elements[0])
 
-            val obj = statements[1]
+            val obj = elements[1]
                 .unwrapExprStmt<ArrayLiteralNode>()
                 .elements[0]
                 .expression
@@ -312,11 +312,11 @@ internal class ParserTest {
     fun testInvalidCall() {
         """
             super?.()
-        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.SUPER_OPTIONAL_CHAIN)
 
         """
             import?.()
-        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf("?."))
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf("?."))
     }
     @Test
     fun testOrdinaryCallMixedWithMemberExpression() {
@@ -376,8 +376,8 @@ internal class ParserTest {
             a
             ++
             b
-        """.shouldBeValidProgramAnd {
-            val exprs = statements.map { it.unwrapExprStmt<ExpressionNode>() }
+        """.shouldBeValidModuleAnd {
+            val exprs = elements.map { it.unwrapExprStmt<ExpressionNode>() }
 
             exprs[0].assertIdentifierNamed("a")
             exprs[1].assertTypeThen<UpdateNode> {
@@ -388,8 +388,8 @@ internal class ParserTest {
         """
             a
             ++b
-        """.shouldBeValidProgramAnd {
-            val exprs = statements.map { it.unwrapExprStmt<ExpressionNode>() }
+        """.shouldBeValidModuleAnd {
+            val exprs = elements.map { it.unwrapExprStmt<ExpressionNode>() }
 
             exprs[0].assertIdentifierNamed("a")
             exprs[1].assertTypeThen<UpdateNode> {
@@ -432,7 +432,7 @@ internal class ParserTest {
 
         """
             -1 ** 1
-        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION)
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION)
     }
     @Test
     fun testMultiplication() {
@@ -482,14 +482,14 @@ internal class ParserTest {
             (0..1).forEach {
                 val isAsyncCase = it == 1
 
-                block(statements[it].unwrapExprStmt(), isAsyncCase)
+                block(elements[it].unwrapExprStmt(), isAsyncCase)
             }
         }
 
         """
             () => 0
             async () => 0
-        """.shouldBeValidProgramAnd {
+        """.shouldBeValidModuleAnd {
             forBothSyncAndAsync { isAsyncCase ->
                 assert(isAsyncCase == isAsync && !isGenerator)
                 assert(parameters.elements.isEmpty())
@@ -504,10 +504,10 @@ internal class ParserTest {
             async () => {
                 0
             }
-        """.shouldBeValidProgramAnd {
+        """.shouldBeValidModuleAnd {
             forBothSyncAndAsync {
-                body.assertTypeThen<BlockStatementNode> {
-                    assert(statements.size == 1)
+                body.assertTypeThen<BlockNode> {
+                    assert(elements.size == 1)
                 }
             }
         }
@@ -515,7 +515,7 @@ internal class ParserTest {
         """
             x => 0
             async x => 0
-        """.shouldBeValidProgramAnd {
+        """.shouldBeValidModuleAnd {
             forBothSyncAndAsync { isAsyncCase ->
                 assert(isAsyncCase == isAsync)
                 assert(parameters.elements.size == 1)
@@ -533,12 +533,12 @@ internal class ParserTest {
 
         """
             (...a, b) => 0
-        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.ELEMENT_AFTER_REST)
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.ELEMENT_AFTER_REST)
 
         """
             ([a, b = 1]) => 0
             async ([a, b = 1]) => 0
-        """.shouldBeValidProgramAnd {
+        """.shouldBeValidModuleAnd {
             forBothSyncAndAsync {
                 val params = parameters.elements
                 assert(params.size == 1)
@@ -564,7 +564,7 @@ internal class ParserTest {
         """
             ([]) => 0
             async ([]) => 0
-        """.shouldBeValidProgramAnd {
+        """.shouldBeValidModuleAnd {
             forBothSyncAndAsync {
                 assert(
                     parameters.elements[0].unwrapNonRest<ArrayBindingPatternNode>()
@@ -576,7 +576,7 @@ internal class ParserTest {
         """
             ([[[a]]]) => 0
             async ([[[a]]]) => 0
-        """.shouldBeValidProgramAnd {
+        """.shouldBeValidModuleAnd {
             forBothSyncAndAsync {
                 parameters.elements[0].unwrapNonRest<ArrayBindingPatternNode>()
                     .elements[0].unwrapNonRest<ArrayBindingPatternNode>()
@@ -588,7 +588,7 @@ internal class ParserTest {
         """
             (...{ a }) => 0
             async (...{ a }) => 0
-        """.shouldBeValidProgramAnd {
+        """.shouldBeValidModuleAnd {
             forBothSyncAndAsync {
                 parameters.elements[0].unwrapRest<ObjectBindingPatternNode>()
                     .elements[0].unwrapNonRest<IdentifierNode>()
@@ -598,7 +598,7 @@ internal class ParserTest {
         """
             ({ ab: a, b = 1, c, ...d }) => 0
             async ({ ab: a, b = 1, c, ...d }) => 0
-        """.shouldBeValidProgramAnd {
+        """.shouldBeValidModuleAnd {
             forBothSyncAndAsync {
                 val params = parameters.elements
                 assert(params.size == 1)
@@ -632,7 +632,7 @@ internal class ParserTest {
         """
             ()
             => 0
-        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf("=>"))
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf("=>"))
 
         """
             (a = await 0) => 0
@@ -640,7 +640,7 @@ internal class ParserTest {
 
         """
             (a = yield 0) => 0
-        """.shouldBeInvalidProgramWithError(SyntaxErrorKind.YIELD_IN_PARAMETER)
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.YIELD_IN_PARAMETER)
 
         """
             ({ ...{} }) => 0
@@ -649,7 +649,7 @@ internal class ParserTest {
         """
             gen () => 0
             async gen () => 0
-        """.shouldBeValidProgramAnd {
+        """.shouldBeValidModuleAnd {
             forBothSyncAndAsync { isAsyncCase ->
                 assert(isAsyncCase == isAsync && isGenerator)
             }
@@ -883,6 +883,10 @@ internal class ParserTest {
         }
 
         """
+            continue
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.ILLEGAL_CONTINUE)
+
+        """
             for (;;) break
         """.shouldBeValidStatementAnd<NormalForNode> {
             assertIs<BreakNode>(body)
@@ -890,7 +894,45 @@ internal class ParserTest {
 
         """
             break
-        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_TOKEN_IDENTIFIER/* temp */)
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.ILLEGAL_BREAK)
+    }
+    @Test
+    fun testReturn() {
+        """
+            () => {
+                return 0
+            }
+        """.shouldBeValidStatementAnd<ExpressionStatementNode> {
+            unwrapExprStmt<ArrowFunctionNode>().run {
+                body.assertTypeThen<BlockNode> {
+                    elements[0].assertTypeThen<ReturnNode> {
+                        assertIs<NumberLiteralNode>(expression)
+                    }
+                }
+            }
+        }
+
+        """
+            () => {
+                return
+                0
+            }
+        """.shouldBeValidStatementAnd<ExpressionStatementNode> {
+            unwrapExprStmt<ArrowFunctionNode>().run {
+                body.assertTypeThen<BlockNode> {
+                    elements[0].assertTypeThen<ReturnNode> {
+                        assertNull(expression)
+                    }
+                    elements[1].assertTypeThen<ExpressionStatementNode> {
+                        assertIs<NumberLiteralNode>(expression)
+                    }
+                }
+            }
+        }
+
+        """
+            return
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.ILLEGAL_RETURN)
     }
 }
 
@@ -932,7 +974,7 @@ private inline fun <reified Stmt: StatementNode> Code.shouldBeValidStatementAnd(
         Parser::parseModuleItem,
         block,
     )
-private inline fun Code.shouldBeValidProgramAnd(block: ModuleNode.() -> Unit) =
+private inline fun Code.shouldBeValidModuleAnd(block: ModuleNode.() -> Unit) =
     shouldBeValidAnd(Parser::parseModule, block)
 private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: ErrorKind, args: List<String>? = null, range: Range? = null) {
     val error = createParser(this).parseUnsuccessfully(parseFn)
@@ -958,7 +1000,7 @@ private fun Code.shouldBeInvalidStatementWithError(kind: ErrorKind, args: List<S
         args,
         range,
     )
-private fun Code.shouldBeInvalidProgramWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
+private fun Code.shouldBeInvalidModuleWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
     shouldBeInvalidWithError(Parser::parseModule, kind, args, range)
 private inline fun <N: Node> Parser.parseSuccessfully(parseFn: Parser.() -> N?) =
     parseFn().let { node ->

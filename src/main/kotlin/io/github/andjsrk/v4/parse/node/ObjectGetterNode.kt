@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ObjectGetterNode(
     override val name: ObjectLiteralKeyNode,
-    override val body: BlockStatementNode,
+    override val body: BlockNode,
     startRange: Range,
 ): GetterNode, ObjectElementNode {
     override val childNodes = listOf(name, body)

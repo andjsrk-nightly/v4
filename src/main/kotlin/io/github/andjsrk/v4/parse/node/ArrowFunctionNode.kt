@@ -11,7 +11,7 @@ class ArrowFunctionNode(
     startRange: Range,
 ): SpecialFunctionExpressionNode {
     init {
-        require(body is ExpressionNode || body is BlockStatementNode)
+        require(body is ExpressionNode || body is BlockNode)
     }
     override val childNodes = listOf(parameters, body)
     override val range = startRange..body.range

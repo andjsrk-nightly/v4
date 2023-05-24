@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class MethodExpressionNode(
     override val parameters: UniqueFormalParametersNode,
-    override val body: BlockStatementNode,
+    override val body: BlockNode,
     override val isAsync: Boolean,
     override val isGenerator: Boolean,
     startRange: Range,

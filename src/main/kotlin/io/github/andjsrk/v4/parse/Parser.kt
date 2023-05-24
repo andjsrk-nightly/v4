@@ -37,9 +37,7 @@ class Parser(private val tokenizer: Tokenizer) {
     private inline fun <R> withStatementParseContext(ctxProvider: StatementParseContext.() -> StatementParseContext, block: () -> R): R {
         val ctx = ctxProvider(stmtParseCtxs.top)
         stmtParseCtxs.push(ctx)
-        return try {
-            block()
-        } finally {
+        return try { block() } finally {
             val popped = stmtParseCtxs.pop()
             assert(popped === ctx)
         }
@@ -213,7 +211,9 @@ class Parser(private val tokenizer: Tokenizer) {
     @Careful(false)
     private fun parseMethod(name: ObjectLiteralKeyNode, isAsync: Boolean, isGenerator: Boolean, startRange: Range): ObjectMethodNode? {
         val parameters = parseArrowFormalParameters() ?: return null
-        val body = parseBlockStatement() ?: return null
+        val body = withStatementParseContext({ copy(allowReturn=true) }) {
+            parseBlock() ?: return null
+        }
         return ObjectMethodNode(name, parameters, body, isAsync, isGenerator, startRange)
     }
     @Careful(false)
@@ -235,7 +235,7 @@ class Parser(private val tokenizer: Tokenizer) {
         return parseGeneratorMethod(name, false)
     }
     @ReportsErrorDirectly
-    private fun parseMethod(givenName: ObjectLiteralKeyNode? = null): ObjectElementNode? {
+    private fun parseMethodLike(givenName: ObjectLiteralKeyNode? = null): ObjectElementNode? {
         val name = givenName ?: parsePropertyName() ?: return null
         return (
             if (name is IdentifierNode) when {
@@ -296,7 +296,7 @@ class Parser(private val tokenizer: Tokenizer) {
             }
             else ->
                 listOf(
-                    { parseMethod(propertyName) },
+                    { parseMethodLike(propertyName) },
                     { PropertyShorthandNode(propertyName) },
                 )
                     .foldElvisIfHasNoError()
@@ -475,7 +475,9 @@ class Parser(private val tokenizer: Tokenizer) {
     private fun parseMethodExpression(isAsync: Boolean, isGenerator: Boolean, startRange: Range?): MethodExpressionNode? {
         val methodTokenRange = takeIfMatchesKeyword(METHOD)?.range ?: return null
         val params = parseArrowFormalParameters() ?: return null
-        val body = parseBlockStatement() ?: return null
+        val body = withStatementParseContext({ copy(allowReturn=true) }) {
+            parseBlock() ?: return null
+        }
         return MethodExpressionNode(params, body, isAsync, isGenerator, startRange ?: methodTokenRange)
     }
     @Careful(false)
@@ -491,7 +493,7 @@ class Parser(private val tokenizer: Tokenizer) {
         return when {
             value != null -> // field with initializer
                 FieldNode(name, value, isStatic, startRange, takeOptionalSemicolonRange(false))
-            else -> parseMethod(name).run {
+            else -> parseMethodLike(name).run {
                 when (this) {
                     // transform object elements to class elements
                     is ObjectGetterNode -> ClassGetterNode(name, body, isStatic, startRange)
@@ -610,47 +612,73 @@ class Parser(private val tokenizer: Tokenizer) {
      */
     @ReportsErrorDirectly
     private tailrec fun parseMemberExpression(`object`: ExpressionNode?, parsingNew: Boolean = false): ExpressionNode? {
-        if (`object` == null) { // base case
+        val parsingSuperProperty = `object` == null && currToken.isKeyword(SUPER)
+        val `super` = parsingSuperProperty.thenTake {
+            SuperNode(advance().range)
+        }
+        if (parsingNew && parsingSuperProperty) return reportError(SyntaxErrorKind.UNEXPECTED_SUPER, `super`!!.range)
+
+        if (`object` == null && !parsingSuperProperty) { // base case
             val primary = parsePrimaryExpression() ?: return null
             if (primary is UniqueFormalParametersNode) return primary
             return parseMemberExpression(primary, parsingNew)
         }
 
-        val member = MemberExpressionNode.Unsealed()
-        member.`object` = `object`
+        val actualObject = `object` ?: `super` ?: neverHappens()
         val questionDotToken = takeIfMatches(QUESTION_DOT)
-        member.isOptionalChain = questionDotToken != null
+        val isOptionalChain = questionDotToken != null
 
-        if (parsingNew && member.isOptionalChain) return reportError(SyntaxErrorKind.NEW_OPTIONAL_CHAIN)
+        if (parsingNew && isOptionalChain) return reportError(SyntaxErrorKind.NEW_OPTIONAL_CHAIN, questionDotToken!!.range)
+        if (parsingSuperProperty && isOptionalChain) return reportError(SyntaxErrorKind.SUPER_OPTIONAL_CHAIN, questionDotToken!!.range)
 
+        lateinit var property: ExpressionNode
+        lateinit var endRange: Range
+        var isComputed = false
         when (currToken.type) {
             LEFT_BRACKET -> {
                 advance()
-                member.property = parseExpression() ?: return reportUnexpectedToken()
-                member.endRange = expect(RIGHT_BRACKET)?.range ?: return null
-                member.isComputed = true
+                property = parseExpression() ?: return reportUnexpectedToken()
+                endRange = expect(RIGHT_BRACKET)?.range ?: return null
+                isComputed = true
             }
             DOT -> {
-                if (member.isOptionalChain) return reportUnexpectedToken()
+                if (isOptionalChain) return reportUnexpectedToken()
                 advance()
-                member.property = parseIdentifierName() ?: return reportUnexpectedToken()
-                member.endRange = member.property.range
+                property = parseIdentifierName() ?: return reportUnexpectedToken()
+                endRange = property.range
             }
             IDENTIFIER -> {
-                if (member.not { isOptionalChain }) return `object`
-                member.property = parseIdentifierName()!!
-                member.endRange = member.property.range
+                if (!isOptionalChain) {
+                    if (parsingSuperProperty) return reportError(SyntaxErrorKind.UNEXPECTED_SUPER, `super`!!.range)
+                    return `object`
+                }
+                property = parseIdentifierName()!!
+                endRange = property.range
             }
             else -> {
-                if (currToken.type == LEFT_PARENTHESIS && !parsingNew) return parseCall(`object`, member.isOptionalChain)
+                if (currToken.type == LEFT_PARENTHESIS && !parsingNew) return parseCall(actualObject, isOptionalChain)
 
                 // if it is neither member access nor call, it is an unexpected token
-                if (member.isOptionalChain) return reportUnexpectedToken()
+                if (isOptionalChain) return reportUnexpectedToken()
+                if (parsingSuperProperty) return reportError(SyntaxErrorKind.UNEXPECTED_SUPER, `super`!!.range)
 
                 return `object`
             }
         }
-        return parseMemberExpression(member.toSealed(), parsingNew)
+
+        return parseMemberExpression(
+            when (actualObject) {
+                is SuperNode -> SuperPropertyNode(`super`!!, property, isComputed, endRange)
+                else -> MemberExpressionNode(
+                    actualObject,
+                    property,
+                    isOptionalChain,
+                    isComputed,
+                    endRange,
+                )
+            },
+            parsingNew,
+        )
     }
     /**
      * Parses [SuperCall](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-SuperCall).
@@ -691,9 +719,12 @@ class Parser(private val tokenizer: Tokenizer) {
                 else -> null
             }
             else {
-                if (currToken.type != LEFT_PARENTHESIS) return callee.takeUnless { isOptionalChain }
+                if (currToken.type != LEFT_PARENTHESIS) return callee.takeUnless { isOptionalChain } ?: reportUnexpectedToken()
                 val args = parseArguments() ?: return null
-                NormalCallNode(callee, args, isOptionalChain)
+                when (callee) {
+                    is SuperNode -> SuperCallNode(callee, args)
+                    else -> NormalCallNode(callee, args, isOptionalChain)
+                }
             }
         )
     }
@@ -974,7 +1005,9 @@ class Parser(private val tokenizer: Tokenizer) {
      */
     @Careful(false)
     private fun parseConciseBody() =
-        if (currToken.type == LEFT_BRACE) parseBlockStatement()
+        if (currToken.type == LEFT_BRACE) withStatementParseContext({ copy(allowReturn=true) }) {
+            parseBlock()
+        }
         else parseAssignment()
     @ReportsErrorDirectly
     private fun parseArrowFunctionWithoutParenthesis(parameter: IdentifierNode): ArrowFunctionNode? {
@@ -1196,14 +1229,14 @@ class Parser(private val tokenizer: Tokenizer) {
      * Parses [BlockStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-BlockStatement).
      */
     @ReportsErrorDirectly
-    private fun parseBlockStatement(): BlockStatementNode? {
+    private fun parseBlock(): BlockNode? {
         val statements = mutableListOf<StatementNode>()
 
         val startRange = expect(LEFT_BRACE)?.range ?: return null
-        while (currToken.type != RIGHT_BRACE) statements += parseStatement() ?: return null
+        while (currToken.type != RIGHT_BRACE) statements += parseStatementListItem() ?: return null
         val endRange = expect(RIGHT_BRACE)?.range ?: return null
 
-        return BlockStatementNode(statements, startRange..endRange)
+        return BlockNode(statements, startRange..endRange)
     }
     /**
      * Parses [IfStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-IfStatement).
@@ -1295,7 +1328,9 @@ class Parser(private val tokenizer: Tokenizer) {
      */
     @Careful
     private fun parseContinue(): ContinueNode? {
+        val ctx = stmtParseCtxs.top
         val continueTokenRange = takeIfMatchesKeyword(CONTINUE)?.range ?: return null
+        if (ctx.not { allowIterationFlowControlStatement }) return reportError(SyntaxErrorKind.ILLEGAL_CONTINUE, continueTokenRange)
         return ContinueNode(continueTokenRange, takeOptionalSemicolonRange())
     }
     /**
@@ -1303,36 +1338,47 @@ class Parser(private val tokenizer: Tokenizer) {
      */
     @Careful
     private fun parseBreak(): BreakNode? {
+        val ctx = stmtParseCtxs.top
         val breakTokenRange = takeIfMatchesKeyword(BREAK)?.range ?: return null
+        if (ctx.not { allowIterationFlowControlStatement }) return reportError(SyntaxErrorKind.ILLEGAL_BREAK, breakTokenRange)
         return BreakNode(breakTokenRange, takeOptionalSemicolonRange())
+    }
+    /**
+     * Parses [ReturnStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ReturnStatement).
+     */
+    @ReportsErrorDirectly
+    private fun parseReturn(): ReturnNode? {
+        val ctx = stmtParseCtxs.top
+        val returnTokenRange = takeIfMatchesKeyword(RETURN)?.range ?: return null
+        if (ctx.not { allowReturn }) return reportError(SyntaxErrorKind.ILLEGAL_RETURN, returnTokenRange)
+        val isCurrSemicolon = currToken.type == SEMICOLON
+        if (isCurrSemicolon || currToken.type.isAsiJob || currToken.isPrevLineTerminator) return ReturnNode(
+            null,
+            returnTokenRange,
+            isCurrSemicolon.thenTake { advance().range },
+        )
+        val expr = parseExpression() ?: return null
+        return ReturnNode(expr, returnTokenRange, takeOptionalSemicolonRange())
     }
     /**
      * Parses [Statement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-Statement).
      */
     @Careful(false)
-    private fun parseStatement(): StatementNode? {
-        val ctx = stmtParseCtxs.top
-        return when (currToken.type) {
+    private fun parseStatement(): StatementNode? =
+        when (currToken.type) {
             SEMICOLON -> EmptyStatementNode(advance().range)
             IDENTIFIER -> listOf(
                 ::parseIfStatement,
                 ::parseIterationStatement,
-                {
-                    ctx.allowIterationFlowControlStatement.thenTake {
-                        listOf(
-                            ::parseContinue,
-                            ::parseBreak,
-                        )
-                            .foldElvisIfHasNoError()
-                    }
-                },
+                ::parseContinue,
+                ::parseBreak,
+                ::parseReturn,
                 ::parseExpressionStatement,
             )
                 .foldElvisIfHasNoError()
-            LEFT_BRACE -> parseBlockStatement()
+            LEFT_BRACE -> parseBlock()
             else -> parseExpressionStatement()
         }
-    }
     /**
      * Parses [Initializer](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Initializer).
      */
@@ -1462,14 +1508,16 @@ class Parser(private val tokenizer: Tokenizer) {
     }
 }
 
-private fun List<IdentifierNode>.findDuplicateBoundName(rawNames: List<String>/* to reduce cost */): IdentifierNode? {
-    val (_, found) = this
-        .asSequence()
-        .withIndex()
-        .find { (i, it) -> it.value in rawNames.take(i) }
-        ?: return null
-    return found
-}
+private fun List<IdentifierNode>.findDuplicateBoundName(rawNames: List<String>/* to reduce cost */): IdentifierNode? =
+    this.asSequence()
+        .filterIndexed { i, it ->
+            // a, b, a
+            //       ^ error
+            // we need to find second occurrence of a name
+            // and first occurrence cannot have duplicate name before self
+            it.value in rawNames.take(i)
+        }
+        .firstOrNull()
 
 private val ExpressionNode.isLeftHandSide get() =
     this !is UnaryExpressionNode && this !is BinaryExpressionNode && this !is ConditionalExpressionNode
@@ -1477,6 +1525,11 @@ private fun IdentifierNode.isKeyword(keyword: ReservedWord) =
     value == keyword.value
 private fun Token.isKeyword(keyword: ReservedWord, verifiedTokenType: Boolean = false) =
     (verifiedTokenType || type == IDENTIFIER) && rawContent == keyword.value
+/**
+ * Represents whether the ASI can insert semicolon if the token is presented as current token.
+ */
+private val TokenType.isAsiJob get() =
+    this.isOneOf(EOS, RIGHT_BRACE)
 
 private fun neverHappens(): Nothing =
     throw KotlinError("This can never happen")

@@ -934,6 +934,26 @@ internal class ParserTest {
             return
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.ILLEGAL_RETURN)
     }
+    @Test
+    fun testThrow() {
+        """
+            throw 0
+        """.shouldBeValidStatementAnd<ThrowNode> {
+            assertIs<NumberLiteralNode>(expression)
+        }
+        """
+            throw
+            0
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.NEWLINE_AFTER_THROW)
+    }
+    @Test
+    fun testTry() {
+        """
+            try {} catch {}
+        """.shouldBeValidStatementAnd<TryNode> {
+
+        }
+    }
 }
 
 private inline fun <reified T: Node> MaybeRestNode.unwrapNonRest() =

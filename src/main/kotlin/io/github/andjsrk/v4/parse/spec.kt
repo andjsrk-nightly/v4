@@ -1,10 +1,7 @@
 package io.github.andjsrk.v4.parse
 
-import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.mapAsSequence
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.parse.node.*
-import io.github.andjsrk.v4.thenTake
-import io.github.andjsrk.v4.util.isOneOf
 import kotlin.reflect.KClass
 
 @EsSpec("Contains")
@@ -62,7 +59,13 @@ internal fun Node.boundNames(): List<IdentifierNode> =
         is ClassDeclarationNode -> name.boundNames()
         else -> emptyList()
     }
-
+@EsSpec("LexicallyDeclaredNames")
+internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
+    when (this) {
+        is DeclarationNode -> boundNames()
+        is StatementListNode -> elements.flatMap { it.lexicallyDeclaredNames() }
+        else -> TODO()
+    }
 @EsSpec("HasDirectSuper")
 internal fun FixedParametersMethodNode.findDirectSuperCall() =
     when (this) {

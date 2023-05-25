@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.tokenize
 
-import io.github.andjsrk.v4.util.isOneOf
+import io.github.andjsrk.v4.isOneOf
 
 enum class TokenType(val staticContent: String?) {
     EOS(null),

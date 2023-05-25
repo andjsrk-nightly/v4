@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 class IdentifierNode(
     val value: String,
     override val range: Range,
-): ExpressionNode, ObjectLiteralKeyNode {
+): ExpressionNode, ObjectLiteralKeyNode, BindingElementNode {
     override fun toString() =
         stringifyLikeDataClass(::value, ::range)
 }

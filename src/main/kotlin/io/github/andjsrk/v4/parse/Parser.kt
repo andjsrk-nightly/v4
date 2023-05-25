@@ -2,18 +2,14 @@ package io.github.andjsrk.v4.parse
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.BinaryOperationType as BinaryOp
-import io.github.andjsrk.v4.WasSuccessful
-import io.github.andjsrk.v4.Error
 import io.github.andjsrk.v4.error.ErrorKind
 import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.parse.ReservedWord.*
 import io.github.andjsrk.v4.parse.node.*
-import io.github.andjsrk.v4.thenAlso
 import io.github.andjsrk.v4.tokenize.Token
 import io.github.andjsrk.v4.tokenize.TokenType
 import io.github.andjsrk.v4.tokenize.TokenType.*
 import io.github.andjsrk.v4.tokenize.Tokenizer
-import io.github.andjsrk.v4.util.isOneOf
 
 private val testing = System.getenv("TEST")?.toBooleanStrict() ?: false
 
@@ -98,6 +94,15 @@ class Parser(private val tokenizer: Tokenizer) {
         }
         return reportError(kind, token.range)
     }
+    private inline fun reportDuplicateName(
+        names: List<IdentifierNode>,
+        reporter: (IdentifierNode) -> Unit = {
+            reportError(SyntaxErrorKind.VAR_REDECLARATION, it.range, it.value)
+        },
+    ) {
+        val duplicate = names.findDuplicateBoundName(names.toRawNames())
+        if (duplicate != null) reporter(duplicate)
+    }
     private inline fun <R> ifHasNoError(valueProvider: () -> R) =
         not { hasError }.thenTake(valueProvider)
     private fun <T> T?.pipeIfHasNoError(valueProvider: () -> T?) =
@@ -105,7 +110,7 @@ class Parser(private val tokenizer: Tokenizer) {
         else this ?: valueProvider()
     private fun <T> Iterable<Deferred<T>>.foldElvisIfHasNoError() =
         this.asSequence().foldNull<_, T> { acc, it ->
-            acc ?: not { hasError }.thenTake { it() }
+            acc ?: ifHasNoError(it)
         }
     private fun takeOptionalSemicolonRange(isEndOfStatement: Boolean = true) =
         takeIfMatches(SEMICOLON)?.range?.also {
@@ -363,12 +368,15 @@ class Parser(private val tokenizer: Tokenizer) {
         }
         return RestNode(binding, restTokenRange..binding.range)
     }
+    @ReportsErrorDirectly
+    private fun parseBindingElementWithoutInitializer(): BindingElementNode? =
+        parseBindingIdentifier() ?: parseBindingPattern() ?: reportError(SyntaxErrorKind.INVALID_DESTRUCTURING_TARGET)
     /**
      * Parses [BindingElement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-BindingElement).
      */
     @ReportsErrorDirectly
     private fun parseBindingElement(): NonRestNode? {
-        val binding = parseBindingIdentifier() ?: parseBindingPattern() ?: return reportError(SyntaxErrorKind.INVALID_DESTRUCTURING_TARGET)
+        val binding = parseBindingElementWithoutInitializer() ?: return null
         takeIfMatches(ASSIGN) ?: return NonRestNode(binding, null)
         val default = parseAssignment() ?: return null
         return NonRestNode(binding, default)
@@ -409,11 +417,15 @@ class Parser(private val tokenizer: Tokenizer) {
                 return NonRestObjectPropertyNode(left, bindingElement.binding, bindingElement.default)
             }
             ASSIGN -> {
+                if (left !is BindingElementNode) return reportUnexpectedToken()
                 advance()
                 val default = parseAssignment() ?: return null
                 NonRestObjectPropertyNode(left, left, default)
             }
-            else -> NonRestObjectPropertyNode(left, left, null)
+            else -> {
+                if (left !is BindingElementNode) return reportUnexpectedToken()
+                NonRestObjectPropertyNode(left, left, null)
+            }
         }
     }
     @ReportsErrorDirectly
@@ -1095,15 +1107,10 @@ class Parser(private val tokenizer: Tokenizer) {
     @ReportsErrorDirectly
     private fun UniqueFormalParametersNode.withEarlyErrorChecks() =
         takeIf {
-            val names = boundNames()
-            val rawNames = names.map { it.value }
-            when (val duplicate = names.findDuplicateBoundName(rawNames)) {
-                null -> true
-                else -> {
-                    reportError(SyntaxErrorKind.DUPLICATE_PARAMETER_NAMES, duplicate.range)
-                    false
-                }
+            reportDuplicateName(boundNames()) {
+                reportError(SyntaxErrorKind.DUPLICATE_PARAMETER_NAMES, it.range)
             }
+            !hasError
         }
     @ReportsErrorDirectly
     private fun parseArrowFunctionByUniqueFormalParameters(params: UniqueFormalParametersNode): ArrowFunctionNode? {
@@ -1227,9 +1234,11 @@ class Parser(private val tokenizer: Tokenizer) {
     }
     /**
      * Parses [BlockStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-BlockStatement).
+     *
+     * @param doDuplicateCheck If `false`, can be used for reducing cost by delegating responsibility about duplicate check to caller.
      */
     @ReportsErrorDirectly
-    private fun parseBlock(): BlockNode? {
+    private fun parseBlock(doDuplicateCheck: Boolean = true): BlockNode? {
         val statements = mutableListOf<StatementNode>()
 
         val startRange = expect(LEFT_BRACE)?.range ?: return null
@@ -1237,7 +1246,16 @@ class Parser(private val tokenizer: Tokenizer) {
         val endRange = expect(RIGHT_BRACE)?.range ?: return null
 
         return BlockNode(statements, startRange..endRange)
+            .let { block ->
+                if (doDuplicateCheck) block.withEarlyErrorChecks()
+                else block
+            }
     }
+    private fun <N: StatementListNode> N.withEarlyErrorChecks() =
+        takeIf {
+            reportDuplicateName(lexicallyDeclaredNames())
+            !hasError
+        }
     /**
      * Parses [IfStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-IfStatement).
      */
@@ -1291,7 +1309,7 @@ class Parser(private val tokenizer: Tokenizer) {
                 if (hasError) return null
                 val update = parseForHeadElement(after=RIGHT_PARENTHESIS) as ExpressionNode?
                 if (hasError) return null
-                // right parenthesis will be handled on update parsing
+                // right parenthesis will be handled on `update`'s parsing
                 val body = parseStatement() ?: return null
                 NormalForNode(init, test, update, body, startRange)
             }
@@ -1357,8 +1375,45 @@ class Parser(private val tokenizer: Tokenizer) {
             returnTokenRange,
             isCurrSemicolon.thenTake { advance().range },
         )
-        val expr = parseExpression() ?: return null
+        val expr = parseAssignment() ?: return null
         return ReturnNode(expr, returnTokenRange, takeOptionalSemicolonRange())
+    }
+    /**
+     * Parses [ThrowStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ThrowStatement).
+     */
+    @Careful(false)
+    private fun parseThrow(): ThrowNode? {
+        val throwTokenRange = takeIfMatchesKeyword(THROW)?.range ?: return null
+        if (currToken.isPrevLineTerminator) return reportError(SyntaxErrorKind.NEWLINE_AFTER_THROW, throwTokenRange)
+        val expr = parseAssignment() ?: return null
+        return ThrowNode(expr, throwTokenRange, takeOptionalSemicolonRange())
+    }
+    /**
+     * Parses [TryStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-try-statement).
+     */
+    private fun parseTry(): TryNode? {
+        val startRange = takeIfMatchesKeyword(TRY)?.range ?: return null
+        val tryBody = parseBlock() ?: return null
+        val catch = run {
+            val startRange = takeIfMatchesKeyword(CATCH)?.range ?: return@run null
+            val binding = run binding@ {
+                takeIfMatches(LEFT_PARENTHESIS)?.range ?: return@binding null
+                val binding = parseBindingElementWithoutInitializer() ?: return null
+                expect(RIGHT_PARENTHESIS) ?: return null
+                binding
+            }
+            val body = parseBlock() ?: return null
+            val bodyNames = body.lexicallyDeclaredNames()
+            reportDuplicateName((binding?.boundNames() ?: emptyList()) + bodyNames)
+
+            ifHasNoError { CatchNode(binding, body, startRange) }
+        }
+        val finallyBody = run {
+            takeIfMatchesKeyword(FINALLY) ?: return@run null
+            parseBlock() ?: return null
+        }
+        if (catch == null && finallyBody == null) return reportError(SyntaxErrorKind.NO_CATCH_OR_FINALLY, startRange..tryBody.range)
+        return TryNode(tryBody, catch, finallyBody, startRange)
     }
     /**
      * Parses [Statement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-Statement).
@@ -1373,6 +1428,8 @@ class Parser(private val tokenizer: Tokenizer) {
                 ::parseContinue,
                 ::parseBreak,
                 ::parseReturn,
+                ::parseThrow,
+                ::parseTry,
                 ::parseExpressionStatement,
             )
                 .foldElvisIfHasNoError()
@@ -1440,15 +1497,8 @@ class Parser(private val tokenizer: Tokenizer) {
     @ReportsErrorDirectly
     private fun LexicalDeclarationWithoutInitializerNode.withEarlyErrorChecks() =
         takeIf {
-            val names = boundNames()
-            val rawNames = names.map { it.value }
-            when (val duplicate = names.findDuplicateBoundName(rawNames)) {
-                null -> true
-                else -> {
-                    reportError(SyntaxErrorKind.VAR_REDECLARATION, duplicate.range, duplicate.value)
-                    false
-                }
-            }
+            reportDuplicateName(boundNames())
+            !hasError
         }
     /**
      * Parses [ClassDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-functions-and-classes.html#prod-ClassDeclaration).
@@ -1518,6 +1568,8 @@ private fun List<IdentifierNode>.findDuplicateBoundName(rawNames: List<String>/*
             it.value in rawNames.take(i)
         }
         .firstOrNull()
+private fun List<IdentifierNode>.toRawNames() =
+    map { it.value }
 
 private val ExpressionNode.isLeftHandSide get() =
     this !is UnaryExpressionNode && this !is BinaryExpressionNode && this !is ConditionalExpressionNode

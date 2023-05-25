@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4
 
-import io.github.andjsrk.v4.util.isOneOf
+import io.github.andjsrk.v4.isOneOf
 
 /**
  * See [UTF16EncodeCodePoint](https://tc39.es/ecma262/multipage/ecmascript-language-source-code.html#sec-utf16encodecodepoint).

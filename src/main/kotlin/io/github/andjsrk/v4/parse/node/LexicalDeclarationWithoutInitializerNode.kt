@@ -10,7 +10,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
  */
 open class LexicalDeclarationWithoutInitializerNode(
     val kind: LexicalDeclarationKind,
-    val binding: IdentifierOrBindingPatternNode,
+    val binding: BindingElementNode,
     startRange: Range,
 ): DeclarationNode {
     override val childNodes: List<Node?> = listOf(binding)

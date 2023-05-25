@@ -2,10 +2,8 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-typealias IdentifierOrBindingPatternNode = Node
-
 open class NonRestNode(
-    override val binding: IdentifierOrBindingPatternNode,
+    override val binding: BindingElementNode,
     val default: ExpressionNode?,
 ): MaybeRestNode {
     override val childNodes by lazy { listOf(binding, default) }

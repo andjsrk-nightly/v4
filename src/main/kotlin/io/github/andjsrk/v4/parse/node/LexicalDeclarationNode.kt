@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class LexicalDeclarationNode(
     kind: LexicalDeclarationKind,
-    binding: IdentifierOrBindingPatternNode,
+    binding: BindingElementNode,
     val value: ExpressionNode?,
     startRange: Range,
     semicolonRange: Range?,

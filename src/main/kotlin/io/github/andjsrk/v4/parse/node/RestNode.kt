@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class RestNode(
-    override val binding: IdentifierOrBindingPatternNode,
+    override val binding: BindingElementNode,
     override val range: Range,
 ): MaybeRestNode {
     override val childNodes = listOf(binding)

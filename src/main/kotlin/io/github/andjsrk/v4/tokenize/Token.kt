@@ -1,6 +1,8 @@
 package io.github.andjsrk.v4.tokenize
 
 import io.github.andjsrk.v4.Range
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 data class Token(
     val type: TokenType,
@@ -8,6 +10,8 @@ data class Token(
     val literal: String,
     val isPrevLineTerminator: Boolean,
     private val startPos: Int,
+    val rawLiteral: String = Json.encodeToString(literal),
+    val rawRawContent: String = Json.encodeToString(rawContent),
 ) {
     val range = Range.since(startPos, rawContent.length)
     internal class Builder {

@@ -8,7 +8,7 @@ class NonRestObjectPropertyNode(
     binding: BindingElementNode,
     default: ExpressionNode?,
 ): NonRestNode(binding, default) {
-    override val childNodes = key and super.childNodes
+    override val childNodes get() = key and super.childNodes
     override fun toString() =
         stringifyLikeDataClass(::key, ::binding, ::default, ::range)
 }

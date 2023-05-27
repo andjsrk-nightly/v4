@@ -7,7 +7,7 @@ class ComputedPropertyKeyNode(
     val expression: ExpressionNode,
     override val range: Range,
 ): ObjectLiteralKeyNode, NonAtomicNode {
-    override val childNodes = listOf(expression)
+    override val childNodes get() = listOf(expression)
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
 }

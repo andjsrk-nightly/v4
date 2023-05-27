@@ -7,7 +7,7 @@ sealed class IfNode<N: Node>( // used generic parameter to coerce both `then` an
     val then: N,
     open val `else`: N?,
 ): NonAtomicNode {
-    override val childNodes = listOf(test, then, `else`)
+    override val childNodes get() = listOf(test, then, `else`)
     override fun toString() =
         stringifyLikeDataClass(::test, ::then, ::`else`, ::range)
 }

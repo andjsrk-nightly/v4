@@ -59,13 +59,18 @@ internal fun Node.boundNames(): List<IdentifierNode> =
         is ClassDeclarationNode -> name.boundNames()
         else -> emptyList()
     }
+
 @EsSpec("LexicallyDeclaredNames")
 internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
     when (this) {
         is DeclarationNode -> boundNames()
         is StatementListNode -> elements.flatMap { it.lexicallyDeclaredNames() }
-        else -> TODO()
+        is ExpressionNode -> emptyList()
+        // TODO: switch statement
+        // TODO: import/export
+        else -> emptyList()
     }
+
 @EsSpec("HasDirectSuper")
 internal fun FixedParametersMethodNode.findDirectSuperCall() =
     when (this) {

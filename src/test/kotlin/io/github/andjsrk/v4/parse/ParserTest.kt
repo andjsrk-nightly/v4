@@ -949,10 +949,39 @@ internal class ParserTest {
     @Test
     fun testTry() {
         """
+            try {} catch (e) {}
+        """.shouldBeValidStatementAnd<TryNode> {
+            val catch = catch
+            assertNotNull(catch)
+            assertNotNull(catch.binding)
+            assertNull(finallyBody)
+        }
+        """
             try {} catch {}
         """.shouldBeValidStatementAnd<TryNode> {
-
+            val catch = catch
+            assertNotNull(catch)
+            assertNull(catch.binding)
+            assertNull(finallyBody)
         }
+
+        """
+            try {} finally {}
+        """.shouldBeValidStatementAnd<TryNode> {
+            assertNull(catch)
+            assertNotNull(finallyBody)
+        }
+
+        """
+            try {} catch {} finally {}
+        """.shouldBeValidStatementAnd<TryNode> {
+            assertNotNull(catch)
+            assertNotNull(finallyBody)
+        }
+
+        """
+            try {}
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.NO_CATCH_OR_FINALLY)
     }
 }
 

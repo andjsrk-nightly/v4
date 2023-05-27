@@ -12,7 +12,7 @@ class ClassMethodNode(
     override val isStatic: Boolean,
     startRange: Range,
 ): MethodNode, NormalClassElementNode {
-    override val childNodes = listOf(name, parameters, body)
+    override val childNodes get() = listOf(name, parameters, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::parameters, ::body, ::isAsync, ::isGenerator, ::isStatic, ::range)

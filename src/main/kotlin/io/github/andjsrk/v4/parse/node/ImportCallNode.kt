@@ -8,8 +8,8 @@ class ImportCallNode(
     val pathSpecifier: ExpressionNode,
     endRange: Range,
 ): FixedArgumentCallNode(importNode) {
+    override val childNodes get() = super.childNodes + pathSpecifier
     override val range = importNode.range..endRange
-    override val childNodes = super.childNodes + pathSpecifier
     override fun toString() =
         stringifyLikeDataClass(::callee, ::pathSpecifier, ::range)
 }

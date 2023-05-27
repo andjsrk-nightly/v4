@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.tokenize.TokenType.*
 
-private typealias Length = Int
+private const val HEX_ESCAPE_DIGIT_COUNT = 2
 
 class Tokenizer(sourceText: String) {
     internal inner class CheckPoint {
@@ -83,25 +83,20 @@ class Tokenizer(sourceText: String) {
     private fun skipSingleLineComment() {
         advanceWhile { it.not { isLineTerminator } }
     }
-    private fun readHexDigits(maxLength: Int): String {
+    private fun readHexDigits(length: Int): Pair<String, WasSuccessful> {
         var res = ""
-        repeat(maxLength) {
-            if (curr.not { isHexDigit }) return res
+        repeat(length) {
+            if (curr.not { isHexDigit }) return res to false
             res += curr
             advance()
         }
-        return res
-    }
-    private fun readHexIntOrNull(length: Int): Pair<Length, Int?> {
-        val digits = readHexDigits(length)
-        return digits.length to (
-            if (digits.length != length) null
-            else digits.toHexIntOrNull()
-        )
+        return res to true
     }
     private fun Token.Builder.addUnescapedHex4DigitsUnicodeEscapeSequence(beginPos: Int): WasSuccessful {
-        val (digitCount, mv) = readHexIntOrNull(4)
-        if (mv == null || mv > MAX_CODE_POINT) return reportError(
+        val (stringMv, successful) = readHexDigits(4)
+        val digitCount = stringMv.length
+        val mv = stringMv.toHexIntOrNull()
+        if (!successful || mv!! > MAX_CODE_POINT) return reportError(
             SyntaxErrorKind.INVALID_UNICODE_ESCAPE_SEQUENCE,
             Range.since(beginPos, digitCount + unicodeEscapeSequencePrefix.length),
         )
@@ -142,11 +137,13 @@ class Tokenizer(sourceText: String) {
             'x' -> {
                 val begin = source.pos - hexEscapeSequencePrefix.length
                 advance()
-                val (_, charCode) = readHexIntOrNull(2)
-                if (charCode == null) return reportError(
-                    SyntaxErrorKind.INVALID_HEX_ESCAPE_SEQUENCE,
-                    Range(begin, source.pos),
-                )
+                val charCode = readHexDigits(HEX_ESCAPE_DIGIT_COUNT)
+                    .takeIf { (_, successful) -> successful }
+                    ?.let { (it) -> it.toHexInt() }
+                    ?: return reportError(
+                        SyntaxErrorKind.INVALID_HEX_ESCAPE_SEQUENCE,
+                        Range(begin, source.pos),
+                    )
                 literal += charCode.toChar()
             }
             else -> literal += curr

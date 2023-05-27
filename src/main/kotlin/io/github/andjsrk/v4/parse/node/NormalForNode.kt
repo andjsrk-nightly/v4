@@ -10,7 +10,7 @@ class NormalForNode(
     override val body: StatementNode,
     startRange: Range,
 ): ForNode {
-    override val childNodes = listOf(init, test, update, body)
+    override val childNodes get() = listOf(init, test, update, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::init, ::test, ::update, ::body, ::range)

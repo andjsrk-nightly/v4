@@ -7,7 +7,7 @@ class SpreadNode(
     override val expression: ExpressionNode,
     startRange: Range,
 ): MaybeSpreadNode {
-    override val childNodes = listOf(expression)
+    override val childNodes get() = listOf(expression)
     override val range = startRange..expression.range
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)

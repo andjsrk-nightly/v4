@@ -8,7 +8,7 @@ class ReturnNode(
     startRange: Range,
     semicolonRange: Range?,
 ): StatementNode, NonAtomicNode {
-    override val childNodes = listOf(expression)
+    override val childNodes get() = listOf(expression)
     override val range = startRange..(semicolonRange ?: expression?.range ?: startRange)
     override fun toString() =
         stringifyLikeDataClass(::expression)

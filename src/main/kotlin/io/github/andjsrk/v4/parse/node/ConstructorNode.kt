@@ -7,7 +7,7 @@ class ConstructorNode(
     override val parameters: UniqueFormalParametersNode,
     override val body: BlockNode,
 ): ClassElementNode, NonSpecialMethodNode {
-    override val childNodes = listOf(name, parameters, body)
+    override val childNodes get() = listOf(name, parameters, body)
     override val range = name.range..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::parameters, ::body)

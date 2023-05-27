@@ -9,7 +9,7 @@ class SuperPropertyNode(
     override val isComputed: Boolean,
     endRange: Range,
 ): MemberExpressionLikeNode {
-    override val childNodes = listOf(`object`, property)
+    override val childNodes get() = listOf(`object`, property)
     override val range = `object`.range..endRange
     override fun toString() =
         stringifyLikeDataClass(::`object`, ::property, ::isComputed, ::range)

@@ -8,7 +8,7 @@ class ObjectGetterNode(
     override val body: BlockNode,
     startRange: Range,
 ): GetterNode, ObjectElementNode {
-    override val childNodes = listOf(name, body)
+    override val childNodes get() = listOf(name, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::body, ::range)

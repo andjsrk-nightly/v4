@@ -8,7 +8,7 @@ sealed class ClassNode: NonAtomicNode {
     abstract val name: IdentifierNode?
     abstract val parent: ExpressionNode?
     abstract val elements: List<ClassElementNode>
-    override val childNodes by lazy { listOf(name, parent) + elements }
+    override val childNodes get() = listOf(name, parent) + elements
     override fun toString() =
         stringifyLikeDataClass(::name, ::parent, ::elements, ::range)
 

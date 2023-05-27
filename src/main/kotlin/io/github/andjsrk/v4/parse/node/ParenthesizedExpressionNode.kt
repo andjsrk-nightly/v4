@@ -7,7 +7,7 @@ class ParenthesizedExpressionNode(
     val expression: ExpressionNode,
     override val range: Range,
 ): ExpressionNode, NonAtomicNode {
-    override val childNodes = listOf(expression)
+    override val childNodes get() = listOf(expression)
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
 }

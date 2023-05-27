@@ -9,7 +9,7 @@ class ClassGetterNode(
     override val isStatic: Boolean,
     startRange: Range,
 ): GetterNode, NormalClassElementNode {
-    override val childNodes = listOf(name, body)
+    override val childNodes get() = listOf(name, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::body, ::isStatic, ::range)

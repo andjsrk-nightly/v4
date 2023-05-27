@@ -8,8 +8,8 @@ class YieldNode(
     val isSpread: Boolean,
     startRange: Range,
 ): ExpressionNode, NonAtomicNode {
+    override val childNodes get() = listOf(expression)
     override val range = startRange..expression.range
-    override val childNodes = listOf(expression)
     override fun toString() =
         stringifyLikeDataClass(::expression, ::isSpread, ::range)
 }

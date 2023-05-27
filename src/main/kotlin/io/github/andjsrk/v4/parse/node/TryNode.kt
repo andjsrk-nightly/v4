@@ -9,7 +9,7 @@ class TryNode(
     val finallyBody: BlockNode?,
     startRange: Range,
 ): StatementNode, NonAtomicNode {
-    override val childNodes = listOf(tryBody, catch, finallyBody)
+    override val childNodes get() = listOf(tryBody, catch, finallyBody)
     override val range = startRange..(finallyBody ?: catch?.body ?: tryBody).range
     override fun toString() =
         stringifyLikeDataClass(::tryBody, ::catch, ::finallyBody, ::range)

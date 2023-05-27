@@ -8,7 +8,7 @@ class CatchNode(
     val body: BlockNode,
     startRange: Range,
 ): NonAtomicNode {
-    override val childNodes = listOf(binding, body)
+    override val childNodes get() = listOf(binding, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass()

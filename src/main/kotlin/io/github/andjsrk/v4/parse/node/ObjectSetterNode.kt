@@ -9,7 +9,7 @@ class ObjectSetterNode(
     override val body: BlockNode,
     startRange: Range,
 ): SetterNode, ObjectElementNode {
-    override val childNodes = listOf(name, parameter, body)
+    override val childNodes get() = listOf(name, parameter, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::parameter, ::body, ::range)

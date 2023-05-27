@@ -9,7 +9,7 @@ class WhileNode(
     val atLeastOnce: Boolean,
     startRange: Range,
 ): IterationStatementNode {
-    override val childNodes = listOf(test, body)
+    override val childNodes get() = listOf(test, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::test, ::body, ::atLeastOnce, ::range)

@@ -27,14 +27,14 @@ class Parser(private val tokenizer: Tokenizer) {
         private set
     val hasError get() =
         error != null
-    private val stmtParseCtxs = Stack(
-        StatementParseContext(allowModuleItem=true),
+    private val parseCtxs = Stack(
+        ParseContext(allowModuleItem=true),
     )
-    private inline fun <R> withStatementParseContext(ctxProvider: StatementParseContext.() -> StatementParseContext, block: () -> R): R {
-        val ctx = ctxProvider(stmtParseCtxs.top)
-        stmtParseCtxs.push(ctx)
+    private inline fun <R> withParseContext(ctxProvider: ParseContext.() -> ParseContext, block: () -> R): R {
+        val ctx = ctxProvider(parseCtxs.top)
+        parseCtxs.push(ctx)
         return try { block() } finally {
-            val popped = stmtParseCtxs.pop()
+            val popped = parseCtxs.pop()
             assert(popped === ctx)
         }
     }
@@ -61,6 +61,8 @@ class Parser(private val tokenizer: Tokenizer) {
     private inline fun expect(tokenType: TokenType, check: (Token) -> Boolean = { true }) =
         if (currToken.type == tokenType && check(currToken)) advance()
         else reportUnexpectedToken()
+    private fun expectKeyword(keyword: ReservedWord) =
+        expect(IDENTIFIER) { it.isKeyword(keyword) }
     private fun reportError(error: Error): Nothing? {
         if (!hasError) {
             this.error = error
@@ -216,7 +218,7 @@ class Parser(private val tokenizer: Tokenizer) {
     @Careful(false)
     private fun parseMethod(name: ObjectLiteralKeyNode, isAsync: Boolean, isGenerator: Boolean, startRange: Range): ObjectMethodNode? {
         val parameters = parseArrowFormalParameters() ?: return null
-        val body = withStatementParseContext({ copy(allowReturn=true) }) {
+        val body = withParseContext({ copy(allowReturn=true) }) {
             parseBlock() ?: return null
         }
         return ObjectMethodNode(name, parameters, body, isAsync, isGenerator, startRange)
@@ -487,7 +489,7 @@ class Parser(private val tokenizer: Tokenizer) {
     private fun parseMethodExpression(isAsync: Boolean, isGenerator: Boolean, startRange: Range?): MethodExpressionNode? {
         val methodTokenRange = takeIfMatchesKeyword(METHOD)?.range ?: return null
         val params = parseArrowFormalParameters() ?: return null
-        val body = withStatementParseContext({ copy(allowReturn=true) }) {
+        val body = withParseContext({ copy(allowReturn=true, allowAwait=isAsync) }) {
             parseBlock() ?: return null
         }
         return MethodExpressionNode(params, body, isAsync, isGenerator, startRange ?: methodTokenRange)
@@ -714,7 +716,7 @@ class Parser(private val tokenizer: Tokenizer) {
             ?.let { ImportNode(it.range) }
             ?: return null
         takeIfMatches(LEFT_PARENTHESIS) ?: return null
-        val pathSpecifier = parseExpression() ?: return null
+        val pathSpecifier = parseAssignment() ?: return null
         val endRange = expect(RIGHT_PARENTHESIS)?.range ?: return null
 
         return ImportCallNode(importNode, pathSpecifier, endRange)
@@ -1017,9 +1019,10 @@ class Parser(private val tokenizer: Tokenizer) {
      */
     @Careful(false)
     private fun parseConciseBody() =
-        if (currToken.type == LEFT_BRACE) withStatementParseContext({ copy(allowReturn=true) }) {
-            parseBlock()
-        }
+        if (currToken.type == LEFT_BRACE)
+            withParseContext({ copy(allowReturn=true) }) {
+                parseBlock()
+            }
         else parseAssignment()
     @ReportsErrorDirectly
     private fun parseArrowFunctionWithoutParenthesis(parameter: IdentifierNode): ArrowFunctionNode? {
@@ -1146,7 +1149,9 @@ class Parser(private val tokenizer: Tokenizer) {
                 )
             }
         expect(ARROW) ?: return null
-        val body = parseConciseBody() ?: return null
+        val body = withParseContext({ copy(allowAwait=isAsync) }) {
+            parseConciseBody() ?: return null
+        }
         return ArrowFunctionNode(parameters, body, isAsync, isGenerator, nonNullStartRange..body.range)
     }
     private fun parseSpecialFunction(): SpecialFunctionExpressionNode? {
@@ -1333,7 +1338,7 @@ class Parser(private val tokenizer: Tokenizer) {
      */
     @Careful(false)
     private fun parseIterationStatement(): IterationStatementNode? {
-        return withStatementParseContext({ copy(allowIterationFlowControlStatement=true) }) {
+        return withParseContext({ copy(allowIterationFlowControlStatement=true) }) {
             listOf(
                 ::parseFor,
                 ::parseWhile,
@@ -1346,7 +1351,7 @@ class Parser(private val tokenizer: Tokenizer) {
      */
     @Careful
     private fun parseContinue(): ContinueNode? {
-        val ctx = stmtParseCtxs.top
+        val ctx = parseCtxs.top
         val continueTokenRange = takeIfMatchesKeyword(CONTINUE)?.range ?: return null
         if (ctx.not { allowIterationFlowControlStatement }) return reportError(SyntaxErrorKind.ILLEGAL_CONTINUE, continueTokenRange)
         return ContinueNode(continueTokenRange, takeOptionalSemicolonRange())
@@ -1356,7 +1361,7 @@ class Parser(private val tokenizer: Tokenizer) {
      */
     @Careful
     private fun parseBreak(): BreakNode? {
-        val ctx = stmtParseCtxs.top
+        val ctx = parseCtxs.top
         val breakTokenRange = takeIfMatchesKeyword(BREAK)?.range ?: return null
         if (ctx.not { allowIterationFlowControlStatement }) return reportError(SyntaxErrorKind.ILLEGAL_BREAK, breakTokenRange)
         return BreakNode(breakTokenRange, takeOptionalSemicolonRange())
@@ -1366,7 +1371,7 @@ class Parser(private val tokenizer: Tokenizer) {
      */
     @ReportsErrorDirectly
     private fun parseReturn(): ReturnNode? {
-        val ctx = stmtParseCtxs.top
+        val ctx = parseCtxs.top
         val returnTokenRange = takeIfMatchesKeyword(RETURN)?.range ?: return null
         if (ctx.not { allowReturn }) return reportError(SyntaxErrorKind.ILLEGAL_RETURN, returnTokenRange)
         val isCurrSemicolon = currToken.type == SEMICOLON
@@ -1531,13 +1536,120 @@ class Parser(private val tokenizer: Tokenizer) {
             ::parseStatement,
         )
             .foldElvisIfHasNoError()
+    private fun parseFromClause(): StringLiteralNode? {
+        expectKeyword(FROM) ?: return null
+        return parseStringLiteral() ?: return reportUnexpectedToken()
+    }
+    @ReportsErrorDirectly
+    private fun parseImportSpecifier(): ImportOrExportSpecifierNode? {
+        val name = parseIdentifierName() ?: return reportUnexpectedToken()
+        takeIfMatchesKeyword(AS) ?: return when {
+            name.not { isIdentifier() } -> reportError(SyntaxErrorKind.UNEXPECTED_RESERVED, name.range)
+            else -> ImportOrExportSpecifierNode(name, name)
+        }
+        val alias = parseBindingIdentifier() ?: return reportUnexpectedToken()
+        return ImportOrExportSpecifierNode(name, alias)
+    }
+    /**
+     * Returning `null`(not a pair that contains `null`) means there is an error.
+     */
+    @Careful(false)
+    private fun parseImportClause(): Pair<DefaultImportBindingNode?, NonDefaultImportBindingNode?>? {
+        val name = parseBindingIdentifier() ?: return parseImportClause(null)
+        val default = DefaultImportBindingNode(name)
+        takeIfMatches(COMMA) ?: return default to null
+        return parseImportClause(default)
+    }
+    @ReportsErrorDirectly
+    private fun parseImportClause(default: DefaultImportBindingNode?): Pair<DefaultImportBindingNode?, NonDefaultImportBindingNode?>? {
+        return default to when (currToken.type) {
+            MULTIPLY -> { // NameSpaceImport
+                val startRange = advance().range
+                expectKeyword(AS) ?: return null
+                val ns = parseBindingIdentifier() ?: return reportUnexpectedToken()
+                NamespaceImportBindingNode(ns, startRange)
+            }
+            LEFT_BRACE -> { // NamedImports
+                val startRange = advance().range
+                val specifiers = mutableListOf<ImportOrExportSpecifierNode>()
+                var skippedComma = true
+                while (currToken.type != RIGHT_BRACE) {
+                    if (!skippedComma) return reportUnexpectedToken()
+                    val specifier = parseImportSpecifier() ?: return null
+                    specifiers += specifier
+                    skippedComma = skip(COMMA)
+                }
+                val endRange = expect(RIGHT_BRACE)?.range ?: neverHappens()
+                NamedImportBindingNode(specifiers.toList(), startRange..endRange)
+            }
+            else -> reportUnexpectedToken()
+        }
+    }
+    @ReportsErrorDirectly
+    private fun parseImportDeclaration(): ImportDeclarationNode? {
+        val startRange = takeIfMatchesKeyword(IMPORT)?.range ?: return null
+        parseStringLiteral()?.let {
+            return ImportDeclarationNode(null, null, it, startRange, takeOptionalSemicolonRange())
+        }
+        val (default, nonDefault) = parseImportClause() ?: return null
+        val moduleSpecifier = parseFromClause() ?: return null
+        return ImportDeclarationNode(default, nonDefault, moduleSpecifier, startRange, takeOptionalSemicolonRange())
+    }
+    @ReportsErrorDirectly
+    private fun parseExportSpecifier(): ImportOrExportSpecifierNode? {
+        val name = parseBindingIdentifier() ?: takeIfMatchesKeyword(DEFAULT)?.toIdentifier() ?: return reportUnexpectedToken()
+        takeIfMatchesKeyword(AS) ?: return ImportOrExportSpecifierNode(name, name)
+        val alias = parseIdentifierName() ?: return reportUnexpectedToken()
+        return ImportOrExportSpecifierNode(name, alias)
+    }
+    private fun parseExportDeclaration(): ExportDeclarationNode? {
+        val startRange = takeIfMatchesKeyword(EXPORT)?.range ?: return null
+
+        if (takeIfMatchesKeyword(DEFAULT) != null) {
+            val expr = parseAssignment() ?: return null
+            return DefaultExportDeclarationNode(expr, startRange, takeOptionalSemicolonRange())
+        }
+
+        return when (currToken.type) {
+            MULTIPLY -> {
+                advance()
+                if (takeIfMatchesKeyword(AS) != null) {
+                    val binding = parseIdentifierName() ?: return null
+                    val moduleSpecifier = parseFromClause() ?: return null
+                    NamespaceExportDeclarationNode(binding, moduleSpecifier, startRange, takeOptionalSemicolonRange())
+                } else {
+                    val moduleSpecifier = parseFromClause() ?: return null
+                    AllExportDeclarationNode(moduleSpecifier, startRange, takeOptionalSemicolonRange())
+                }
+            }
+            LEFT_BRACE -> { // NamedExports
+                advance()
+                val specifiers = mutableListOf<ImportOrExportSpecifierNode>()
+                var skippedComma = true
+                while (currToken.type != RIGHT_BRACE) {
+                    if (!skippedComma) return reportUnexpectedToken()
+                    val specifier = parseExportSpecifier() ?: return null
+                    specifiers += specifier
+                    skippedComma = skip(COMMA)
+                }
+                val endRange = expect(RIGHT_BRACE)?.range ?: neverHappens()
+                if (takeIfMatchesKeyword(FROM) != null) {
+                    val moduleSpecifier = parseStringLiteral() ?: return null
+                    return NamedExportDeclarationNode(specifiers.toList(), moduleSpecifier, startRange, endRange, takeOptionalSemicolonRange())
+                }
+                NamedExportDeclarationNode(specifiers.toList(), null, startRange, endRange, takeOptionalSemicolonRange())
+            }
+            else -> reportUnexpectedToken()
+        }
+    }
     /**
      * Parses [ModuleItem](https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#prod-ModuleItem).
      */
     @Careful(false)
     fun parseModuleItem() =
         listOf(
-            // TODO: import/export
+            ::parseImportDeclaration,
+            ::parseExportDeclaration,
             ::parseStatementListItem,
         )
             .foldElvisIfHasNoError()
@@ -1545,7 +1657,6 @@ class Parser(private val tokenizer: Tokenizer) {
     fun parseModule(): ModuleNode? {
         val statements = mutableListOf<StatementNode>()
 
-        // TODO: Strict ASI behavior
         while (currToken.type != EOS) {
             if (!isLastStatementTerminated) return reportUnexpectedToken()
             isLastStatementTerminated = false
@@ -1572,7 +1683,15 @@ private fun List<IdentifierNode>.toRawNames() =
     map { it.value }
 
 private val ExpressionNode.isLeftHandSide get() =
-    this !is UnaryExpressionNode && this !is BinaryExpressionNode && this !is ConditionalExpressionNode
+    this !is UnaryExpressionNode && this !is BinaryExpressionNode && this !is IfExpressionNode
+/**
+ * Returns whether the identifier is [Identifier](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Identifier).
+ */
+private fun IdentifierNode.isIdentifier() =
+    ReservedWord.values()
+        .asSequence()
+        .filter { it.not { isContextual } }
+        .any { this.isKeyword(it) }
 private fun IdentifierNode.isKeyword(keyword: ReservedWord) =
     value == keyword.value
 private fun Token.isKeyword(keyword: ReservedWord, verifiedTokenType: Boolean = false) =

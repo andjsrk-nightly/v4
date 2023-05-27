@@ -9,7 +9,7 @@ class ForInNode(
     override val body: StatementNode,
     startRange: Range,
 ): ForNode {
-    override val childNodes = listOf(declaration, target, body)
+    override val childNodes get() = listOf(declaration, target, body)
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::declaration, ::target, ::body)

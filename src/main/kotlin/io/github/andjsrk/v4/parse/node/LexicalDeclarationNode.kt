@@ -11,7 +11,7 @@ class LexicalDeclarationNode(
     startRange: Range,
     semicolonRange: Range?,
 ): LexicalDeclarationWithoutInitializerNode(kind, binding, startRange) {
-    override val childNodes = super.childNodes + value
+    override val childNodes get() = super.childNodes + value
     override val range = startRange..(semicolonRange ?: value?.range ?: binding.range)
     override fun toString() =
         stringifyLikeDataClass(::kind, ::binding, ::value, ::range)

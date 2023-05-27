@@ -668,133 +668,6 @@ internal class ParserTest {
     }
     // </editor-fold>
     @Test
-    fun testLexicalDeclaration() {
-        """
-            var a = 1
-        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
-            assert(kind == LexicalDeclarationKind.VAR)
-            binding.assertIdentifierNamed("a")
-            assertIs<NumberLiteralNode>(value)
-        }
-
-        """
-            let a = 1
-        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
-            assert(kind == LexicalDeclarationKind.LET)
-        }
-
-        """
-            var a
-        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
-            assertNull(value)
-        }
-
-        """
-            let a
-        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER)
-
-        """
-            var {}
-        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER)
-    }
-    @Test
-    fun testClass() {
-        """
-            class {}
-        """.shouldBeValidExpressionAnd<ClassExpressionNode> {
-            assertNull(name)
-        }
-
-        """
-            class A {}
-        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            name.assertIdentifierNamed("A")
-        }
-
-        """
-            class {}
-        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.MISSING_CLASS_NAME)
-
-        """
-            class A {
-                a = 0
-            }
-        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            elements[0].assertTypeThen<FieldNode> {
-                assert(!isStatic)
-                name.assertIdentifierNamed("a")
-                assertIs<NumberLiteralNode>(value)
-            }
-        }
-
-        """
-            class A {
-                a
-            }
-        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            elements[0].assertTypeThen<FieldNode> {
-                assertNull(value)
-            }
-        }
-
-        """
-            class A {
-                static a = 0
-            }
-        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            elements[0].assertTypeThen<FieldNode> {
-                assert(isStatic)
-            }
-        }
-
-        """
-            class A {
-                a() {}
-            }
-        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            assertIs<ClassMethodNode>(elements[0])
-        }
-
-        """
-            class A {
-                if = 0
-            }
-        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            elements[0].assertTypeThen<FieldNode> {
-                name.assertIdentifierNamed("if")
-            }
-        }
-
-        """
-            class A {
-                constructor() {}
-            }
-        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            assertNotNull(constructor)
-        }
-
-        """
-            class A extends null {
-                constructor() {
-                    super()
-                }
-            }
-        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            assertIs<NullLiteralNode>(parent)
-            val constructor = constructor
-            assertNotNull(constructor)
-            assert(constructor.body.contains(SuperCallNode::class))
-        }
-
-        """
-            class A {
-                constructor() {
-                    super()
-                }
-            }
-        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
-    }
-    @Test
     fun testIfStatement() {
         """
             if (true);
@@ -982,6 +855,133 @@ internal class ParserTest {
         """
             try {}
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.NO_CATCH_OR_FINALLY)
+    }
+    @Test
+    fun testLexicalDeclaration() {
+        """
+            var a = 1
+        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
+            assert(kind == LexicalDeclarationKind.VAR)
+            binding.assertIdentifierNamed("a")
+            assertIs<NumberLiteralNode>(value)
+        }
+
+        """
+            let a = 1
+        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
+            assert(kind == LexicalDeclarationKind.LET)
+        }
+
+        """
+            var a
+        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
+            assertNull(value)
+        }
+
+        """
+            let a
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER)
+
+        """
+            var {}
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER)
+    }
+    @Test
+    fun testClass() {
+        """
+            class {}
+        """.shouldBeValidExpressionAnd<ClassExpressionNode> {
+            assertNull(name)
+        }
+
+        """
+            class A {}
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            name.assertIdentifierNamed("A")
+        }
+
+        """
+            class {}
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.MISSING_CLASS_NAME)
+
+        """
+            class A {
+                a = 0
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            elements[0].assertTypeThen<FieldNode> {
+                assert(!isStatic)
+                name.assertIdentifierNamed("a")
+                assertIs<NumberLiteralNode>(value)
+            }
+        }
+
+        """
+            class A {
+                a
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            elements[0].assertTypeThen<FieldNode> {
+                assertNull(value)
+            }
+        }
+
+        """
+            class A {
+                static a = 0
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            elements[0].assertTypeThen<FieldNode> {
+                assert(isStatic)
+            }
+        }
+
+        """
+            class A {
+                a() {}
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            assertIs<ClassMethodNode>(elements[0])
+        }
+
+        """
+            class A {
+                if = 0
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            elements[0].assertTypeThen<FieldNode> {
+                name.assertIdentifierNamed("if")
+            }
+        }
+
+        """
+            class A {
+                constructor() {}
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            assertNotNull(constructor)
+        }
+
+        """
+            class A extends null {
+                constructor() {
+                    super()
+                }
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            assertIs<NullLiteralNode>(parent)
+            val constructor = constructor
+            assertNotNull(constructor)
+            assert(constructor.body.contains(SuperCallNode::class))
+        }
+
+        """
+            class A {
+                constructor() {
+                    super()
+                }
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
     }
 }
 

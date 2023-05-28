@@ -1522,7 +1522,7 @@ class Parser(private val tokenizer: Tokenizer) {
     @Careful(false)
     private fun parseDeclaration() =
         listOf(
-            { parseLexicalDeclaration() },
+            { parseLexicalDeclaration() }, // `(Any?(optional)) -> Any?` is not assignable to `() -> Any?`
             ::parseClassDeclaration,
         )
             .foldElvisIfHasNoError()
@@ -1536,6 +1536,7 @@ class Parser(private val tokenizer: Tokenizer) {
             ::parseStatement,
         )
             .foldElvisIfHasNoError()
+    @ReportsErrorDirectly
     private fun parseFromClause(): StringLiteralNode? {
         expectKeyword(FROM) ?: return null
         return parseStringLiteral() ?: return reportUnexpectedToken()
@@ -1597,11 +1598,12 @@ class Parser(private val tokenizer: Tokenizer) {
     }
     @ReportsErrorDirectly
     private fun parseExportSpecifier(): ImportOrExportSpecifierNode? {
-        val name = parseBindingIdentifier() ?: takeIfMatchesKeyword(DEFAULT)?.toIdentifier() ?: return reportUnexpectedToken()
+        val name = parseIdentifierName() ?: return reportUnexpectedToken()
         takeIfMatchesKeyword(AS) ?: return ImportOrExportSpecifierNode(name, name)
         val alias = parseIdentifierName() ?: return reportUnexpectedToken()
         return ImportOrExportSpecifierNode(name, alias)
     }
+    @ReportsErrorDirectly
     private fun parseExportDeclaration(): ExportDeclarationNode? {
         val startRange = takeIfMatchesKeyword(EXPORT)?.range ?: return null
 
@@ -1639,7 +1641,11 @@ class Parser(private val tokenizer: Tokenizer) {
                 }
                 NamedExportDeclarationNode(specifiers.toList(), null, startRange, endRange, takeOptionalSemicolonRange())
             }
-            else -> reportUnexpectedToken()
+            else ->
+                run {
+                    val declaration = parseDeclaration() ?: return@run null
+                    NamedSingleExportDeclarationNode(declaration, startRange, declaration.range)
+                } ?: reportUnexpectedToken()
         }
     }
     /**
@@ -1688,10 +1694,12 @@ private val ExpressionNode.isLeftHandSide get() =
  * Returns whether the identifier is [Identifier](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Identifier).
  */
 private fun IdentifierNode.isIdentifier() =
-    ReservedWord.values()
-        .asSequence()
-        .filter { it.not { isContextual } }
-        .any { this.isKeyword(it) }
+    not {
+        ReservedWord.values()
+            .asSequence()
+            .filter { it.not { isContextual } }
+            .any { this.isKeyword(it) }
+    }
 private fun IdentifierNode.isKeyword(keyword: ReservedWord) =
     value == keyword.value
 private fun Token.isKeyword(keyword: ReservedWord, verifiedTokenType: Boolean = false) =

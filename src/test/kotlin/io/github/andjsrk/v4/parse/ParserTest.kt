@@ -983,6 +983,98 @@ internal class ParserTest {
             }
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
     }
+    @Test
+    fun testImportDeclaration() {
+        """
+            import a from "mod"
+        """.shouldBeValidStatementAnd<ImportDeclarationNode> {
+            assertNotNull(defaultBinding)
+            assertNull(nonDefaultBinding)
+            assert(moduleSpecifier.value == "mod")
+        }
+
+        """
+            import { a, b as c } from "mod"
+        """.shouldBeValidStatementAnd<ImportDeclarationNode> {
+            assertNull(defaultBinding)
+            nonDefaultBinding.assertTypeThen<NamedImportBindingNode> {
+                elements[0].run {
+                    name.assertIdentifierNamed("a")
+                    assert(name.value == alias.value)
+                }
+                elements[1].run {
+                    name.assertIdentifierNamed("b")
+                    alias.assertIdentifierNamed("c")
+                }
+            }
+        }
+
+        """
+            import { if } from "mod"
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_RESERVED)
+
+        """
+            import * as a from "mod"
+        """.shouldBeValidStatementAnd<ImportDeclarationNode> {
+            assertNull(defaultBinding)
+            nonDefaultBinding.assertTypeThen<NamespaceImportBindingNode> {
+                binding.assertIdentifierNamed("a")
+            }
+        }
+
+        """
+            import "mod"
+        """.shouldBeValidStatementAnd<ImportDeclarationNode> {
+            assertNull(defaultBinding)
+            assertNull(nonDefaultBinding)
+        }
+    }
+    @Test
+    fun testExportDeclaration() {
+        """
+            export default 0
+        """.shouldBeValidStatementAnd<DefaultExportDeclarationNode> {
+            assertIs<NumberLiteralNode>(expression)
+        }
+
+        """
+            export let a = 0
+        """.shouldBeValidStatementAnd<NamedSingleExportDeclarationNode> {
+            assertIs<LexicalDeclarationNode>(declaration)
+        }
+
+        """
+            export { a, b as c }
+        """.shouldBeValidStatementAnd<NamedExportDeclarationNode> {
+            elements[0].run {
+                name.assertIdentifierNamed("a")
+                assert(name.value == alias.value)
+            }
+            assertNull(moduleSpecifier)
+        }
+
+        """
+            export { a, b as c } from "mod"
+        """.shouldBeValidStatementAnd<NamedExportDeclarationNode> {
+            assertNotNull(moduleSpecifier)
+        }
+
+        """
+            export { if } from "mod"
+        """.shouldBeValidStatementAnd<NamedExportDeclarationNode> {
+            elements[0].name.assertIdentifierNamed("if")
+        }
+
+        """
+            export * from "mod"
+        """.shouldBeValidStatementAnd<AllExportDeclarationNode> {}
+
+        """
+            export * as a from "mod"
+        """.shouldBeValidStatementAnd<NamespaceExportDeclarationNode> {
+            binding.assertIdentifierNamed("a")
+        }
+    }
 }
 
 private inline fun <reified T: Node> MaybeRestNode.unwrapNonRest() =

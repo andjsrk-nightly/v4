@@ -8,7 +8,7 @@ import io.github.andjsrk.v4.tokenize.TokenType.*
 
 private const val HEX_ESCAPE_DIGIT_COUNT = 2
 
-class Tokenizer(sourceText: String) {
+internal class Tokenizer(sourceText: String) {
     internal inner class CheckPoint {
         private val error = this@Tokenizer.error
         private val sourceCheckPoint = source.CheckPoint()
@@ -213,7 +213,7 @@ class Tokenizer(sourceText: String) {
             }
         }
     }
-    private fun getTemplateMiddleToken(): Token {
+    fun getTemplateMiddleToken(): Token {
         // } have already been read
         builder.run {
             while (true) {

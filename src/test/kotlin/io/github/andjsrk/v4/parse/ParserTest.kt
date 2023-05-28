@@ -223,6 +223,35 @@ internal class ParserTest {
         }
     }
     @Test
+    fun testTemplateLiteral() {
+        """
+            `123`
+        """.shouldBeValidExpressionAnd<TemplateLiteralNode> {
+            assert(strings.single().value == "123")
+            assert(expressions.isEmpty())
+        }
+
+        """
+            `123${"\${0}"}456`
+        """.shouldBeValidExpressionAnd<TemplateLiteralNode> {
+            assert(strings[0].value == "123")
+            assertIs<NumberLiteralNode>(expressions.single())
+            assert(strings[1].value == "456")
+        }
+
+        """
+            `123${"\${{}}"}`
+        """.shouldBeValidExpressionAnd<TemplateLiteralNode> {
+            assert(strings[0].value == "123")
+            assertIs<ObjectLiteralNode>(expressions.single())
+            assert(strings[1].value.isEmpty())
+        }
+
+        """
+            `123${"\${"}
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_EOS)
+    }
+    @Test
     fun testMemberExpression() {
         """
             a.b
@@ -1161,8 +1190,6 @@ private inline fun Parser.parseUnsuccessfully(parseFn: Parser.() -> Node?) =
         error!!
     }
 private fun createParser(code: Code) =
-    code.trimIndent()
-        .let(::Tokenizer)
-        .let(::Parser)
+    Parser(code.trimIndent())
 
 private typealias Code = String

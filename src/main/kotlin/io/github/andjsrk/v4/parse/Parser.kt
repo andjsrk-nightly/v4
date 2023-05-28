@@ -13,7 +13,7 @@ import io.github.andjsrk.v4.tokenize.Tokenizer
 
 private val testing = System.getenv("TEST")?.toBooleanStrict() ?: false
 
-class Parser(private val tokenizer: Tokenizer) {
+class Parser(sourceText: String) {
     internal inner class CheckPoint {
         private val currToken = this@Parser.currToken
         private val tokenizerCheckPoint = tokenizer.CheckPoint()
@@ -22,6 +22,7 @@ class Parser(private val tokenizer: Tokenizer) {
             tokenizerCheckPoint.load()
         }
     }
+    private val tokenizer = Tokenizer(sourceText)
     private var currToken = tokenizer.getNextToken()
     var error: Error? = null
         private set
@@ -574,6 +575,21 @@ class Parser(private val tokenizer: Tokenizer) {
                 else -> true
             }
         }
+    private fun parseTemplateLiteral(): TemplateLiteralNode? {
+        val head = takeIfMatches(TEMPLATE_FULL) ?: takeIfMatches(TEMPLATE_HEAD) ?: return null
+        if (head.type == TEMPLATE_FULL) return TemplateLiteralNode(listOf(TemplateStringNode(head)), emptyList())
+        val strings = mutableListOf(head)
+        val expressions = mutableListOf<ExpressionNode>()
+        while (true) {
+            val expr = parseExpression() ?: return null
+            val string = tokenizer.getTemplateMiddleToken()
+            if (string.type.not { isOneOf(TEMPLATE_MIDDLE, TEMPLATE_TAIL) }) return reportUnexpectedToken()
+            expressions += expr
+            strings += string
+            if (string.type == TEMPLATE_TAIL) break
+        }
+        return TemplateLiteralNode(strings.map(::TemplateStringNode), expressions.toList())
+    }
     /**
      * Parses [PrimaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-PrimaryExpression).
      */
@@ -589,6 +605,7 @@ class Parser(private val tokenizer: Tokenizer) {
             LEFT_PARENTHESIS -> parseCoverParenthesizedExpressionAndArrowParameterList()
             LEFT_BRACE -> parseObjectLiteral()
             LEFT_BRACKET -> parseArrayLiteral()
+            TEMPLATE_FULL, TEMPLATE_HEAD -> parseTemplateLiteral()
             else -> null
         }
     // </editor-fold>

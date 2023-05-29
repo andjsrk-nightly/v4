@@ -8,7 +8,6 @@ import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.node.ArrayLiteralNode
 import io.github.andjsrk.v4.parse.node.ObjectLiteralNode
-import io.github.andjsrk.v4.tokenize.Tokenizer
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
@@ -348,7 +347,7 @@ internal class ParserTest {
         """.shouldBeInvalidModuleWithError(SyntaxErrorKind.UNEXPECTED_TOKEN, listOf("?."))
     }
     @Test
-    fun testOrdinaryCallMixedWithMemberExpression() {
+    fun testNormalCallMixedWithMemberExpression() {
         """
             a().b
         """.shouldBeValidExpressionAnd<MemberExpressionNode> {

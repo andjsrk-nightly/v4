@@ -583,7 +583,7 @@ class Parser(sourceText: String) {
         while (true) {
             val expr = parseExpression() ?: return null
             val string = tokenizer.getTemplateMiddleToken()
-            if (string.type.not { isOneOf(TEMPLATE_MIDDLE, TEMPLATE_TAIL) }) return reportUnexpectedToken()
+            if (string.type.not { isOneOf(TEMPLATE_MIDDLE, TEMPLATE_TAIL) }) return reportError(SyntaxErrorKind.UNTERMINATED_TEMPLATE_EXPR)
             expressions += expr
             strings += string
             if (string.type == TEMPLATE_TAIL) break
@@ -598,8 +598,8 @@ class Parser(sourceText: String) {
         parsePrimitiveLiteral() ?: parseIdentifier() ?: when (currToken.type) {
             IDENTIFIER -> // now there are only keywords except primitive literals
                 listOf(
-                    { parseThis() },
-                    { parseClassExpression() },
+                    ::parseThis,
+                    ::parseClassExpression,
                 )
                     .foldElvisIfHasNoError()
             LEFT_PARENTHESIS -> parseCoverParenthesizedExpressionAndArrowParameterList()
@@ -793,7 +793,7 @@ class Parser(sourceText: String) {
     @Careful(false)
     private fun parseLeftHandSideExpression() =
         listOf(
-            { parseNewExpression() },
+            ::parseNewExpression,
             { parseCall(null) },
         )
             .foldElvisIfHasNoError()
@@ -1724,12 +1724,10 @@ private val ExpressionNode.isLeftHandSide get() =
  * Returns whether the identifier is [Identifier](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Identifier).
  */
 private fun IdentifierNode.isIdentifier() =
-    not {
-        ReservedWord.values()
-            .asSequence()
-            .filter { it.not { isContextual } }
-            .any { this.isKeyword(it) }
-    }
+    ReservedWord.values()
+        .asSequence()
+        .filter { it.not { isContextual } }
+        .none { this.isKeyword(it) }
 private fun IdentifierNode.isKeyword(keyword: ReservedWord) =
     value == keyword.value
 private fun Token.isKeyword(keyword: ReservedWord, verifiedTokenType: Boolean = false) =

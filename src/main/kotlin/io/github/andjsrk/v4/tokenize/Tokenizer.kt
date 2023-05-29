@@ -266,7 +266,7 @@ internal class Tokenizer(sourceText: String) {
         while (check(curr) || curr.isNumericLiteralSeparator) {
             if (curr.isNumericLiteralSeparator) {
                 advance()
-                if (curr.isNumericLiteralSeparator) return reportError(RangeErrorKind.CONTINUOUS_NUMERIC_SEPARATOR)
+                if (curr.isNumericLiteralSeparator) return reportError(SyntaxErrorKind.CONTINUOUS_NUMERIC_SEPARATOR)
                 separatorSeen = true
                 continue
             }
@@ -274,7 +274,7 @@ internal class Tokenizer(sourceText: String) {
             addLiteralAdvance()
         }
 
-        if (separatorSeen) return reportError(RangeErrorKind.TRAILING_NUMERIC_SEPARATOR)
+        if (separatorSeen) return reportError(SyntaxErrorKind.TRAILING_NUMERIC_SEPARATOR)
 
         return true
     }

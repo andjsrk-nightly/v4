@@ -1,13 +1,9 @@
 package io.github.andjsrk.v4.parse
 
-import io.github.andjsrk.v4.BinaryOperationType
-import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.UnaryOperationType
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.error.ErrorKind
 import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.parse.node.*
-import io.github.andjsrk.v4.parse.node.ArrayLiteralNode
-import io.github.andjsrk.v4.parse.node.ObjectLiteralNode
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
@@ -255,7 +251,7 @@ internal class ParserTest {
 
         """
             `123${"\${"}
-        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNTERMINATED_TEMPLATE)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_EOS)
     }
     @Test
     fun testMemberExpression() {
@@ -383,7 +379,7 @@ internal class ParserTest {
         }
 
         """
-            a?.``
+            a?.b.c``
         """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.TAGGED_TEMPLATE_OPTIONAL_CHAIN)
 
         // modified to
@@ -1175,12 +1171,13 @@ private inline fun <reified Stmt: StatementNode> Code.shouldBeValidStatementAnd(
 private inline fun Code.shouldBeValidModuleAnd(block: ModuleNode.() -> Unit) =
     shouldBeValidAnd(Parser::parseModule, block)
 private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: ErrorKind, args: List<String>? = null, range: Range? = null) {
-    val error = createParser(this).parseUnsuccessfully(parseFn)
+    val parser = createParser(this)
+    val error = parser.parseUnsuccessfully(parseFn)
     assert(error.kind == kind) {
         """
             Expected: $kind
             Actual: $error
-        """.trimIndent()
+        """.trimIndent() + parser.stackTrace?.toErrorMessagePart()
     }
     if (range != null) assert(error.range == range)
     if (args != null) {
@@ -1205,8 +1202,7 @@ private inline fun <N: Node> Parser.parseSuccessfully(parseFn: Parser.() -> N?) 
         assert(!hasError) {
             """
                 Error occurred: $error
-                Stack trace:
-            """.trimIndent() + "\n${stackTrace?.joinToString("\n") { "    $it" }}"
+            """.trimIndent() + stackTrace?.toErrorMessagePart()
         }
         assertNotNull(node)
         node
@@ -1217,6 +1213,8 @@ private inline fun Parser.parseUnsuccessfully(parseFn: Parser.() -> Node?) =
         assert(hasError)
         error!!
     }
+private fun List<StackTraceElement>.toErrorMessagePart() =
+    "\nStack trace:\n${joinToString("\n") { "    $it" }}"
 private fun createParser(code: Code) =
     Parser(code.trimIndent())
 

@@ -1,15 +1,12 @@
 package io.github.andjsrk.v4.parse
 
 import io.github.andjsrk.v4.*
-import io.github.andjsrk.v4.BinaryOperationType as BinaryOp
-import io.github.andjsrk.v4.error.ErrorKind
-import io.github.andjsrk.v4.error.SyntaxErrorKind
+import io.github.andjsrk.v4.error.*
 import io.github.andjsrk.v4.parse.ReservedWord.*
 import io.github.andjsrk.v4.parse.node.*
-import io.github.andjsrk.v4.tokenize.Token
-import io.github.andjsrk.v4.tokenize.TokenType
+import io.github.andjsrk.v4.tokenize.*
 import io.github.andjsrk.v4.tokenize.TokenType.*
-import io.github.andjsrk.v4.tokenize.Tokenizer
+import io.github.andjsrk.v4.BinaryOperationType as BinaryOp
 
 private val testing = System.getenv("TEST")?.toBooleanStrict() ?: false
 
@@ -588,6 +585,7 @@ class Parser(sourceText: String) {
             advance() // successfully got template middle/tail token, so now advance to get normal token
             expressions += expr
             strings += string
+            if (strings.size > Int.MAX_VALUE) return reportError(RangeErrorKind.TEMPLATE_STRING_OUT_OF_RANGE, string.range)
             if (string.type == TEMPLATE_TAIL) break
         }
         return TemplateLiteralNode(strings.map(::TemplateStringNode), expressions.toList())
@@ -764,7 +762,24 @@ class Parser(sourceText: String) {
                     }
                 }
                 currToken.type.isTemplateStart -> {
-                    if (isOptionalChain) return reportError(SyntaxErrorKind.TAGGED_TEMPLATE_OPTIONAL_CHAIN)
+                    fun report() = reportError(SyntaxErrorKind.TAGGED_TEMPLATE_OPTIONAL_CHAIN)
+                    if (isOptionalChain) return report()
+
+                    // check for parents
+                    var obj = callee
+                    while (true) {
+                        when (obj) {
+                            is MemberExpressionNode -> {
+                                if (obj.isOptionalChain) return report()
+                                obj = obj.`object`
+                            }
+                            is NormalCallNode -> {
+                                if (obj.isOptionalChain) return report()
+                                obj = obj.callee
+                            }
+                            else -> break
+                        }
+                    }
                     val template = parseTemplateLiteral() ?: return null
                     TaggedTemplateNode(callee, template)
                 }

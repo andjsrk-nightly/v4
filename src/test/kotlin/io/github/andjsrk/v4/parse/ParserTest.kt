@@ -369,6 +369,28 @@ internal class ParserTest {
         }
     }
     @Test
+    fun testTaggedTemplate() {
+        """
+            a``
+        """.shouldBeValidExpressionAnd<TaggedTemplateNode> {
+            callee.assertIdentifierNamed("a")
+        }
+
+        """
+            a?.``
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.TAGGED_TEMPLATE_OPTIONAL_CHAIN)
+
+        // modified to
+        // CallExpression [no LineTerminator here] TemplateLiteral
+        """
+            a
+            ``
+        """.shouldBeValidModuleAnd {
+            elements[0].unwrapExprStmt<IdentifierNode>()
+            elements[1].unwrapExprStmt<TemplateLiteralNode>()
+        }
+    }
+    @Test
     fun testNewExpression() {
         """
             new A()

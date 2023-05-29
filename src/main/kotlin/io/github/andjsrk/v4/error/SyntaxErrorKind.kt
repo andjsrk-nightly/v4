@@ -91,6 +91,7 @@ enum class SyntaxErrorKind(override val message: String): ErrorKind {
     SPECIES_NOT_CONSTRUCTOR("object.constructor[Symbol.species] is not a constructor"),
     STRICT_EVAL_ARGUMENTS("Unexpected eval or arguments in strict mode"),
     SUPER_OPTIONAL_CHAIN("Invalid optional chain from super"),
+    TAGGED_TEMPLATE_OPTIONAL_CHAIN("Invalid tagged template on optional chain"),
     THIS_FORMAL_PARAMETER("'this' is not a valid formal parameter name"),
     TOO_MANY_ARGUMENTS("Too many arguments in function call (only 65535 allowed)"),
     TOO_MANY_ELEMENTS_IN_PROMISE_COMBINATOR("Too many elements passed to Promise.%"),

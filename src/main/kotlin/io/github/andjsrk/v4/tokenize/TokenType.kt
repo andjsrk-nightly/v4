@@ -1,14 +1,12 @@
 package io.github.andjsrk.v4.tokenize
 
-import io.github.andjsrk.v4.isOneOf
-
 enum class TokenType(val staticContent: String?) {
     EOS(null),
     ILLEGAL(null),
+    TEMPLATE_FULL(null),
     TEMPLATE_HEAD(null),
     TEMPLATE_MIDDLE(null),
     TEMPLATE_TAIL(null),
-    TEMPLATE_FULL(null),
     DOT("."),
     LEFT_BRACKET("["),
     QUESTION_DOT("?."),
@@ -76,5 +74,8 @@ enum class TokenType(val staticContent: String?) {
 
     val isAssignLike by lazy {
         this in ASSIGN..ASSIGN_MINUS
+    }
+    val isTemplateStart by lazy {
+        this in TEMPLATE_FULL..TEMPLATE_HEAD
     }
 }

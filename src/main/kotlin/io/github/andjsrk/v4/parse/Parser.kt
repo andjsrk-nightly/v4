@@ -87,7 +87,7 @@ class Parser(sourceText: String) {
             NUMBER, BIGINT -> SyntaxErrorKind.UNEXPECTED_TOKEN_NUMBER
             STRING -> SyntaxErrorKind.UNEXPECTED_TOKEN_STRING
             IDENTIFIER -> SyntaxErrorKind.UNEXPECTED_TOKEN_IDENTIFIER
-            TEMPLATE_HEAD, TEMPLATE_MIDDLE, TEMPLATE_TAIL, TEMPLATE_FULL -> SyntaxErrorKind.UNEXPECTED_TEMPLATE_STRING
+            in TEMPLATE_FULL..TEMPLATE_TAIL -> SyntaxErrorKind.UNEXPECTED_TEMPLATE_STRING
             ILLEGAL -> SyntaxErrorKind.INVALID_OR_UNEXPECTED_TOKEN
             else -> return reportError(
                 SyntaxErrorKind.UNEXPECTED_TOKEN,
@@ -687,7 +687,11 @@ class Parser(sourceText: String) {
                 endRange = property.range
             }
             else -> {
-                if (currToken.type == LEFT_PARENTHESIS && !parsingNew) return parseCall(actualObject, isOptionalChain)
+                if (!parsingNew) {
+                    val isNormalCall = currToken.type == LEFT_PARENTHESIS
+                    val isTaggedTemplate = !parsingSuperProperty && currToken.type.isTemplateStart && currToken.not { isPrevLineTerminator }
+                    if (isNormalCall || isTaggedTemplate) return parseCall(actualObject, isOptionalChain)
+                }
 
                 // if it is neither member access nor call, it is an unexpected token
                 if (isOptionalChain) return reportUnexpectedToken()
@@ -749,13 +753,22 @@ class Parser(sourceText: String) {
                 currToken.isKeyword(IMPORT) -> parseImportCall()
                 else -> null
             }
-            else {
-                if (currToken.type != LEFT_PARENTHESIS) return callee.takeUnless { isOptionalChain } ?: reportUnexpectedToken()
-                val args = parseArguments() ?: return null
-                when (callee) {
-                    is SuperNode -> SuperCallNode(callee, args)
-                    else -> NormalCallNode(callee, args, isOptionalChain)
+            else when {
+                currToken.type == LEFT_PARENTHESIS -> {
+                    val args = parseArguments() ?: return null
+                    when (callee) {
+                        is SuperNode -> SuperCallNode(callee, args)
+                        else -> NormalCallNode(callee, args, isOptionalChain)
+                    }
                 }
+                currToken.type.isTemplateStart -> {
+                    if (isOptionalChain) return reportError(SyntaxErrorKind.TAGGED_TEMPLATE_OPTIONAL_CHAIN)
+                    val template = parseTemplateLiteral() ?: return null
+                    TaggedTemplateNode(callee, template)
+                }
+                else ->
+                    callee.takeUnless { isOptionalChain }
+                        ?: reportUnexpectedToken()
             }
         )
     }

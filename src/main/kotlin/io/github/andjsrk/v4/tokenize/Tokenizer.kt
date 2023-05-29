@@ -14,6 +14,7 @@ internal class Tokenizer(sourceText: String) {
         private val sourceCheckPoint = source.CheckPoint()
         fun load() {
             this@Tokenizer.error = error
+            builder = Token.Builder()
             sourceCheckPoint.load()
         }
     }
@@ -38,6 +39,15 @@ internal class Tokenizer(sourceText: String) {
     }
     private fun advanceWhile(check: (Char) -> Boolean) =
         advanceWhile(true, check)
+    private lateinit var previousStateCheckPoint: CheckPoint
+    /**
+     * The tokenizer gets back to previous state.
+     * Note that this function will not work correctly if try to call again before next token is computed,
+     * because to support it [CheckPoint] needs to store every [Tokenizer]'s state so far.
+     */
+    fun back() {
+        previousStateCheckPoint.load()
+    }
     private val curr get() =
         source.curr
     private fun peek(relativePos: Int = 1) =
@@ -213,8 +223,11 @@ internal class Tokenizer(sourceText: String) {
             }
         }
     }
+    /**
+     * Note that this function will be called by parser because parser has a context about what current token should be.
+     */
     fun getTemplateMiddleToken(): Token {
-        // } have already been read
+        advance() // read }
         builder.run {
             while (true) {
                 if (curr.isEndOfInput) return buildIllegal()
@@ -324,6 +337,7 @@ internal class Tokenizer(sourceText: String) {
     }
     fun getNextToken(): Token {
         builder = Token.Builder()
+        previousStateCheckPoint = CheckPoint()
         builder.run {
             do {
                 startPos = source.pos

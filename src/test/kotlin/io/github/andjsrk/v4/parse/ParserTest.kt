@@ -239,6 +239,13 @@ internal class ParserTest {
         }
 
         """
+            `${"\${0}\${0}"}`
+        """.shouldBeValidExpressionAnd<TemplateLiteralNode> {
+            assert(strings.size == 3)
+            assert(expressions.size == 2)
+        }
+
+        """
             `123${"\${{}}"}`
         """.shouldBeValidExpressionAnd<TemplateLiteralNode> {
             assert(strings[0].value == "123")
@@ -248,7 +255,7 @@ internal class ParserTest {
 
         """
             `123${"\${"}
-        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_EOS)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNTERMINATED_TEMPLATE)
     }
     @Test
     fun testMemberExpression() {

@@ -582,8 +582,10 @@ class Parser(sourceText: String) {
         val expressions = mutableListOf<ExpressionNode>()
         while (true) {
             val expr = parseExpression() ?: return null
+            tokenizer.back() // current token is right brace, which is not expected, so get back to previous state then get template middle token
             val string = tokenizer.getTemplateMiddleToken()
             if (string.type.not { isOneOf(TEMPLATE_MIDDLE, TEMPLATE_TAIL) }) return reportError(SyntaxErrorKind.UNTERMINATED_TEMPLATE_EXPR)
+            advance() // successfully got template middle/tail token, so now advance to get normal token
             expressions += expr
             strings += string
             if (string.type == TEMPLATE_TAIL) break

@@ -1619,15 +1619,8 @@ class Parser(sourceText: String) {
      * Returning `null`(not a pair that contains `null`) means there is an error.
      */
     @Careful(false)
-    private fun parseImportClause(): Pair<DefaultImportBindingNode?, NonDefaultImportBindingNode?>? {
-        val name = parseBindingIdentifier() ?: return parseImportClause(null)
-        val default = DefaultImportBindingNode(name)
-        takeIfMatches(COMMA) ?: return default to null
-        return parseImportClause(default)
-    }
-    @Careful(false)
-    private fun parseImportClause(default: DefaultImportBindingNode?): Pair<DefaultImportBindingNode?, NonDefaultImportBindingNode?>? {
-        return default to when (currToken.type) {
+    private fun parseImportClause(): ImportBindingNode? {
+        return when (currToken.type) {
             MULTIPLY -> { // NameSpaceImport
                 val startRange = advance().range
                 expectKeyword(AS) ?: return null
@@ -1654,11 +1647,11 @@ class Parser(sourceText: String) {
     private fun parseImportDeclaration(): ImportDeclarationNode? {
         val startRange = takeIfMatchesKeyword(IMPORT)?.range ?: return null
         parseStringLiteral()?.let {
-            return ImportDeclarationNode(null, null, it, startRange, takeOptionalSemicolonRange())
+            return ImportDeclarationNode(null, it, startRange, takeOptionalSemicolonRange())
         }
-        val (default, nonDefault) = parseImportClause() ?: return null
+        val binding = parseImportClause() ?: return null
         val moduleSpecifier = parseFromClause() ?: return null
-        return ImportDeclarationNode(default, nonDefault, moduleSpecifier, startRange, takeOptionalSemicolonRange())
+        return ImportDeclarationNode(binding, moduleSpecifier, startRange, takeOptionalSemicolonRange())
     }
     @Careful(false)
     private fun parseExportSpecifier(): ImportOrExportSpecifierNode? {
@@ -1670,11 +1663,6 @@ class Parser(sourceText: String) {
     @Careful
     private fun parseExportDeclaration(): ExportDeclarationNode? {
         val startRange = takeIfMatchesKeyword(EXPORT)?.range ?: return null
-
-        if (takeIfMatchesKeyword(DEFAULT) != null) {
-            val expr = parseAssignment() ?: return null
-            return DefaultExportDeclarationNode(expr, startRange, takeOptionalSemicolonRange())
-        }
 
         return when (currToken.type) {
             MULTIPLY -> {

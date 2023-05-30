@@ -4,14 +4,13 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ImportDeclarationNode(
-    val defaultBinding: DefaultImportBindingNode?,
-    val nonDefaultBinding: NonDefaultImportBindingNode?,
+    val binding: ImportBindingNode?,
     val moduleSpecifier: StringLiteralNode,
     startRange: Range,
     semicolonRange: Range?,
 ): DeclarationNode {
-    override val childNodes get() = listOf(defaultBinding, nonDefaultBinding, moduleSpecifier)
+    override val childNodes get() = listOf(binding, moduleSpecifier)
     override val range = startRange..(semicolonRange ?: moduleSpecifier.range)
     override fun toString() =
-        stringifyLikeDataClass(::defaultBinding, ::nonDefaultBinding, ::moduleSpecifier, ::range)
+        stringifyLikeDataClass(::binding, ::moduleSpecifier, ::range)
 }

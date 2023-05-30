@@ -1039,18 +1039,9 @@ internal class ParserTest {
     @Test
     fun testImportDeclaration() {
         """
-            import a from "mod"
-        """.shouldBeValidStatementAnd<ImportDeclarationNode> {
-            assertNotNull(defaultBinding)
-            assertNull(nonDefaultBinding)
-            assert(moduleSpecifier.value == "mod")
-        }
-
-        """
             import { a, b as c } from "mod"
         """.shouldBeValidStatementAnd<ImportDeclarationNode> {
-            assertNull(defaultBinding)
-            nonDefaultBinding.assertTypeThen<NamedImportBindingNode> {
+            binding.assertTypeThen<NamedImportBindingNode> {
                 elements[0].run {
                     name.assertIdentifierNamed("a")
                     assert(name.value == alias.value)
@@ -1069,8 +1060,7 @@ internal class ParserTest {
         """
             import * as a from "mod"
         """.shouldBeValidStatementAnd<ImportDeclarationNode> {
-            assertNull(defaultBinding)
-            nonDefaultBinding.assertTypeThen<NamespaceImportBindingNode> {
+            binding.assertTypeThen<NamespaceImportBindingNode> {
                 binding.assertIdentifierNamed("a")
             }
         }
@@ -1078,18 +1068,11 @@ internal class ParserTest {
         """
             import "mod"
         """.shouldBeValidStatementAnd<ImportDeclarationNode> {
-            assertNull(defaultBinding)
-            assertNull(nonDefaultBinding)
+            assertNull(binding)
         }
     }
     @Test
     fun testExportDeclaration() {
-        """
-            export default 0
-        """.shouldBeValidStatementAnd<DefaultExportDeclarationNode> {
-            assertIs<NumberLiteralNode>(expression)
-        }
-
         """
             export let a = 0
         """.shouldBeValidStatementAnd<NamedSingleExportDeclarationNode> {

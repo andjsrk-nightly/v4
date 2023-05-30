@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 class NamespaceImportBindingNode(
     val binding: IdentifierNode,
     startRange: Range,
-): NonDefaultImportBindingNode {
+): ImportBindingNode {
     override val childNodes get() = listOf(binding)
     override val range = startRange..binding.range
     override fun toString() =

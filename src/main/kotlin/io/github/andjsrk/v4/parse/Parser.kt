@@ -1667,14 +1667,8 @@ class Parser(sourceText: String) {
         return when (currToken.type) {
             MULTIPLY -> {
                 advance()
-                if (takeIfMatchesKeyword(AS) != null) {
-                    val binding = parseIdentifierName() ?: return null
-                    val moduleSpecifier = parseFromClause() ?: return null
-                    NamespaceExportDeclarationNode(binding, moduleSpecifier, startRange, takeOptionalSemicolonRange())
-                } else {
-                    val moduleSpecifier = parseFromClause() ?: return null
-                    AllExportDeclarationNode(moduleSpecifier, startRange, takeOptionalSemicolonRange())
-                }
+                val moduleSpecifier = parseFromClause() ?: return null
+                AllExportDeclarationNode(moduleSpecifier, startRange, takeOptionalSemicolonRange())
             }
             LEFT_BRACE -> { // NamedExports
                 advance()

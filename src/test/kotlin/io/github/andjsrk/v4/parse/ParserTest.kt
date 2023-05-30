@@ -1104,12 +1104,6 @@ internal class ParserTest {
         """
             export * from "mod"
         """.shouldBeValidStatementAnd<AllExportDeclarationNode> {}
-
-        """
-            export * as a from "mod"
-        """.shouldBeValidStatementAnd<NamespaceExportDeclarationNode> {
-            binding.assertIdentifierNamed("a")
-        }
     }
 }
 

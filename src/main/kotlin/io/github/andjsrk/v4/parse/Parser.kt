@@ -12,9 +12,11 @@ private val testing = System.getenv("TEST")?.toBooleanStrict() ?: false
 
 class Parser(sourceText: String) {
     internal inner class CheckPoint {
+        private val error = this@Parser.error
         private val currToken = this@Parser.currToken
         private val tokenizerCheckPoint = tokenizer.CheckPoint()
         fun load() {
+            this@Parser.error = error
             this@Parser.currToken = currToken
             tokenizerCheckPoint.load()
         }
@@ -219,10 +221,10 @@ class Parser(sourceText: String) {
             parseBlock(false) ?: return null
         }
         return ObjectMethodNode(name, parameters, body, isAsync, isGenerator, startRange)
-            .withEarlyErrorChecks()
+            .withDuplicateNameCheck()
     }
-    private fun <N: HasParameters> N.withEarlyErrorChecks() =
-        takeIf {
+    private fun <N: HasParameters> N?.withDuplicateNameCheck() =
+        this?.takeIf {
             val names = when {
                 this is NonSpecialMethodNode ->
                     parameters.boundNames() + body.lexicallyDeclaredNames()
@@ -234,6 +236,13 @@ class Parser(sourceText: String) {
             }
             if (names != null) reportDuplicateName(names)
             !hasError
+        }
+    private fun <N: MethodNode> N?.withDirectSuperCheck() =
+        this?.let {
+            when (val directSuper = findDirectSuper()) {
+                null -> this
+                else -> reportError(SyntaxErrorKind.UNEXPECTED_SUPER, directSuper.range)
+            }
         }
     @Careful
     private fun parseGeneratorMethod(givenName: ObjectLiteralKeyNode?, isAsync: Boolean): ObjectMethodNode? {
@@ -253,8 +262,11 @@ class Parser(sourceText: String) {
         }
         return parseGeneratorMethod(name, false)
     }
+    /**
+     * @return [ObjectElementNode] & [MethodNode]
+     */
     @Careful
-    private fun parseMethodLike(givenName: ObjectLiteralKeyNode? = null): ObjectElementNode? {
+    private fun parseMethodLike(givenName: ObjectLiteralKeyNode? = null): MethodNode? {
         val name = givenName ?: parsePropertyName() ?: return null
         return (
             if (name is IdentifierNode) when {
@@ -315,7 +327,10 @@ class Parser(sourceText: String) {
             }
             else ->
                 listOf(
-                    { parseMethodLike(propertyName) },
+                    {
+                        parseMethodLike(propertyName)
+                            .withDirectSuperCheck() as ObjectElementNode?
+                    },
                     { PropertyShorthandNode(propertyName) },
                 )
                     .foldElvisIfHasNoError()
@@ -339,23 +354,7 @@ class Parser(sourceText: String) {
         val rightBraceTokenRange = expect(RIGHT_BRACE)?.range ?: return null
 
         return ObjectLiteralNode(elements.toList(), leftBraceTokenRange..rightBraceTokenRange)
-            .withEarlyErrorChecks()
     }
-    private fun ObjectLiteralNode.withEarlyErrorChecks() =
-        takeIf {
-            val directSuperCall = elements
-                .mapAsSequence {
-                    (it as? MethodNode)?.findDirectSuperCall()
-                }
-                .foldElvis()
-            when (directSuperCall) {
-                null -> true
-                else -> {
-                    reportError(SyntaxErrorKind.UNEXPECTED_SUPER, directSuperCall.range)
-                    false
-                }
-            }
-        }
     @Careful
     private fun parseThis(): ThisNode? =
         takeIfMatchesKeyword(THIS)?.let {
@@ -393,7 +392,7 @@ class Parser(sourceText: String) {
         takeIfMatches(ASSIGN) ?: return NonRestNode(binding, null)
         val default = parseAssignment() ?: return null
         return NonRestNode(binding, default)
-            .withEarlyErrorChecks()
+            .withInvalidDefaultCheck()
     }
     @Careful
     private fun parseArrayBindingPattern(): ArrayBindingPatternNode? {
@@ -480,7 +479,6 @@ class Parser(sourceText: String) {
         val expr = parseExpression()
         val rightParenTokenAfterExprRange = expect(RIGHT_PARENTHESIS)?.range
         val exprError = error
-        error = null
 
         checkPoint.load()
 
@@ -502,12 +500,12 @@ class Parser(sourceText: String) {
         val methodTokenRange = takeIfMatchesKeyword(METHOD)?.range ?: return (isAsync || isGenerator).thenTake {
             reportUnexpectedToken()
         }
-        val params = parseArrowFormalParameters() ?: return null
+        val params = parseArrowFormalParameters(doDuplicateCheck=false) ?: return null
         val body = withParseContext({ copy(allowReturn=true, allowAwait=isAsync) }) {
             parseBlock() ?: return null
         }
         return MethodExpressionNode(params, body, isAsync, isGenerator, startRange ?: methodTokenRange)
-            .withEarlyErrorChecks()
+            .withDuplicateNameCheck()
     }
     @Careful
     private fun parseClassElement(): ClassElementNode? {
@@ -571,21 +569,17 @@ class Parser(sourceText: String) {
         val name = parseIdentifier()
         val tail = parseClassTail() ?: return null
         return ClassExpressionNode(name, tail.parent, tail.elements, startRange..tail.range)
-            .withEarlyErrorChecks()
+            .withDirectSuperCallInConstructorCheck()
     }
-    private fun <N: ClassNode> N.withEarlyErrorChecks() =
-        takeIf {
+    private fun <N: ClassNode> N?.withDirectSuperCallInConstructorCheck() =
+        this?.let {
+            // TODO: method super call
             val constructor = constructor
             when {
                 parent == null && constructor != null ->
-                    when (val directSuperCall = constructor.findDirectSuperCall()) {
-                        null -> true
-                        else -> {
-                            reportError(SyntaxErrorKind.UNEXPECTED_SUPER, directSuperCall.range)
-                            false
-                        }
-                    }
-                else -> true
+                    constructor.withDirectSuperCheck()
+                        ?.let { this }
+                else -> this
             }
         }
     @Careful
@@ -778,7 +772,7 @@ class Parser(sourceText: String) {
                         else -> NormalCallNode(callee, args, isOptionalChain)
                     }
                 }
-                currToken.type.isTemplateStart -> {
+                currToken.type.isTemplateStart && currToken.not { isPrevLineTerminator } -> {
                     fun report() = reportError(SyntaxErrorKind.TAGGED_TEMPLATE_OPTIONAL_CHAIN)
                     if (isOptionalChain) return report()
 
@@ -798,6 +792,7 @@ class Parser(sourceText: String) {
                         }
                     }
                     val template = parseTemplateLiteral() ?: return null
+                    // TODO: ignore escape sequences
                     TaggedTemplateNode(callee, template)
                 }
                 else ->
@@ -846,7 +841,7 @@ class Parser(sourceText: String) {
                     token.range,
                     true,
                 )
-                    .withEarlyErrorChecks()
+                    .withLhsCheck()
             }
             else -> {
                 val leftHandSideExpr = parseLeftHandSideExpression() ?: return null
@@ -858,13 +853,13 @@ class Parser(sourceText: String) {
                         token.range,
                         false,
                     )
-                        .withEarlyErrorChecks()
+                        .withLhsCheck()
                 } else leftHandSideExpr
             }
         }
     }
-    private fun UpdateNode.withEarlyErrorChecks() =
-        takeIf {
+    private fun UpdateNode?.withLhsCheck() =
+        this?.takeIf {
             when {
                 operand.isAssignmentTarget() -> true
                 else -> {
@@ -1109,17 +1104,20 @@ class Parser(sourceText: String) {
             false,
             parameter.range..body.range,
         )
+            .withDuplicateNameCheck()
     }
     /**
-     * @see UniqueFormalParametersNode.withEarlyErrorChecks
+     * @see UniqueFormalParametersNode.withDuplicateNameCheck
      */
-    private fun <N: NonRestNode> N.withEarlyErrorChecks() =
-        when {
-            default is YieldNode ->
-                reportError(SyntaxErrorKind.YIELD_IN_PARAMETER, range)
-            default is UnaryExpressionNode && default.operation == UnaryOperationType.AWAIT ->
-                reportError(SyntaxErrorKind.AWAIT_EXPRESSION_FORMAL_PARAMETER, range)
-            else -> this
+    private fun <N: NonRestNode> N?.withInvalidDefaultCheck() =
+        this?.let {
+            when {
+                default is YieldNode ->
+                    reportError(SyntaxErrorKind.YIELD_IN_PARAMETER, range)
+                default is UnaryExpressionNode && default.operation == UnaryOperationType.AWAIT ->
+                    reportError(SyntaxErrorKind.AWAIT_EXPRESSION_FORMAL_PARAMETER, range)
+                else -> this
+            }
         }
     /**
      * Parses [ArrowFormalParameters](https://tc39.es/ecma262/multipage/ecmascript-language-functions-and-classes.html#prod-ArrowFormalParameters).
@@ -1165,18 +1163,18 @@ class Parser(sourceText: String) {
 
         return UniqueFormalParametersNode(elements, startRange..endRange)
             .let {
-                if (doDuplicateCheck) it.withEarlyErrorChecks()
+                if (doDuplicateCheck) it.withDuplicateNameCheck()
                 else it
             }
     }
     /**
      * See [Early Errors](https://tc39.es/ecma262/multipage/ecmascript-language-functions-and-classes.html#sec-arrow-function-definitions-static-semantics-early-errors).
      * Note that this early error rule will be applied to methods as well because `await`/`yield` expressions are not contextually allowed anymore.
-     * Also, `await`/`yield` expressions will be handled on [NonRestNode.withEarlyErrorChecks],
+     * Also, `await`/`yield` expressions will be handled on [NonRestNode.withInvalidDefaultCheck],
      * because finding range of those in this function is less efficient.
      */
-    private fun UniqueFormalParametersNode.withEarlyErrorChecks() =
-        takeIf {
+    private fun UniqueFormalParametersNode?.withDuplicateNameCheck() =
+        this?.takeIf {
             reportDuplicateName(boundNames()) {
                 reportError(SyntaxErrorKind.DUPLICATE_PARAMETER_NAMES, it.range)
             }
@@ -1198,6 +1196,7 @@ class Parser(sourceText: String) {
             false,
             params.range..body.range,
         )
+            .withDuplicateNameCheck()
     }
     @Careful
     private fun parseArrowFunction(
@@ -1207,7 +1206,7 @@ class Parser(sourceText: String) {
     ): ArrowFunctionNode? {
         val nonNullStartRange = startRange ?: currToken.range
         val parameters =
-            if (currToken.type == LEFT_PARENTHESIS) parseArrowFormalParameters() ?: return null
+            if (currToken.type == LEFT_PARENTHESIS) parseArrowFormalParameters(doDuplicateCheck=false) ?: return null
             else {
                 val paramName = parseIdentifier() ?: return (isAsync || isGenerator).thenTake {
                     reportUnexpectedToken()
@@ -1222,6 +1221,7 @@ class Parser(sourceText: String) {
             parseConciseBody() ?: return null
         }
         return ArrowFunctionNode(parameters, body, isAsync, isGenerator, nonNullStartRange..body.range)
+            .withDuplicateNameCheck()
     }
     @Careful
     private fun parseSpecialFunction(): FunctionExpressionNode? {
@@ -1316,12 +1316,12 @@ class Parser(sourceText: String) {
 
         return BlockNode(statements, startRange..endRange)
             .let { block ->
-                if (doDuplicateCheck) block.withEarlyErrorChecks()
+                if (doDuplicateCheck) block.withDuplicateNameCheck()
                 else block
             }
     }
-    private fun <N: StatementListNode> N.withEarlyErrorChecks() =
-        takeIf {
+    private fun <N: StatementListNode> N?.withDuplicateNameCheck() =
+        this?.takeIf {
             reportDuplicateName(lexicallyDeclaredNames())
             !hasError
         }
@@ -1474,7 +1474,7 @@ class Parser(sourceText: String) {
             }
             val body = parseBlock() ?: return null
             val bodyNames = body.lexicallyDeclaredNames()
-            reportDuplicateName((binding?.boundNames() ?: emptyList()) + bodyNames)
+            reportDuplicateName(binding?.boundNames().orEmpty() + bodyNames)
 
             ifHasNoError { CatchNode(binding, body, startRange) }
         }
@@ -1528,13 +1528,13 @@ class Parser(sourceText: String) {
         val binding = parseIdentifier() ?: parseBindingPattern() ?: return reportUnexpectedToken(startToken)
 
         return LexicalDeclarationWithoutInitializerNode(kind, binding, startToken.range)
-            .withEarlyErrorChecks()
+            .withDuplicateNameCheck()
     }
     /**
      * See [Early Errors](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-let-and-const-declarations-static-semantics-early-errors).
      */
-    private fun LexicalDeclarationWithoutInitializerNode.withEarlyErrorChecks() =
-        takeIf {
+    private fun LexicalDeclarationWithoutInitializerNode?.withDuplicateNameCheck() =
+        this?.takeIf {
             reportDuplicateName(boundNames())
             !hasError
         }
@@ -1578,7 +1578,7 @@ class Parser(sourceText: String) {
         val name = parseIdentifier() ?: return reportError(SyntaxErrorKind.MISSING_CLASS_NAME)
         val tail = parseClassTail() ?: return null
         return ClassDeclarationNode(name, tail.parent, tail.elements, startRange..tail.range)
-            .withEarlyErrorChecks()
+            .withDirectSuperCallInConstructorCheck()
     }
     /**
      * Parses [Declaration](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-Declaration).

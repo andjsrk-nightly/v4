@@ -19,7 +19,7 @@ internal fun <N: Node> Node.find(symbol: KClass<N>, predicate: (N) -> Boolean = 
         // TODO: static initialization block
         is ArrowFunctionNode ->
             symbol.isOneOf(
-                SuperPropertyNode::class,
+                SuperNode::class,
                 SuperCallNode::class,
                 ThisNode::class,
             ).thenTake {
@@ -58,6 +58,11 @@ internal fun Node.boundNames(): List<IdentifierNode> =
         is BindingPatternNode -> elements.flatMap { it.boundNames() }
         is UniqueFormalParametersNode -> elements.flatMap { it.boundNames() }
         is ClassDeclarationNode -> name.boundNames()
+        is ImportOrExportSpecifierNode -> alias.boundNames()
+        is NamedImportBindingNode -> elements.flatMap { it.boundNames() }
+        is NamespaceImportBindingNode -> binding.boundNames()
+        is ImportDeclarationNode -> binding?.boundNames().orEmpty()
+        is NamedSingleExportDeclarationNode -> declaration.boundNames()
         else -> emptyList()
     }
 
@@ -68,7 +73,6 @@ internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
         is StatementListNode -> elements.flatMap { it.lexicallyDeclaredNames() }
         is ExpressionNode -> emptyList()
         // TODO: switch statement
-        // TODO: import/export
         else -> emptyList()
     }
 
@@ -80,6 +84,15 @@ internal fun MethodNode.findDirectSuperCall() =
         is SetterNode -> listOf(parameter, body)
     }
         .mapAsSequence { it.find(SuperCallNode::class) }
+        .foldElvis()
+
+internal fun MethodNode.findDirectSuper() =
+    when (this) {
+        is NonSpecialMethodNode -> listOf(parameters, body)
+        is GetterNode -> listOf(body)
+        is SetterNode -> listOf(parameter, body)
+    }
+        .mapAsSequence { it.find(SuperNode::class) }
         .foldElvis()
 
 @EsSpec("AssignmentTargetType")

@@ -1,7 +1,5 @@
 package io.github.andjsrk.v4
 
-import io.github.andjsrk.v4.isOneOf
-
 /**
  * See [UTF16EncodeCodePoint](https://tc39.es/ecma262/multipage/ecmascript-language-source-code.html#sec-utf16encodecodepoint).
  */
@@ -23,12 +21,12 @@ val Char.isAsciiLetter get() =
 /**
  * modified to:
  *
- * IdentifierChar `::`
+ * IdentifierChar ::
  *   AsciiLetter
  *   `_`
  *   `$`
  *
- * IdentifierName `::`
+ * IdentifierName ::
  *   IdentifierChar
  *   IdentifierName IdentifierChar
  */
@@ -56,7 +54,6 @@ val Char.isHexDigit get() =
     this.isDecimalDigit || this in 'a'..'f' || this in 'A'..'f'
 
 private typealias UnescapedChar = Char
-
 /**
  * See [Table 37](https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#table-string-single-character-escape-sequences).
  */

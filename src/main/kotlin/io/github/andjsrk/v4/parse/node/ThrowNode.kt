@@ -11,5 +11,5 @@ class ThrowNode(
     override val childNodes get() = listOf(expression)
     override val range = startRange..(semicolonRange ?: expression.range)
     override fun toString() =
-        stringifyLikeDataClass(::expression)
+        stringifyLikeDataClass(::expression, ::range)
 }

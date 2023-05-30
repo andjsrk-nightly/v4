@@ -36,10 +36,11 @@ internal fun <N: Node> Node.find(symbol: KClass<N>, predicate: (N) -> Boolean = 
 /**
  * @see find
  */
+@EsSpec("ComputedPropertyContains")
 internal fun <N: Node> Node.computedPropertyFind(symbol: KClass<N>, predicate: (N) -> Boolean): N? =
     when (this) {
         is ComputedPropertyKeyNode -> find(symbol, predicate)
-        is FixedParametersMethodNode -> name.computedPropertyFind(symbol, predicate)
+        is MethodNode -> name.computedPropertyFind(symbol, predicate)
         is FieldNode -> name.computedPropertyFind(symbol, predicate)
         is ClassNode ->
             elements
@@ -72,7 +73,7 @@ internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
     }
 
 @EsSpec("HasDirectSuper")
-internal fun FixedParametersMethodNode.findDirectSuperCall() =
+internal fun MethodNode.findDirectSuperCall() =
     when (this) {
         is NonSpecialMethodNode -> listOf(parameters, body)
         is GetterNode -> listOf(body)
@@ -82,10 +83,11 @@ internal fun FixedParametersMethodNode.findDirectSuperCall() =
         .foldElvis()
 
 @EsSpec("AssignmentTargetType")
-internal fun ExpressionNode.isValidAssignmentTarget(): Boolean =
+internal fun ExpressionNode.isAssignmentTarget(): Boolean =
     when (this) {
         is IdentifierNode -> true
-        is MemberExpressionNode -> true
-        is ParenthesizedExpressionNode -> expression.isValidAssignmentTarget()
+        is SuperPropertyNode -> true
+        is MemberExpressionNode -> !isOptionalChain
+        is ParenthesizedExpressionNode -> expression.isAssignmentTarget()
         else -> false
     }

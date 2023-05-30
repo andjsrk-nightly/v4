@@ -1,3 +1,3 @@
 package io.github.andjsrk.v4.parse.node
 
-sealed interface NonSpecialMethodNode: FixedParametersMethodNode, HasParameters
+sealed interface NonSpecialMethodNode: MethodNode, NonSpecialFunctionNode

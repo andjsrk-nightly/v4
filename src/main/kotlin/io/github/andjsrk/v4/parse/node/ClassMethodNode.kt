@@ -11,7 +11,7 @@ class ClassMethodNode(
     override val isGenerator: Boolean,
     override val isStatic: Boolean,
     startRange: Range,
-): MethodNode, NormalClassElementNode {
+): NormalMethodNode, NormalClassElementNode {
     override val childNodes get() = listOf(name, parameters, body)
     override val range = startRange..body.range
     override fun toString() =

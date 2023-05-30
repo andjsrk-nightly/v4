@@ -11,5 +11,5 @@ class AllExportDeclarationNode(
     override val childNodes get() = listOf(moduleSpecifier)
     override val range = startRange..(semicolonRange ?: moduleSpecifier.range)
     override fun toString() =
-        stringifyLikeDataClass(::moduleSpecifier)
+        stringifyLikeDataClass(::moduleSpecifier, ::range)
 }

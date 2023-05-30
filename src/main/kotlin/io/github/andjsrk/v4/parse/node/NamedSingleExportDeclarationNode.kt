@@ -11,5 +11,5 @@ class NamedSingleExportDeclarationNode(
     override val childNodes get() = listOf(declaration)
     override val range = startRange..(semicolonRange ?: declaration.range)
     override fun toString() =
-        stringifyLikeDataClass()
+        stringifyLikeDataClass(::declaration, ::range)
 }

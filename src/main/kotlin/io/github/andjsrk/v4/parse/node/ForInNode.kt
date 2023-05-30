@@ -12,5 +12,5 @@ class ForInNode(
     override val childNodes get() = listOf(declaration, target, body)
     override val range = startRange..body.range
     override fun toString() =
-        stringifyLikeDataClass(::declaration, ::target, ::body)
+        stringifyLikeDataClass(::declaration, ::target, ::body, ::range)
 }

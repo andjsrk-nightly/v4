@@ -9,9 +9,9 @@ class MethodExpressionNode(
     override val isAsync: Boolean,
     override val isGenerator: Boolean,
     startRange: Range,
-): SpecialFunctionExpressionNode {
+): FunctionExpressionNode {
     override val childNodes get() = listOf<Node?>(parameters, body)
     override val range = startRange..body.range
     override fun toString() =
-        stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator)
+        stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator, ::range)
 }

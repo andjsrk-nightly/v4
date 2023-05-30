@@ -9,7 +9,7 @@ class ArrowFunctionNode(
     override val isAsync: Boolean,
     override val isGenerator: Boolean,
     startRange: Range,
-): SpecialFunctionExpressionNode {
+): FunctionExpressionNode {
     init {
         require(body is ExpressionNode || body is BlockNode)
     }

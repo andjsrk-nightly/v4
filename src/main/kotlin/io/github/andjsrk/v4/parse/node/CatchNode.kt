@@ -11,5 +11,5 @@ class CatchNode(
     override val childNodes get() = listOf(binding, body)
     override val range = startRange..body.range
     override fun toString() =
-        stringifyLikeDataClass()
+        stringifyLikeDataClass(::binding, ::body, ::range)
 }

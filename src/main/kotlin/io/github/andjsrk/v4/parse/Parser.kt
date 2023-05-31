@@ -237,11 +237,11 @@ class Parser(sourceText: String) {
             if (names != null) reportDuplicateName(names)
             !hasError
         }
-    private fun <N: MethodNode> N?.withDirectSuperCheck() =
+    private fun <N: MethodNode> N?.withDirectSuperCallCheck() =
         this?.let {
-            when (val directSuper = findDirectSuper()) {
+            when (val superCall = findDirectSuperCall()) {
                 null -> this
-                else -> reportError(SyntaxErrorKind.UNEXPECTED_SUPER, directSuper.range)
+                else -> reportError(SyntaxErrorKind.UNEXPECTED_SUPER, superCall.callee.range)
             }
         }
     @Careful
@@ -329,7 +329,7 @@ class Parser(sourceText: String) {
                 listOf(
                     {
                         parseMethodLike(propertyName)
-                            .withDirectSuperCheck() as ObjectElementNode?
+                            .withDirectSuperCallCheck() as ObjectElementNode?
                     },
                     { PropertyShorthandNode(propertyName) },
                 )
@@ -533,12 +533,13 @@ class Parser(sourceText: String) {
                             return ConstructorNode(actualName, parameters, body)
                         }
                         ClassMethodNode(actualName, parameters, body, isAsync, isGenerator, isStatic, startRange)
+                            .withDirectSuperCallCheck()
                     }
                     null -> // field without initializer
                         ifHasNoError {
                             FieldNode(name, null, isStatic, startRange, takeOptionalSemicolonRange(false))
                         }
-                    else -> neverHappens()
+                    is ClassElementNode -> neverHappens()
                 }
             }
         }
@@ -562,26 +563,78 @@ class Parser(sourceText: String) {
         }
         val endRange = expect(RIGHT_BRACE)?.range ?: neverHappens()
         return ClassTailNode(parent, elements.toList(), (extendsTokenRange ?: leftBraceTokenRange)..endRange)
+            .withDuplicateNameCheck()
+            .withDirectSuperCheck()
     }
+    private fun ClassTailNode?.withDuplicateNameCheck(): ClassTailNode? {
+        return this?.let {
+            val constructors = elements.filterIsInstance<ConstructorNode>()
+            if (constructors.size > 1) return reportError(SyntaxErrorKind.DUPLICATE_CONSTRUCTOR, constructors[1].name.range)
+            val (statics, nonStatics) = elements
+                .filterIsInstance<NormalClassElementNode>()
+                .partition { it.isStatic }
+            arrayOf(statics, nonStatics).forEach { elems ->
+                val elemInfos =
+                    mutableMapOf<String, Pair<Boolean/* encountered getter */, Boolean/* encountered setter */>>()
+                elems.forEach classElem@ {
+                    val name = it.propName() ?: return@classElem
+                    val stringName = when (name) {
+                        is NumberLiteralNode -> name.raw
+                        is IdentifierNode -> name.value
+                        is StringLiteralNode -> name.value
+                        is ComputedPropertyKeyNode -> neverHappens()
+                    }
+                    fun report() = reportError(SyntaxErrorKind.DUPLICATE_CLASS_ELEMENT_NAMES, name.range)
+                    val info = elemInfos[stringName]
+                    if (info != null) {
+                        val (isGetter, isSetter) = info
+
+                        when {
+                            isGetter == isSetter -> return report()
+                            isGetter -> {
+                                if (it !is SetterNode) return report()
+                                elemInfos[stringName] = true to true
+                            }
+                            isSetter -> {
+                                if (it !is GetterNode) return report()
+                                elemInfos[stringName] = true to true
+                            }
+                        }
+                    } else elemInfos[stringName] = (it is GetterNode) to (it is SetterNode)
+                }
+            }
+            this
+        }
+    }
+    private fun ClassTailNode?.withDirectSuperCheck() =
+        this?.let {
+            when (parent) {
+                null -> {
+                    val `super` = elements.asSequence()
+                        .filterIsInstance<MethodNode>()
+                        .map { it.findDirectSuper() }
+                        .foldElvis()
+                    if (`super` != null) reportError(SyntaxErrorKind.UNEXPECTED_SUPER, `super`.range)
+                    not { hasError }.thenTake { this }
+                }
+                else -> {
+                    val superCall = elements.asSequence()
+                        .filterIsInstance<MethodNode>()
+                        .filter { it !is ConstructorNode }
+                        .map { it.findDirectSuperCall() }
+                        .foldElvis()
+                    if (superCall != null) reportError(SyntaxErrorKind.UNEXPECTED_SUPER, superCall.callee.range)
+                    not { hasError }.thenTake { this }
+                }
+            }
+        }
     @Careful
     private fun parseClassExpression(): ClassExpressionNode? {
         val startRange = takeIfMatchesKeyword(CLASS)?.range ?: return null
         val name = parseIdentifier()
         val tail = parseClassTail() ?: return null
         return ClassExpressionNode(name, tail.parent, tail.elements, startRange..tail.range)
-            .withDirectSuperCallInConstructorCheck()
     }
-    private fun <N: ClassNode> N?.withDirectSuperCallInConstructorCheck() =
-        this?.let {
-            // TODO: method super call
-            val constructor = constructor
-            when {
-                parent == null && constructor != null ->
-                    constructor.withDirectSuperCheck()
-                        ?.let { this }
-                else -> this
-            }
-        }
     @Careful
     private fun parseTemplateLiteral(): TemplateLiteralNode? {
         val head = takeIfMatches(TEMPLATE_FULL) ?: takeIfMatches(TEMPLATE_HEAD) ?: return null
@@ -727,19 +780,6 @@ class Parser(sourceText: String) {
         )
     }
     /**
-     * Parses [SuperCall](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-SuperCall).
-     */
-    @Careful
-    private fun parseSuperCall(): SuperCallNode? {
-        val superNode = takeIfMatchesKeyword(SUPER)
-            ?.let { SuperNode(it.range) }
-            ?: return null
-        if (currToken.type != LEFT_PARENTHESIS) return reportError(SyntaxErrorKind.UNEXPECTED_SUPER, superNode.range)
-        val args = parseArguments() ?: return null
-
-        return SuperCallNode(superNode, args)
-    }
-    /**
      * Parses [ImportCall](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-ImportCall).
      */
     @Careful
@@ -760,7 +800,6 @@ class Parser(sourceText: String) {
     private fun parseCall(callee: ExpressionNode?, isOptionalChain: Boolean = false): ExpressionNode? {
         return parseMemberExpression(
             if (callee == null) when {
-                currToken.isKeyword(SUPER) -> parseSuperCall()
                 currToken.isKeyword(IMPORT) -> parseImportCall()
                 else -> null
             }
@@ -1541,7 +1580,7 @@ class Parser(sourceText: String) {
     /**
      * Parses [LexicalDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-LexicalDeclaration).
      * @param inNormalContext
-     * Indicates whether the lexical declaration is in normal context;
+     * Indicates whether the lexical declaration is in normal context.
      * There are some special context such as for statement.
      */
     @Careful
@@ -1564,9 +1603,7 @@ class Parser(sourceText: String) {
             binding,
             value,
             withoutInitializer.range,
-            inNormalContext.thenTake {
-                takeOptionalSemicolonRange()
-            },
+            inNormalContext.thenTake { takeOptionalSemicolonRange() },
         )
     }
     /**
@@ -1578,7 +1615,6 @@ class Parser(sourceText: String) {
         val name = parseIdentifier() ?: return reportError(SyntaxErrorKind.MISSING_CLASS_NAME)
         val tail = parseClassTail() ?: return null
         return ClassDeclarationNode(name, tail.parent, tail.elements, startRange..tail.range)
-            .withDirectSuperCallInConstructorCheck()
     }
     /**
      * Parses [Declaration](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-Declaration).
@@ -1615,6 +1651,9 @@ class Parser(sourceText: String) {
         }
         return specifiers.toList()
     }
+    /**
+     * Parses [ImportSpecifier](https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#prod-ImportSpecifier).
+     */
     @Careful(false)
     private fun parseImportSpecifier(): ImportOrExportSpecifierNode? {
         val name = parseIdentifierName() ?: return reportUnexpectedToken()
@@ -1625,6 +1664,19 @@ class Parser(sourceText: String) {
         val alias = parseBindingIdentifier() ?: return reportUnexpectedToken()
         return ImportOrExportSpecifierNode(name, alias)
     }
+    /**
+     * Parses [ImportDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#prod-ImportDeclaration).
+     *
+     * modified to:
+     *
+     * ImportDeclaration ::
+     *   `import` ModuleSpecifier `;`
+     *   `import` ModuleSpecifier ImportTail `;`
+     *
+     * ImportTail ::
+     *   `as` BindingIdentifier
+     *   `with` NamedImports
+     */
     @Careful
     private fun parseImportDeclaration(): ImportDeclarationNode? {
         val startRange = takeIfMatchesKeyword(IMPORT)?.range ?: return null
@@ -1646,6 +1698,9 @@ class Parser(sourceText: String) {
             else -> EffectImportDeclarationNode(moduleSpecifier, startRange, takeOptionalSemicolonRange())
         }
     }
+    /**
+     * Parses [ExportSpecifier](https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#prod-ExportSpecifier).
+     */
     @Careful(false)
     private fun parseExportSpecifier(isReExport: Boolean = false): ImportOrExportSpecifierNode? {
         val name = parseIdentifierName() ?: return reportUnexpectedToken()
@@ -1656,6 +1711,20 @@ class Parser(sourceText: String) {
         val alias = parseIdentifierName() ?: return reportUnexpectedToken()
         return ImportOrExportSpecifierNode(name, alias)
     }
+    /**
+     * Parses [ExportDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#prod-ExportDeclaration).
+     *
+     * modified to:
+     *
+     * ExportDeclaration ::
+     *   `export` ModuleSpecifier ReExportTail `;`
+     *   `export` NamedExports `;`
+     *   `export` Declaration `;`
+     *
+     * ReExportTail ::
+     *   `*`
+     *   `with` NamedExports
+     */
     @Careful
     private fun parseExportDeclaration(): ExportDeclarationNode? {
         val startRange = takeIfMatchesKeyword(EXPORT)?.range ?: return null

@@ -103,3 +103,17 @@ internal fun ExpressionNode.isAssignmentTarget(): Boolean =
         is ParenthesizedExpressionNode -> expression.isAssignmentTarget()
         else -> false
     }
+
+/**
+ * @return [ObjectLiteralKeyNode] but not [ComputedPropertyKeyNode]
+ */
+@EsSpec("PropName")
+internal fun Node.propName(): ObjectLiteralKeyNode? =
+    when (this) {
+        is PropertyNode -> key
+        is PropertyShorthandNode -> key
+        is MethodNode -> name
+        is FieldNode -> name
+        else -> null
+    }
+        ?.takeIf { it !is ComputedPropertyKeyNode }

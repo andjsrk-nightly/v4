@@ -89,7 +89,7 @@ internal class ParserTest {
                 assertIs<NumberLiteralNode>(value)
             }
             elements[1].assertTypeThen<PropertyShorthandNode> {
-                name.assertIdentifierNamed("b")
+                key.assertIdentifierNamed("b")
             }
             elements[2].assertTypeThen<SpreadNode> {
                 expression.assertIdentifierNamed("c")
@@ -100,7 +100,7 @@ internal class ParserTest {
             { a }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
             elements[0].assertTypeThen<PropertyShorthandNode> {
-                name.assertIdentifierNamed("a")
+                key.assertIdentifierNamed("a")
             }
         }
 
@@ -1035,6 +1035,112 @@ internal class ParserTest {
                 }
             }
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
+
+        """
+            class A {
+                constructor() {}
+                constructor() {}
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DUPLICATE_CONSTRUCTOR)
+
+        """
+            class A {
+                a() {}
+                a = 1
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DUPLICATE_CLASS_ELEMENT_NAMES)
+
+        """
+            class A {
+                get a() {}
+                set a(x) {}
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            assertIs<ClassGetterNode>(elements[0])
+            assertIs<ClassSetterNode>(elements[1])
+        }
+
+        """
+            class A {
+                get a() {}
+                get a() {}
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DUPLICATE_CLASS_ELEMENT_NAMES)
+
+        """
+            class A {
+                a() {}
+                "a"() {}
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DUPLICATE_CLASS_ELEMENT_NAMES)
+    }
+    @Test
+    fun testSuper() {
+        """
+            class A extends P {
+                constructor() {
+                    super()
+                    super.a
+                }
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
+            constructor!!.body.elements.run {
+                assertIs<SuperCallNode>(this[0].unwrapExprStmt())
+                assertIs<SuperPropertyNode>(this[1].unwrapExprStmt())
+            }
+        }
+
+        """
+            class A {
+                constructor() {
+                    super()
+                }
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
+
+        """
+            class A {
+                constructor() {
+                    super.a
+                }
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
+
+        """
+            class A extends P {
+                a() {
+                    super()
+                }
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
+
+        """
+            class A extends P {
+                a() {
+                    super.a
+                }
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {}
+
+        """
+            {
+                a() {
+                    super.a
+                }
+            }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeThen<ObjectMethodNode> {
+                assertIs<SuperPropertyNode>(body.elements[0].unwrapExprStmt())
+            }
+        }
+
+        """
+            {
+                a() {
+                    super()
+                }
+            }
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
     }
     @Test
     fun testImportDeclaration() {

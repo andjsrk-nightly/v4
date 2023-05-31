@@ -1679,8 +1679,8 @@ class Parser(sourceText: String) {
 
         return when {
             currToken.type == MULTIPLY -> {
-                advance()
-                AllReExportDeclarationNode(moduleSpecifier, startRange, takeOptionalSemicolonRange())
+                val endRange = advance().range
+                AllReExportDeclarationNode(moduleSpecifier, startRange..endRange, takeOptionalSemicolonRange())
             }
             currToken.isKeyword(WITH) -> {
                 advance()

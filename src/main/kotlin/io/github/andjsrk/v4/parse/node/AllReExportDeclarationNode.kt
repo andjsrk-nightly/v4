@@ -5,11 +5,11 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class AllReExportDeclarationNode(
     override val moduleSpecifier: StringLiteralNode,
-    startRange: Range,
+    range: Range,
     semicolonRange: Range?,
 ): ExportDeclarationWithModuleSpecifierNode {
     override val childNodes get() = listOf(moduleSpecifier)
-    override val range = startRange..(semicolonRange ?: moduleSpecifier.range)
+    override val range = range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::moduleSpecifier, ::range)
 }

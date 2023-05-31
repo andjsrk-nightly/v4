@@ -9,7 +9,7 @@ class ThrowNode(
     semicolonRange: Range?,
 ): StatementNode, NonAtomicNode {
     override val childNodes get() = listOf(expression)
-    override val range = startRange..(semicolonRange ?: expression.range)
+    override val range = startRange..expression.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
 }

@@ -9,7 +9,7 @@ class EffectImportDeclarationNode(
     semicolonRange: Range?,
 ): ImportDeclarationNode {
     override val childNodes get() = listOf(moduleSpecifier)
-    override val range = startRange..(semicolonRange ?: moduleSpecifier.range)
+    override val range = startRange..moduleSpecifier.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::moduleSpecifier, ::range)
 }

@@ -11,7 +11,7 @@ class FieldNode(
     semicolonRange: Range?,
 ): NormalClassElementNode {
     override val childNodes get() = listOf(name, value)
-    override val range = startRange..(semicolonRange ?: (value ?: name).range)
+    override val range = startRange..(value ?: name).range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::name, ::value, ::isStatic, ::range)
 }

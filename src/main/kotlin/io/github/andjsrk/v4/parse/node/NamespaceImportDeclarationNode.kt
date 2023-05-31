@@ -10,7 +10,7 @@ class NamespaceImportDeclarationNode(
     semicolonRange: Range?,
 ): ImportDeclarationNode {
     override val childNodes get() = listOf(moduleSpecifier, binding)
-    override val range = startRange..(semicolonRange ?: binding.range)
+    override val range = startRange..binding.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::moduleSpecifier, ::binding, ::range)
 }

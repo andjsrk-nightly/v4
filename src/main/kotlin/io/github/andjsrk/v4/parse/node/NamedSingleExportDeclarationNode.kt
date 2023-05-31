@@ -9,7 +9,7 @@ class NamedSingleExportDeclarationNode(
     semicolonRange: Range?,
 ): ExportDeclarationNode {
     override val childNodes get() = listOf(declaration)
-    override val range = startRange..(semicolonRange ?: declaration.range)
+    override val range = startRange..declaration.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::declaration, ::range)
 }

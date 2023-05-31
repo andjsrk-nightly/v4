@@ -8,7 +8,7 @@ class ExpressionStatementNode(
     semicolonRange: Range?,
 ): StatementNode, NonAtomicNode {
     override val childNodes get() = listOf(expression)
-    override val range = expression.range..(semicolonRange ?: expression.range)
+    override val range = expression.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
 }

@@ -1039,37 +1039,29 @@ internal class ParserTest {
     @Test
     fun testImportDeclaration() {
         """
-            import { a, b as c } from "mod"
-        """.shouldBeValidStatementAnd<ImportDeclarationNode> {
-            binding.assertTypeThen<NamedImportBindingNode> {
-                elements[0].run {
-                    name.assertIdentifierNamed("a")
-                    assert(name.value == alias.value)
-                }
-                elements[1].run {
-                    name.assertIdentifierNamed("b")
-                    alias.assertIdentifierNamed("c")
-                }
+            import "mod" with { a, b as c }
+        """.shouldBeValidStatementAnd<NamedImportDeclarationNode> {
+            specifiers[0].run {
+                name.assertIdentifierNamed("a")
+                assert(name.value == alias.value)
+            }
+            specifiers[1].run {
+                name.assertIdentifierNamed("b")
+                alias.assertIdentifierNamed("c")
             }
         }
 
         """
-            import { if } from "mod"
+            import "mod" with { if }
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_RESERVED)
 
         """
-            import * as a from "mod"
-        """.shouldBeValidStatementAnd<ImportDeclarationNode> {
-            binding.assertTypeThen<NamespaceImportBindingNode> {
-                binding.assertIdentifierNamed("a")
-            }
-        }
+            import "mod" as a
+        """.shouldBeValidStatementAnd<NamespaceImportDeclarationNode> {}
 
         """
             import "mod"
-        """.shouldBeValidStatementAnd<ImportDeclarationNode> {
-            assertNull(binding)
-        }
+        """.shouldBeValidStatementAnd<EffectImportDeclarationNode> {}
     }
     @Test
     fun testExportDeclaration() {
@@ -1082,28 +1074,42 @@ internal class ParserTest {
         """
             export { a, b as c }
         """.shouldBeValidStatementAnd<NamedExportDeclarationNode> {
-            elements[0].run {
+            specifiers[0].run {
                 name.assertIdentifierNamed("a")
                 assert(name.value == alias.value)
             }
-            assertNull(moduleSpecifier)
+            specifiers[1].run {
+                name.assertIdentifierNamed("b")
+                alias.assertIdentifierNamed("c")
+            }
         }
 
         """
-            export { a, b as c } from "mod"
-        """.shouldBeValidStatementAnd<NamedExportDeclarationNode> {
-            assertNotNull(moduleSpecifier)
+            export "mod" with { a, b as c }
+        """.shouldBeValidStatementAnd<NamedReExportDeclarationNode> {
+            specifiers[0].run {
+                name.assertIdentifierNamed("a")
+                assert(name.value == alias.value)
+            }
+            specifiers[1].run {
+                name.assertIdentifierNamed("b")
+                alias.assertIdentifierNamed("c")
+            }
         }
 
         """
-            export { if } from "mod"
-        """.shouldBeValidStatementAnd<NamedExportDeclarationNode> {
-            elements[0].name.assertIdentifierNamed("if")
+            export { if }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_RESERVED)
+
+        """
+            export "mod" with { if }
+        """.shouldBeValidStatementAnd<NamedReExportDeclarationNode> {
+            specifiers[0].name.assertIdentifierNamed("if")
         }
 
         """
-            export * from "mod"
-        """.shouldBeValidStatementAnd<AllExportDeclarationNode> {}
+            export "mod" *
+        """.shouldBeValidStatementAnd<AllReExportDeclarationNode> {}
     }
 }
 

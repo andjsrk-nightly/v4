@@ -17,7 +17,6 @@ enum class ReservedWord(val isContextual: Boolean = false) {
     FALSE,
     FINALLY,
     FOR,
-    FROM(isContextual=true),
     GEN,
     GET(isContextual=true),
     IF,
@@ -41,6 +40,7 @@ enum class ReservedWord(val isContextual: Boolean = false) {
     VAR,
     VOID,
     WHILE,
+    WITH(isContextual=true),
     YIELD;
 
     val value = name.lowercase()

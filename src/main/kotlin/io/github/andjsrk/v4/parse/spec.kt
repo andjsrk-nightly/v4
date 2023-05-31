@@ -59,9 +59,8 @@ internal fun Node.boundNames(): List<IdentifierNode> =
         is UniqueFormalParametersNode -> elements.flatMap { it.boundNames() }
         is ClassDeclarationNode -> name.boundNames()
         is ImportOrExportSpecifierNode -> alias.boundNames()
-        is NamedImportBindingNode -> elements.flatMap { it.boundNames() }
-        is NamespaceImportBindingNode -> binding.boundNames()
-        is ImportDeclarationNode -> binding?.boundNames().orEmpty()
+        is NamedImportDeclarationNode -> specifiers.flatMap { it.boundNames() }
+        is NamespaceImportDeclarationNode -> binding.boundNames()
         is NamedSingleExportDeclarationNode -> declaration.boundNames()
         else -> emptyList()
     }

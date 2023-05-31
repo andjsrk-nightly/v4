@@ -1,5 +1,5 @@
 package io.github.andjsrk.v4.parse.node
 
-sealed interface ImportDeclarationNode: DeclarationNode {
+sealed interface ExportDeclarationWithModuleSpecifierNode: ExportDeclarationNode {
     val moduleSpecifier: StringLiteralNode
 }

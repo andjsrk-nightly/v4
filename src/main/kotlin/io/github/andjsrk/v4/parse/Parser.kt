@@ -1600,63 +1600,59 @@ class Parser(sourceText: String) {
             ::parseStatement,
         )
             .foldElvisIfHasNoError()
+    /**
+     * Parses specifiers between braces.
+     */
     @Careful(false)
-    private fun parseFromClause(): StringLiteralNode? {
-        expectKeyword(FROM) ?: return null
-        return parseStringLiteral() ?: return reportUnexpectedToken()
+    private fun parseSpecifierList(parseSpecifier: () -> ImportOrExportSpecifierNode?): List<ImportOrExportSpecifierNode>? {
+        val specifiers = mutableListOf<ImportOrExportSpecifierNode>()
+        var skippedComma = true
+        while (currToken.type != RIGHT_BRACE) {
+            if (!skippedComma) return reportUnexpectedToken()
+            val specifier = parseSpecifier() ?: return null
+            specifiers += specifier
+            skippedComma = skip(COMMA)
+        }
+        return specifiers.toList()
     }
     @Careful(false)
     private fun parseImportSpecifier(): ImportOrExportSpecifierNode? {
         val name = parseIdentifierName() ?: return reportUnexpectedToken()
         takeIfMatchesKeyword(AS) ?: return when {
-            name.not { isIdentifier() } -> reportError(SyntaxErrorKind.UNEXPECTED_RESERVED, name.range)
-            else -> ImportOrExportSpecifierNode(name, name)
+            name.isIdentifier() -> ImportOrExportSpecifierNode(name, name)
+            else -> reportError(SyntaxErrorKind.UNEXPECTED_RESERVED, name.range)
         }
         val alias = parseBindingIdentifier() ?: return reportUnexpectedToken()
         return ImportOrExportSpecifierNode(name, alias)
     }
-    /**
-     * Returning `null`(not a pair that contains `null`) means there is an error.
-     */
-    @Careful(false)
-    private fun parseImportClause(): ImportBindingNode? {
-        return when (currToken.type) {
-            MULTIPLY -> { // NameSpaceImport
-                val startRange = advance().range
-                expectKeyword(AS) ?: return null
-                val ns = parseBindingIdentifier() ?: return reportUnexpectedToken()
-                NamespaceImportBindingNode(ns, startRange)
-            }
-            LEFT_BRACE -> { // NamedImports
-                val startRange = advance().range
-                val specifiers = mutableListOf<ImportOrExportSpecifierNode>()
-                var skippedComma = true
-                while (currToken.type != RIGHT_BRACE) {
-                    if (!skippedComma) return reportUnexpectedToken()
-                    val specifier = parseImportSpecifier() ?: return null
-                    specifiers += specifier
-                    skippedComma = skip(COMMA)
-                }
-                val endRange = expect(RIGHT_BRACE)?.range ?: neverHappens()
-                NamedImportBindingNode(specifiers.toList(), startRange..endRange)
-            }
-            else -> reportUnexpectedToken()
-        }
-    }
     @Careful
     private fun parseImportDeclaration(): ImportDeclarationNode? {
         val startRange = takeIfMatchesKeyword(IMPORT)?.range ?: return null
-        parseStringLiteral()?.let {
-            return ImportDeclarationNode(null, it, startRange, takeOptionalSemicolonRange())
+        val moduleSpecifier = parseStringLiteral() ?: return reportUnexpectedToken()
+
+        return when {
+            currToken.isKeyword(AS) -> {
+                advance()
+                val binding = parseIdentifier() ?: return reportUnexpectedToken()
+                NamespaceImportDeclarationNode(moduleSpecifier, binding, startRange, takeOptionalSemicolonRange())
+            }
+            currToken.isKeyword(WITH) -> {
+                advance()
+                expect(LEFT_BRACE) ?: return null
+                val specifiers = parseSpecifierList(::parseImportSpecifier) ?: return null
+                val endRange = advance().range // right brace
+                NamedImportDeclarationNode(moduleSpecifier, specifiers, startRange..endRange, takeOptionalSemicolonRange())
+            }
+            else -> EffectImportDeclarationNode(moduleSpecifier, startRange, takeOptionalSemicolonRange())
         }
-        val binding = parseImportClause() ?: return null
-        val moduleSpecifier = parseFromClause() ?: return null
-        return ImportDeclarationNode(binding, moduleSpecifier, startRange, takeOptionalSemicolonRange())
     }
     @Careful(false)
-    private fun parseExportSpecifier(): ImportOrExportSpecifierNode? {
+    private fun parseExportSpecifier(isReExport: Boolean = false): ImportOrExportSpecifierNode? {
         val name = parseIdentifierName() ?: return reportUnexpectedToken()
-        takeIfMatchesKeyword(AS) ?: return ImportOrExportSpecifierNode(name, name)
+        takeIfMatchesKeyword(AS) ?: run {
+            if (!isReExport && name.not { isIdentifier() }) return reportError(SyntaxErrorKind.UNEXPECTED_RESERVED, name.range)
+            return ImportOrExportSpecifierNode(name, name)
+        }
         val alias = parseIdentifierName() ?: return reportUnexpectedToken()
         return ImportOrExportSpecifierNode(name, alias)
     }
@@ -1664,34 +1660,36 @@ class Parser(sourceText: String) {
     private fun parseExportDeclaration(): ExportDeclarationNode? {
         val startRange = takeIfMatchesKeyword(EXPORT)?.range ?: return null
 
-        return when (currToken.type) {
-            MULTIPLY -> {
-                advance()
-                val moduleSpecifier = parseFromClause() ?: return null
-                AllExportDeclarationNode(moduleSpecifier, startRange, takeOptionalSemicolonRange())
-            }
-            LEFT_BRACE -> { // NamedExports
-                advance()
-                val specifiers = mutableListOf<ImportOrExportSpecifierNode>()
-                var skippedComma = true
-                while (currToken.type != RIGHT_BRACE) {
-                    if (!skippedComma) return reportUnexpectedToken()
-                    val specifier = parseExportSpecifier() ?: return null
-                    specifiers += specifier
-                    skippedComma = skip(COMMA)
+        if (currToken.type != STRING) { // module specifier is not present
+            return when (currToken.type) {
+                LEFT_BRACE -> {
+                    advance()
+                    val specifiers = parseSpecifierList(::parseExportSpecifier) ?: return null
+                    val endRange = advance().range // right brace
+                    NamedExportDeclarationNode(specifiers, startRange..endRange, takeOptionalSemicolonRange())
                 }
-                val endRange = expect(RIGHT_BRACE)?.range ?: neverHappens()
-                if (takeIfMatchesKeyword(FROM) != null) {
-                    val moduleSpecifier = parseStringLiteral() ?: return null
-                    return NamedExportDeclarationNode(specifiers.toList(), moduleSpecifier, startRange, endRange, takeOptionalSemicolonRange())
-                }
-                NamedExportDeclarationNode(specifiers.toList(), null, startRange, endRange, takeOptionalSemicolonRange())
-            }
-            else ->
-                run {
-                    val declaration = parseDeclaration() ?: return@run null
+                else -> {
+                    val declaration = parseDeclaration() ?: return reportUnexpectedToken()
                     NamedSingleExportDeclarationNode(declaration, startRange, declaration.range)
-                } ?: reportUnexpectedToken()
+                }
+            }
+        }
+
+        val moduleSpecifier = parseStringLiteral() ?: neverHappens()
+
+        return when {
+            currToken.type == MULTIPLY -> {
+                advance()
+                AllReExportDeclarationNode(moduleSpecifier, startRange, takeOptionalSemicolonRange())
+            }
+            currToken.isKeyword(WITH) -> {
+                advance()
+                expect(LEFT_BRACE) ?: return null
+                val specifiers = parseSpecifierList { parseExportSpecifier(true) } ?: return null
+                val endRange = advance().range // right brace
+                NamedReExportDeclarationNode(moduleSpecifier, specifiers, startRange..endRange, takeOptionalSemicolonRange())
+            }
+            else -> reportUnexpectedToken()
         }
     }
     /**

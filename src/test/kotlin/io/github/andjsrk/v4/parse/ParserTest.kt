@@ -1016,27 +1016,6 @@ internal class ParserTest {
         }
 
         """
-            class A extends null {
-                constructor() {
-                    super()
-                }
-            }
-        """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            assertIs<NullLiteralNode>(parent)
-            val constructor = constructor
-            assertNotNull(constructor)
-            assert(constructor.body.contains(SuperCallNode::class))
-        }
-
-        """
-            class A {
-                constructor() {
-                    super()
-                }
-            }
-        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
-
-        """
             class A {
                 constructor() {}
                 constructor() {}
@@ -1121,6 +1100,12 @@ internal class ParserTest {
                 }
             }
         """.shouldBeValidStatementAnd<ClassDeclarationNode> {}
+
+        """
+            class A extends P {
+                a = super()
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
 
         """
             {
@@ -1216,6 +1201,29 @@ internal class ParserTest {
         """
             export "mod" *
         """.shouldBeValidStatementAnd<AllReExportDeclarationNode> {}
+    }
+    @Test
+    fun testModuleEarlyErrors() {
+        """
+            import "mod" with { a, a }
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.VAR_REDECLARATION)
+
+        """
+            export { a, a }
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.DUPLICATE_EXPORT)
+
+        """
+            export { a, b as a }
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.DUPLICATE_EXPORT)
+
+        """
+            export var a
+            export { a }
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.DUPLICATE_EXPORT)
+
+        """
+            super.a
+        """.shouldBeInvalidModuleWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
     }
 }
 

@@ -76,13 +76,14 @@ internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
     }
 
 @EsSpec("HasDirectSuper")
-internal fun MethodNode.findDirectSuperCall() =
+internal fun NonAtomicNode.findDirectSuperCall() =
     when (this) {
         is NonSpecialMethodNode -> listOf(parameters, body)
         is GetterNode -> listOf(body)
         is SetterNode -> listOf(parameter, body)
+        else -> childNodes
     }
-        .mapAsSequence { it.find(SuperCallNode::class) }
+        .mapAsSequence { it?.find(SuperCallNode::class) }
         .foldElvis()
 
 internal fun MethodNode.findDirectSuper() =
@@ -117,3 +118,15 @@ internal fun Node.propName(): ObjectLiteralKeyNode? =
         else -> null
     }
         ?.takeIf { it !is ComputedPropertyKeyNode }
+
+internal fun ModuleNode.exportedNames() =
+    elements.asSequence()
+        .filterIsInstance<ExportDeclarationNode>()
+        .flatMap {
+            when (it) {
+                is NamedSingleExportDeclarationNode -> it.boundNames()
+                is NamedExportDeclarationNode -> it.specifiers.flatMap { it.boundNames() }
+                else -> emptyList()
+            }
+        }
+        .toList()

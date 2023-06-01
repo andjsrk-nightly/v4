@@ -565,6 +565,7 @@ class Parser(sourceText: String) {
         return ClassTailNode(parent, elements.toList(), (extendsTokenRange ?: leftBraceTokenRange)..endRange)
             .withDuplicateNameCheck()
             .withDirectSuperCheck()
+            // TODO: static block
     }
     private fun ClassTailNode?.withDuplicateNameCheck(): ClassTailNode? {
         return this?.let {
@@ -619,8 +620,7 @@ class Parser(sourceText: String) {
                 }
                 else -> {
                     val superCall = elements.asSequence()
-                        .filterIsInstance<MethodNode>()
-                        .filter { it !is ConstructorNode }
+                        .filterIsInstance<NormalClassElementNode>()
                         .map { it.findDirectSuperCall() }
                         .foldElvis()
                     if (superCall != null) reportError(SyntaxErrorKind.UNEXPECTED_SUPER, superCall.callee.range)
@@ -1088,7 +1088,7 @@ class Parser(sourceText: String) {
     /**
      * Parses IfExpression.
      *
-     * IfExpression ::
+     * IfExpression :
      *   `if` `(` Expression `)` AssignmentExpression `else` AssignmentExpression
      */
     @Careful
@@ -1669,11 +1669,11 @@ class Parser(sourceText: String) {
      *
      * modified to:
      *
-     * ImportDeclaration ::
+     * ImportDeclaration :
      *   `import` ModuleSpecifier `;`
      *   `import` ModuleSpecifier ImportTail `;`
      *
-     * ImportTail ::
+     * ImportTail :
      *   `as` BindingIdentifier
      *   `with` NamedImports
      */
@@ -1716,12 +1716,12 @@ class Parser(sourceText: String) {
      *
      * modified to:
      *
-     * ExportDeclaration ::
+     * ExportDeclaration :
      *   `export` ModuleSpecifier ReExportTail `;`
      *   `export` NamedExports `;`
      *   `export` Declaration `;`
      *
-     * ReExportTail ::
+     * ReExportTail :
      *   `*`
      *   `with` NamedExports
      */
@@ -1785,7 +1785,24 @@ class Parser(sourceText: String) {
         }
 
         return ModuleNode(statements)
+            .withDuplicateNameCheck()
+            .withDirectSuperCheck()
     }
+    private fun ModuleNode?.withDuplicateNameCheck() =
+        this?.takeIf {
+            reportDuplicateName(lexicallyDeclaredNames())
+            reportDuplicateName(exportedNames()) {
+                reportError(SyntaxErrorKind.DUPLICATE_EXPORT, it.range)
+            }
+            !hasError
+        }
+    private fun ModuleNode?.withDirectSuperCheck() =
+        this?.let {
+            when (val `super` = find(SuperNode::class)) {
+                null -> this
+                else -> reportError(SyntaxErrorKind.UNEXPECTED_SUPER, `super`.range)
+            }
+        }
 }
 
 private fun List<IdentifierNode>.findDuplicateBoundName(rawNames: List<String>/* to reduce cost */): IdentifierNode? =

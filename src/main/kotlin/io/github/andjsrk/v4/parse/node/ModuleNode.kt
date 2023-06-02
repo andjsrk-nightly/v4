@@ -12,10 +12,10 @@ class ModuleNode(override val elements: List<StatementNode>): StatementListNode 
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
     override fun evaluate(): Completion {
-        val itemListEval = elements
+        val itemList = elements
             .map { it.evaluate() }
-            .reduceRight(::updateEmpty) as Completion
-        if (itemListEval.type == Completion.Type.NORMAL && itemListEval.value == null) return Completion.normal(NullType)
-        return itemListEval
+            .reduceRight(::updateEmpty)
+        if (itemList.type.isNormal && itemList.value == null) return Completion.normal(NullType)
+        return itemList
     }
 }

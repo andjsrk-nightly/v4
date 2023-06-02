@@ -3,7 +3,6 @@ package io.github.andjsrk.v4.error
 enum class SyntaxErrorKind(override val message: String): ErrorKind {
     AMBIGUOUS_EXPORT("The requested module '%' contains conflicting star exports for name '%'"),
     ARG_STRING_TERMINATES_PARAMETERS_EARLY("Arg string terminates parameters early"),
-    ASYNC_FUNCTION_IN_SINGLE_STATEMENT_CONTEXT("Async functions can only be declared at the top level or inside a block."),
     AWAIT_EXPRESSION_FORMAL_PARAMETER("Await expression not allowed in formal parameter"),
     BAD_GETTER_ARITY("Getter must not have any formal parameters."),
     BAD_SETTER_ARITY("Setter must have exactly one formal parameter."),
@@ -19,7 +18,6 @@ enum class SyntaxErrorKind(override val message: String): ErrorKind {
     DUPLICATE_CLASS_ELEMENT_NAMES("Duplicate class element name not allowed"),
     DUPLICATE_EXPORT("Duplicate export of '%'"),
     DUPLICATE_PARAMETER_NAMES("Duplicate parameter name not allowed"),
-    DUPLICATE_PROTO("Duplicate __proto__ fields are not allowed in object literals"),
     ELEMENT_AFTER_REST("Rest element must be last element"),
     FOUND_NON_CALLABLE_HAS_INSTANCE("Found non-callable @@hasInstance"),
     ILLEGAL_BREAK("Illegal break statement"),

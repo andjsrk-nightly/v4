@@ -8,6 +8,12 @@ import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 internal class ParserTest {
+    @Test
+    fun testTokenizerErrorEjection() {
+        """
+            "\x"
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.INVALID_HEX_ESCAPE_SEQUENCE)
+    }
     // <editor-fold desc="expressions">
     @Test
     fun testPrimitiveLiteral() {

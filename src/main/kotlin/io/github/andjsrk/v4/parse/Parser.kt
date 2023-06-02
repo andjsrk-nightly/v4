@@ -27,6 +27,9 @@ class Parser(sourceText: String) {
         private set
     val hasError get() =
         error != null
+    private fun ejectTokenizerError() {
+        tokenizer.error?.run(::reportError)
+    }
     private val parseCtxs = Stack(
         ParseContext(allowModuleItem=true),
     )
@@ -61,8 +64,6 @@ class Parser(sourceText: String) {
     private inline fun expect(tokenType: TokenType, check: (Token) -> Boolean = { true }) =
         if (currToken.type == tokenType && check(currToken)) advance()
         else reportUnexpectedToken()
-    private fun expectKeyword(keyword: ReservedWord) =
-        expect(IDENTIFIER) { it.isKeyword(keyword) }
     private fun reportError(error: Error): Nothing? {
         if (!hasError) {
             this.error = error
@@ -161,7 +162,7 @@ class Parser(sourceText: String) {
                 else -> null
             }
                 ?.also { advance() }
-            else -> null
+            else -> null.also { ejectTokenizerError() }
         }
     private fun parseArrayElement(): MaybeSpreadNode? {
         val ellipsisToken = takeIfMatches(ELLIPSIS)

@@ -10,4 +10,8 @@ class SequenceExpressionNode(
     override val childNodes = expressions
     override fun toString() =
         stringifyLikeDataClass(::expressions, ::range)
+    override fun evaluate() =
+        expressions.asSequence()
+            .map { it.evaluate() }
+            .last()
 }

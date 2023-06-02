@@ -4,12 +4,8 @@ import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.parse.node.*
 import kotlin.reflect.KClass
 
-@EsSpec("Contains")
-internal fun <N: Node> Node.contains(symbol: KClass<N>, predicate: (N) -> Boolean = { true }) =
-    find(symbol, predicate) != null
-
 /**
- * A convenient way to find a node that is matched by [contains].
+ * A convenient way to find a node that is matched by [Contains](https://tc39.es/ecma262/multipage/syntax-directed-operations.html#sec-static-semantics-contains).
  */
 internal fun <N: Node> Node.find(symbol: KClass<N>, predicate: (N) -> Boolean = { true }): N? {
     val baseCondition = lazy { this::class == symbol && predicate(this as N) }

@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.evaluate.type.spec
 
 import io.github.andjsrk.v4.evaluate.type.AbstractType
 
-data class Completion(val type: Type, val value: AbstractType?): Record {
+data class Completion(val type: Type, val value: AbstractType): Record {
     enum class Type {
         NORMAL,
         BREAK,
@@ -16,7 +16,7 @@ data class Completion(val type: Type, val value: AbstractType?): Record {
             !isNormal
     }
     companion object {
-        fun normal(value: AbstractType?) =
+        fun normal(value: AbstractType) =
             Completion(Type.NORMAL, value)
     }
 }

@@ -566,7 +566,7 @@ class Parser(sourceText: String) {
         return ClassTailNode(parent, elements.toList(), (extendsTokenRange ?: leftBraceTokenRange)..endRange)
             .withDuplicateNameCheck()
             .withDirectSuperCheck()
-            // TODO: static block
+            // TODO: static initialization block
     }
     private fun ClassTailNode?.withDuplicateNameCheck(): ClassTailNode? {
         return this?.let {
@@ -1836,6 +1836,3 @@ private fun Token.isKeyword(keyword: ReservedWord, verifiedTokenType: Boolean = 
  */
 private val TokenType.isAsiJob get() =
     this.isOneOf(EOS, RIGHT_BRACE)
-
-private fun neverHappens(): Nothing =
-    throw KotlinError("This can never happen")

@@ -3,6 +3,10 @@ package io.github.andjsrk.v4.evaluate.type.spec
 import io.github.andjsrk.v4.evaluate.type.AbstractType
 
 data class Completion(val type: Type, val value: AbstractType): Record {
+    fun map(transform: (AbstractType) -> AbstractType) =
+        if (type.isNormal) copy(value=transform(value))
+        else this
+
     enum class Type {
         NORMAL,
         BREAK,

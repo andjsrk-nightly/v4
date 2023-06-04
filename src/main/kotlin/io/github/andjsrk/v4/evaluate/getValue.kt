@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.spec.Completion
 
 @EsSpec("GetValue")
-fun getValue(v: AbstractType): Completion {
+internal fun getValue(v: AbstractType): Completion {
     return Completion.normal(v) // temp
 }
 
@@ -14,5 +14,5 @@ fun getValue(v: AbstractType): Completion {
  * @see getValue
  * @see returnIfAbrupt
  */
-inline fun getValueOrReturn(v: AbstractType, `return`: (Completion) -> Nothing) =
+internal inline fun getValueOrReturn(v: AbstractType, `return`: (Completion) -> Nothing) =
     returnIfAbrupt<LanguageType>(getValue(v), `return`)

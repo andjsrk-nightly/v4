@@ -7,5 +7,5 @@ import io.github.andjsrk.v4.tokenize.Token
 class BooleanLiteralNode(token: Token): DynamicPrimitiveLiteralNode<Boolean>(token) {
     override val value = raw.toBooleanStrict()
     override fun evaluate() =
-        Completion.normal(BooleanType(value))
+        Completion.normal(BooleanType.from(value))
 }

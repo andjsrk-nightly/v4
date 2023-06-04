@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.evaluate.type.spec.Completion
 /**
  * Note that the function is not an extension exceptionally due to shadowing of extensions.
  */
-fun toString(value: LanguageType): Completion {
+internal fun toString(value: LanguageType): Completion {
     return Completion.normal(
         when (value) {
             is NullType -> StringType("null")

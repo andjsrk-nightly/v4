@@ -3,6 +3,7 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.BinaryOperationType
 import io.github.andjsrk.v4.BinaryOperationType.*
 import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.type.AbstractType
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.spec.Completion
 import io.github.andjsrk.v4.neverHappens
@@ -52,31 +53,26 @@ class BinaryExpressionNode(
         if (rval !is NumericType<*>) return Completion(Completion.Type.THROW, NullType)
         if (lval::class != rval::class) return Completion(Completion.Type.THROW, NullType)
 
-        // it seems that Kotlin cannot handle pattern like `NumericType`,
-        // so we need to write code for each concrete types
-        when (lval) {
-            is NumberType -> {
-                val rval = rval as NumberType
-                return Completion.normal(
-                    when (operation) {
-                        PLUS -> lval + rval
-                        MINUS -> lval - rval
-                        MULTIPLY -> lval * rval
-                        else -> TODO()
-                    }
-                )
+        return Completion.normal(
+            when (operation) {
+                EXPONENTIAL -> lval.pow(rval).extractIfCompletion { return it }
+                MULTIPLY -> lval * rval
+                DIVIDE -> lval / rval
+                MOD -> lval % rval
+                PLUS -> lval + rval
+                MINUS -> lval - rval
+                SHL -> lval.leftShift(rval).extractIfCompletion { return it }
+                SAR -> lval.signedRightShift(rval).extractIfCompletion { return it }
+                SHR -> lval.unsignedRightShift(rval).extractIfCompletion { return it }
+                BITWISE_AND -> lval.bitwiseAnd(rval).extractIfCompletion { return it }
+                else -> TODO()
             }
-            is BigIntType -> {
-                val rval = rval as BigIntType
-                return Completion.normal(
-                    when (operation) {
-                        PLUS -> lval + rval
-                        MINUS -> lval - rval
-                        MULTIPLY -> lval * rval
-                        else -> TODO()
-                    }
-                )
-            }
-        }
+        )
     }
 }
+
+private inline fun AbstractType.extractIfCompletion(`return`: (Completion) -> Nothing) =
+    (
+        if (this is Completion) returnIfAbrupt(this, `return`)
+        else this
+    ) as LanguageType

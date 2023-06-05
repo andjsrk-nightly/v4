@@ -17,3 +17,7 @@ internal inline fun <reified R: AbstractType> returnIfAbrupt(completion: Complet
 
 internal inline fun neverAbrupt(completion: Completion) =
     returnIfAbrupt(completion) { neverHappens() }
+
+@JvmName("neverAbruptWithCast")
+internal inline fun <reified R> neverAbrupt(completion: Completion) =
+    neverAbrupt(completion) as R

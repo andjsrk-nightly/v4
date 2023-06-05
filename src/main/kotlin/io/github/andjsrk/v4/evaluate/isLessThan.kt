@@ -13,7 +13,7 @@ internal fun LanguageType.isLessThan(other: LanguageType, undefinedReplacement: 
     return Completion.normal(
         when (this) {
             is NumberType -> this.lessThan(other as NumberType, undefinedReplacement)
-            is BigIntType -> TODO()
+            is BigIntType -> this.lessThan(other as BigIntType, undefinedReplacement)
             is StringType -> TODO()
             else -> neverHappens()
         }

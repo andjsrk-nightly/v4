@@ -8,7 +8,7 @@ internal value class BigIntType(override val value: BigInteger): NumericType<Big
     override fun unaryMinus() =
         BigIntType(-value)
     override fun bitwiseNot() =
-        BigIntType(value.not())
+        BigIntType(-value - BigInteger.ONE)
     override fun pow(other: BigIntType) =
         when {
             other.value < BigInteger.ZERO -> Completion(Completion.Type.THROW, NullType/* RangeError */)
@@ -16,12 +16,39 @@ internal value class BigIntType(override val value: BigInteger): NumericType<Big
         }
     override fun times(other: BigIntType) =
         BigIntType(value * other.value)
+    override fun div(other: BigIntType): BigIntType {
+        TODO()
+    }
+    override fun rem(other: BigIntType): BigIntType {
+        TODO()
+    }
     override fun plus(other: BigIntType) =
         BigIntType(value + other.value)
     override fun minus(other: BigIntType) =
         BigIntType(value - other.value)
+    override fun leftShift(other: BigIntType): BigIntType {
+        TODO()
+    }
+    override fun signedRightShift(other: BigIntType): BigIntType {
+        TODO()
+    }
+    override fun unsignedRightShift(other: BigIntType): BigIntType {
+        TODO()
+    }
     override fun lessThan(other: BigIntType, undefinedReplacement: BooleanType): BooleanType =
         BooleanType.from(value < other.value)
+    override fun bitwiseOr(other: BigIntType): BigIntType {
+        TODO()
+    }
+    override fun bitwiseXor(other: BigIntType): BigIntType {
+        TODO()
+    }
+    override fun bitwiseAnd(other: BigIntType): BigIntType {
+        TODO()
+    }
+    override fun equal(other: BigIntType): BooleanType {
+        TODO()
+    }
 }
 
 private fun BigInteger.pow(other: BigInteger): BigInteger {

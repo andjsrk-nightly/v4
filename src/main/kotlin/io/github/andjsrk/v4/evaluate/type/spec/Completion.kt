@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type.spec
 
 import io.github.andjsrk.v4.evaluate.type.AbstractType
+import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 data class Completion(val type: Type, val value: AbstractType): Record {
     fun map(transform: (AbstractType) -> AbstractType) =
@@ -20,7 +21,9 @@ data class Completion(val type: Type, val value: AbstractType): Record {
             !isNormal
     }
     companion object {
-        fun normal(value: AbstractType) =
+        inline fun wideNormal(value: AbstractType) =
             Completion(Type.NORMAL, value)
+        inline fun normal(value: LanguageType) =
+            wideNormal(value)
     }
 }

@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.spec.Completion
 
 @EsSpec("GetValue")
 internal fun getValue(v: AbstractType): Completion {
-    return Completion.normal(v) // temp
+    return Completion.wideNormal(v) // temp
 }
 
 /**

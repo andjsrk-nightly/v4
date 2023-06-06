@@ -1,12 +1,10 @@
 package io.github.andjsrk.v4.parse.node
 
-import io.github.andjsrk.v4.BinaryOperationType
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.BinaryOperationType.*
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.AbstractType
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.spec.Completion
-import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class BinaryExpressionNode(
@@ -19,9 +17,9 @@ class BinaryExpressionNode(
     override fun toString() =
         stringifyLikeDataClass(::left, ::right, ::operation, ::range)
     override fun evaluate(): Completion {
-        val lref = returnIfAbrupt(left.evaluate()) { return it }
+        val lref = left.evaluateOrReturn { return it }
         val lval = getValueOrReturn(lref) { return it }
-        val rref = returnIfAbrupt(right.evaluate()) { return it }
+        val rref = right.evaluateOrReturn { return it }
         val rval = getValueOrReturn(rref) { return it }
 
         when (operation) {
@@ -49,30 +47,26 @@ class BinaryExpressionNode(
             else -> {}
         }
 
-        if (lval !is NumericType<*>) return Completion(Completion.Type.THROW, NullType)
-        if (rval !is NumericType<*>) return Completion(Completion.Type.THROW, NullType)
-        if (lval::class != rval::class) return Completion(Completion.Type.THROW, NullType)
+        if (lval !is NumericType<*>) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+        if (rval !is NumericType<*>) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+        if (lval::class != rval::class) return Completion(Completion.Type.THROW, NullType/* TypeError */)
 
         return Completion.normal(
             when (operation) {
                 EXPONENTIAL -> lval.pow(rval).extractIfCompletion { return it }
                 MULTIPLY -> lval * rval
-                DIVIDE -> lval / rval
-                MOD -> lval % rval
+                DIVIDE -> (lval / rval).extractIfCompletion { return it }
+                MOD -> (lval % rval).extractIfCompletion { return it }
                 PLUS -> lval + rval
                 MINUS -> lval - rval
                 SHL -> lval.leftShift(rval).extractIfCompletion { return it }
                 SAR -> lval.signedRightShift(rval).extractIfCompletion { return it }
                 SHR -> lval.unsignedRightShift(rval).extractIfCompletion { return it }
                 BITWISE_AND -> lval.bitwiseAnd(rval).extractIfCompletion { return it }
-                else -> TODO()
+                BITWISE_XOR -> lval.bitwiseXor(rval).extractIfCompletion { return it }
+                BITWISE_OR -> lval.bitwiseOr(rval).extractIfCompletion { return it }
+                else -> missingBranch()
             }
         )
     }
 }
-
-private inline fun AbstractType.extractIfCompletion(`return`: (Completion) -> Nothing) =
-    (
-        if (this is Completion) returnIfAbrupt(this, `return`)
-        else this
-    ) as LanguageType

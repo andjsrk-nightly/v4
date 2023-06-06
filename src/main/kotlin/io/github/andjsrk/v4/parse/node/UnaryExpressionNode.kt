@@ -1,10 +1,8 @@
 package io.github.andjsrk.v4.parse.node
 
-import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.UnaryOperationType
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.UnaryOperationType.*
-import io.github.andjsrk.v4.evaluate.getValueOrReturn
-import io.github.andjsrk.v4.evaluate.returnIfAbrupt
+import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.spec.Completion
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
@@ -25,12 +23,12 @@ open class UnaryExpressionNode(
     override fun evaluate(): Completion {
         when (this.operation) {
             VOID -> {
-                val expr = returnIfAbrupt(operand.evaluate()) { return it }
+                val expr = operand.evaluateOrReturn { return it }
                 getValueOrReturn(expr) { return it }
                 return Completion.normal(NullType)
             }
             TYPEOF -> {
-                val expr = returnIfAbrupt(operand.evaluate()) { return it }
+                val expr = operand.evaluateOrReturn { return it }
                 val value = getValueOrReturn(expr) { return it }
                 return Completion.normal(
                     StringType(
@@ -47,7 +45,7 @@ open class UnaryExpressionNode(
                 )
             }
             MINUS -> {
-                val expr = returnIfAbrupt(operand.evaluate()) { return it }
+                val expr = operand.evaluateOrReturn { return it }
                 val value = getValueOrReturn(expr) { return it }
                 return when (value) {
                     is NumericType<*> -> Completion.normal(-value)
@@ -55,19 +53,24 @@ open class UnaryExpressionNode(
                 }
             }
             BITWISE_NOT -> {
-                val expr = returnIfAbrupt(operand.evaluate()) { return it }
+                val expr = operand.evaluateOrReturn { return it }
                 val value = getValueOrReturn(expr) { return it }
                 return when (value) {
-                    is NumberType -> {
-                        val res = returnIfAbrupt(value.bitwiseNot()) { return it }
-                        return Completion.normal(res)
+                    is NumericType<*> -> {
+                        val res = value.bitwiseNot().extractIfCompletion { return it }
+                        Completion.normal(res)
                     }
-                    is BigIntType -> Completion.normal(value.bitwiseNot())
-                    is NumericType<*> -> TODO()
                     else -> Completion(Completion.Type.THROW, NullType/* TypeError */)
                 }
             }
-            else -> TODO()
+            NOT -> {
+                val expr = operand.evaluateOrReturn { return it }
+                val value = getValueOrReturn(expr) { return it }
+                if (value !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+                return Completion.normal(!value)
+            }
+            // TODO: await expression
+            else -> missingBranch()
         }
     }
 }

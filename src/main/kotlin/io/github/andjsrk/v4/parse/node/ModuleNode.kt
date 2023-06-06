@@ -15,7 +15,7 @@ class ModuleNode(override val elements: List<StatementNode>): StatementListNode 
         val itemList = elements
             .map { it.evaluate() }
             .reduceRight(::updateEmpty)
-        if (itemList.type.isNormal && itemList.value == null) return Completion.normal(NullType)
+        if (itemList.type.isNormal && itemList.value == null) return Completion.wideNormal(NullType)
         return itemList
     }
 }

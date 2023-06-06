@@ -230,20 +230,20 @@ internal data class NumberType(
      * Note that the function assumes that the number is an integer if [radix] is not `10`.
      */
     @EsSpec("Number::toString")
-    fun toString(radix: UInt): StringType =
+    override fun toString(radix: Int): StringType =
         StringType(when {
             this.isNaN -> "NaN"
             this.isZero -> "0"
             value < 0 -> "-${(-this).toString(radix).value}"
             this.isInfinity -> "Infinity"
             else -> when (radix) {
-                10u ->
+                10 ->
                     value
                         .toBigDecimal().toPlainString() // prevent scientific notation
                         .removeSuffix(".0") // remove trailing `.0` if possible because trailing `.0` means the number can be represented as an integer
                 else -> {
                     assert(value.isInteger)
-                    value.toBigDecimal().toBigIntegerExact().toString(radix.toInt())
+                    value.toBigDecimal().toBigIntegerExact().toString(radix)
                 }
             }
         })

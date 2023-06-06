@@ -8,5 +8,5 @@ import io.github.andjsrk.v4.evaluate.type.spec.Completion
 internal fun <T: AbstractType?> updateEmpty(completion: Completion, value: T): Completion {
     // TODO: support empty
     val res = returnIfAbrupt(completion) { return it }
-    return Completion.normal(res)
+    return Completion.wideNormal(res)
 }

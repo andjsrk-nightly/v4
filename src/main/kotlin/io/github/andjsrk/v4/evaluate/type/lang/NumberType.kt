@@ -161,11 +161,11 @@ internal data class NumberType(
     private fun <T> generalShift(
         other: NumberType,
         leftCoercion: () -> Completion,
-        leftConverter: Double.() -> T,
+        leftTransform: Double.() -> T,
         operation: (T, Int) -> Double,
     ): Completion {
         val left = returnIfAbrupt<NumberType>(leftCoercion()) { return it }
-            .value.leftConverter()
+            .value.leftTransform()
         val right = returnIfAbrupt<NumberType>(other.toUint32()) { return it }
             .value.toInt()
         val shiftCount = right % 32

@@ -2,7 +2,6 @@ package io.github.andjsrk.v4.tokenize
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.error.ErrorKind
-import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.tokenize.TokenType.*
 
@@ -401,17 +400,20 @@ internal class Tokenizer(sourceText: String) {
                                         build(ASSIGN_SAR)
                                     }
                                     '>' -> select('=', ASSIGN_SHR, SHR)
-                                    else -> build()
+                                    else -> build(SAR)
                                 }
                             }
                             else -> build()
                         }
                     }
                     ASSIGN -> {
-                        // = == === =>
+                        // = == =>
                         advance()
                         return when (curr) {
-                            '=' -> select('=', EQ_STRICT, EQ)
+                            '=' -> {
+                                advance()
+                                build(EQ)
+                            }
                             '>' -> {
                                 advance()
                                 build(ARROW)
@@ -420,12 +422,13 @@ internal class Tokenizer(sourceText: String) {
                         }
                     }
                     NOT -> {
-                        // ! != !==
+                        // ! !==
                         advance()
-                        return when (curr) {
-                            '=' -> select('=', NOT_EQ_STRICT, NOT_EQ)
-                            else -> build(NOT)
-                        }
+                        return if (curr == '=' && peek() == '=') {
+                            advance()
+                            advance()
+                            build(NOT_EQ)
+                        } else build()
                     }
                     PLUS -> {
                         // + += ++

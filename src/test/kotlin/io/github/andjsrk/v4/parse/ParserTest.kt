@@ -1302,11 +1302,7 @@ private fun Code.shouldBeInvalidModuleWithError(kind: ErrorKind, args: List<Stri
     shouldBeInvalidWithError(Parser::parseModule, kind, args, range)
 private inline fun <N: Node> Parser.parseSuccessfully(parseFn: Parser.() -> N?) =
     parseFn().let { node ->
-        assert(!hasError) {
-            """
-                Error occurred: $error
-            """.trimIndent() + stackTrace?.toErrorMessagePart()
-        }
+        assert(!hasError) { createErrorMsg() }
         assertNotNull(node)
         node
     }
@@ -1316,8 +1312,6 @@ private inline fun Parser.parseUnsuccessfully(parseFn: Parser.() -> Node?) =
         assert(hasError)
         error!!
     }
-private fun List<StackTraceElement>.toErrorMessagePart() =
-    "\nStack trace:\n${joinToString("\n") { "    $it" }}"
 private fun createParser(code: Code) =
     Parser(code.trimIndent())
 

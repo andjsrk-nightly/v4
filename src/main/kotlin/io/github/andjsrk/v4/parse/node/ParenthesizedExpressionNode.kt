@@ -10,4 +10,6 @@ class ParenthesizedExpressionNode(
     override val childNodes get() = listOf(expression)
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
+    override fun evaluate() =
+        expression.evaluate()
 }

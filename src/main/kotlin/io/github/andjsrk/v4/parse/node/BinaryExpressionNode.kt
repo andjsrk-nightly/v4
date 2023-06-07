@@ -26,12 +26,14 @@ class BinaryExpressionNode(
             LT, GT, LT_EQ, GT_EQ -> return when {
                 lval::class != rval::class -> Completion(Completion.Type.THROW, NullType/* TypeError */)
                 lval is StringType || lval is NumericType<*> ->
-                    when (operation) {
-                        LT -> lval.isLessThan(rval, BooleanType.FALSE)
-                        GT -> rval.isLessThan(lval, BooleanType.FALSE)
-                        LT_EQ -> rval.isLessThan(lval, BooleanType.TRUE).map { !(it as BooleanType) }
-                        GT_EQ -> lval.isLessThan(rval, BooleanType.TRUE).map { !(it as BooleanType) }
-                        else -> neverHappens()
+                    BooleanType.run {
+                        when (operation) {
+                            LT -> lval.isLessThan(rval, FALSE)
+                            GT -> rval.isLessThan(lval, FALSE)
+                            LT_EQ -> rval.isLessThan(lval, TRUE).map { !(it as BooleanType) }
+                            GT_EQ -> lval.isLessThan(rval, TRUE).map { !(it as BooleanType) }
+                            else -> neverHappens()
+                        }
                     }
                 else -> Completion(Completion.Type.THROW, NullType/* TypeError */)
             }
@@ -44,6 +46,8 @@ class BinaryExpressionNode(
                     return Completion.normal(left + right)
                 }
             }
+            EQ -> return Completion.normal(equal(lval, rval))
+            NOT_EQ -> return Completion.normal(!equal(lval, rval))
             else -> {}
         }
 

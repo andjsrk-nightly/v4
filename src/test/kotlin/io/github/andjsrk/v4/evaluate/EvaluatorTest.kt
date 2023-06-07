@@ -98,6 +98,277 @@ class EvaluatorTest {
             !0
         """).shouldBeThrow()
     }
+    @Test
+    fun testArithmeticOperator() {
+        evaluationOf("""
+            2 ** 4
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 16.0)
+        }
+
+        evaluationOf("""
+            3 ** 0
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 1.0)
+        }
+
+        evaluationOf("""
+            "a" ** 1
+        """).shouldBeThrow()
+
+        evaluationOf("""
+            1 ** 1n
+        """).shouldBeThrow()
+
+        evaluationOf("""
+            2 * 3
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 6.0)
+        }
+
+        evaluationOf("""
+            "2" * 3
+        """).shouldBeThrow()
+
+        evaluationOf("""
+            4 / 2
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 2.0)
+        }
+
+        evaluationOf("""
+            5 % 2
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 1.0)
+        }
+
+        evaluationOf("""
+            2.5 % 1
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 0.5)
+        }
+
+        evaluationOf("""
+            -3 % 2
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == -1.0)
+        }
+
+        evaluationOf("""
+            1 + 2
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 3.0)
+        }
+
+        evaluationOf("""
+            "1" + "2"
+        """).shouldBeNormalAnd<StringType> {
+            assert(value == "12")
+        }
+
+        evaluationOf("""
+            "1" + 2
+        """).shouldBeNormalAnd<StringType> {
+            assert(value == "12")
+        }
+
+        evaluationOf("""
+            2 - 1
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 1.0)
+        }
+
+        evaluationOf("""
+            "2" - 1
+        """).shouldBeThrow()
+    }
+    @Test
+    fun testBitwiseOperator() {
+        evaluationOf("""
+            1 << 4
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 16.0)
+        }
+
+        evaluationOf("""
+            16 >> 4
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 1.0)
+        }
+
+        evaluationOf("""
+            -2 >> 1
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == -1.0)
+        }
+
+        evaluationOf("""
+            16 >>> 4
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 1.0)
+        }
+
+        evaluationOf("""
+            -2 >>> 1
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == Int.MAX_VALUE.toDouble())
+        }
+
+        evaluationOf("""
+            7 & 11
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 3.0)
+        }
+
+        evaluationOf("""
+            3 | 10
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 11.0)
+        }
+
+        evaluationOf("""
+            1.1 | 0
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 1.0)
+        }
+    }
+    @Test
+    fun testRelationalOperator() {
+        evaluationOf("""
+            1 < 2
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            1 < 1
+        """).shouldBeNormalAnd<BooleanType> {
+            assertFalse(value)
+        }
+
+        evaluationOf("""
+            2 < 1
+        """).shouldBeNormalAnd<BooleanType> {
+            assertFalse(value)
+        }
+
+        evaluationOf("""
+            1 <= 2
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            1 <= 1
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            2 <= 1
+        """).shouldBeNormalAnd<BooleanType> {
+            assertFalse(value)
+        }
+
+        evaluationOf("""
+            2 > 1
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            1 > 1
+        """).shouldBeNormalAnd<BooleanType> {
+            assertFalse(value)
+        }
+
+        evaluationOf("""
+            1 > 2
+        """).shouldBeNormalAnd<BooleanType> {
+            assertFalse(value)
+        }
+
+        evaluationOf("""
+            2 >= 1
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            1 >= 1
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            1 >= 2
+        """).shouldBeNormalAnd<BooleanType> {
+            assertFalse(value)
+        }
+    }
+    @Test
+    fun testEqualOperator() {
+        arrayOf("==" to true, "!==" to false).forEach { (op, expected) ->
+            fun BooleanType.assertEqual() =
+                assert(value == expected)
+            fun BooleanType.assertNotEqual() =
+                assert(value != expected)
+
+            evaluationOf("""
+                1 $op 1
+            """).shouldBeNormalAnd<BooleanType> {
+                assertEqual()
+            }
+
+            evaluationOf("""
+                1 $op 2
+            """).shouldBeNormalAnd<BooleanType> {
+                assertNotEqual()
+            }
+
+            evaluationOf("""
+                -0 $op 0
+            """).shouldBeNormalAnd<BooleanType> {
+                assertEqual()
+            }
+
+            evaluationOf("""
+                (0 / 0) $op (0 / 0)
+            """).shouldBeNormalAnd<BooleanType> {
+                assertNotEqual()
+            }
+
+            evaluationOf("""
+                1 $op "a"
+            """).shouldBeNormalAnd<BooleanType> {
+                assertNotEqual()
+            }
+
+            evaluationOf("""
+                "abc" $op "abc"
+            """).shouldBeNormalAnd<BooleanType> {
+                assertEqual()
+            }
+
+            evaluationOf("""
+                "abc" $op "abd"
+            """).shouldBeNormalAnd<BooleanType> {
+                assertNotEqual()
+            }
+
+            evaluationOf("""
+                true $op true
+            """).shouldBeNormalAnd<BooleanType> {
+                assertEqual()
+            }
+
+            evaluationOf("""
+                true $op false
+            """).shouldBeNormalAnd<BooleanType> {
+                assertNotEqual()
+            }
+        }
+    }
 }
 
 private inline fun <reified ValueT> Completion.shouldBeNormalAnd(block: ValueT.() -> Unit) {

@@ -1022,7 +1022,7 @@ class Parser(sourceText: String) {
     @Careful
     private tailrec fun parseEquality(left: BinaryExpressionNode? = null): ExpressionNode? {
         val relationalExpr = left ?: parseRelational() ?: return null
-        if (currToken.type !in EQ..NOT_EQ_STRICT) return relationalExpr
+        if (currToken.type !in EQ..NOT_EQ) return relationalExpr
         val operation = BinaryOp.fromTokenType(currToken.type)
         advance()
         val right = parseRelational() ?: return null

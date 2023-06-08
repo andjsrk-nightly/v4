@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class NormalForNode(
-    val init: LexicalDeclarationNode?,
+    val init: NormalLexicalDeclarationNode?,
     val test: ExpressionNode?,
     val update: ExpressionNode?,
     override val body: StatementNode,

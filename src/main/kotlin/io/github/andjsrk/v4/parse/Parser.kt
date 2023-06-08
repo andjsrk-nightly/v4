@@ -516,7 +516,7 @@ class Parser(sourceText: String) {
         val isStatic = staticToken != null
         val name = parsePropertyName() ?: return null
         val startRange = staticToken?.range ?: name.range
-        val value = parseInitializer()?.value
+        val value = parseInitializer()
 
         return when {
             value != null -> // field with initializer
@@ -1398,6 +1398,7 @@ class Parser(sourceText: String) {
         expect(LEFT_PARENTHESIS) ?: return null
         val isInitOmittedNormalFor = currToken.type == SEMICOLON // do not take because ForDeclaration needs to be parsed on below
         val declaration = parseLexicalDeclarationWithoutInitializer()
+            .withDuplicateNameCheck()
         if (hasError) return null
         return when {
             declaration != null && currToken.isKeyword(IN) -> {
@@ -1411,7 +1412,7 @@ class Parser(sourceText: String) {
                 val init = if (declaration == null) {
                     if (isInitOmittedNormalFor) null
                     else reportUnexpectedToken()
-                } else parseLexicalDeclaration(declaration, false)
+                } else parseLexicalDeclaration(declaration)
                 expect(SEMICOLON)
                 if (hasError) return null
                 val test = parseForHeadElement() as ExpressionNode?
@@ -1546,14 +1547,25 @@ class Parser(sourceText: String) {
             LEFT_BRACE -> parseBlock()
             else -> parseExpressionStatement()
         }
+
     /**
      * Parses [Initializer](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Initializer).
      */
     @Careful
-    private fun parseInitializer(): InitializerNode? {
-        val startRange = takeIfMatches(ASSIGN)?.range ?: return null
-        val value = parseAssignment() ?: return null
-        return InitializerNode(value, startRange)
+    private fun parseInitializer(): ExpressionNode? {
+        takeIfMatches(ASSIGN) ?: return null
+        return parseAssignment()
+    }
+    /**
+     * Parses [LexicalBinding](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-LexicalBinding).
+     */
+    @Careful(false)
+    private fun parseLexicalBinding(): LexicalBindingNode? {
+        val binding = parseBindingElementWithoutInitializer() ?: return null
+        val value = parseInitializer()
+        if (hasError) return null
+        if (value == null && binding is BindingPatternNode) return reportError(SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER, binding.range)
+        return LexicalBindingNode(binding, value)
     }
     /**
      * Parses [LexicalDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-LexicalDeclaration) without [Initializer](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Initializer).
@@ -1568,44 +1580,47 @@ class Parser(sourceText: String) {
         val binding = parseIdentifier() ?: parseBindingPattern() ?: return reportUnexpectedToken(startToken)
 
         return LexicalDeclarationWithoutInitializerNode(kind, binding, startToken.range)
-            .withDuplicateNameCheck()
+        // defer early error check
     }
     /**
      * See [Early Errors](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-let-and-const-declarations-static-semantics-early-errors).
      */
-    private fun LexicalDeclarationWithoutInitializerNode?.withDuplicateNameCheck() =
+    private fun <N: LexicalDeclarationNode> N?.withDuplicateNameCheck() =
         this?.takeIf {
             reportDuplicateName(boundNames())
             !hasError
         }
     /**
      * Parses [LexicalDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-LexicalDeclaration).
-     * @param inNormalContext
-     * Indicates whether the lexical declaration is in normal context.
-     * There are some special context such as for statement.
      */
     @Careful
-    private fun parseLexicalDeclaration(givenDeclaration: LexicalDeclarationWithoutInitializerNode? = null, inNormalContext: Boolean = true): LexicalDeclarationNode? {
-        assert(givenDeclaration !is LexicalDeclarationNode)
+    private fun parseLexicalDeclaration(givenDeclaration: LexicalDeclarationWithoutInitializerNode? = null): NormalLexicalDeclarationNode? {
         val withoutInitializer = givenDeclaration ?: parseLexicalDeclarationWithoutInitializer() ?: return null
         val kind = withoutInitializer.kind
-        val binding = withoutInitializer.binding
-        val value = parseInitializer()?.value
-        if (value == null) {
-            if (hasError) return null
-            if (kind == LexicalDeclarationKind.LET || binding is BindingPatternNode) return reportError(
-                SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER,
-                binding.range,
-            )
+        val firstBinding = withoutInitializer.binding
+        val firstValue = parseInitializer()
+
+        if (hasError) return null
+        if ((kind == LexicalDeclarationKind.LET || firstBinding is BindingPatternNode) && firstValue == null) return reportError(
+            SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER,
+            firstBinding.range,
+        )
+
+        val bindings = mutableListOf(LexicalBindingNode(firstBinding, firstValue))
+        while (takeIfMatches(COMMA) != null) {
+            val lexicalBinding = parseLexicalBinding() ?: return reportUnexpectedToken()
+            bindings += lexicalBinding
         }
 
-        return LexicalDeclarationNode(
+        val inNormalContext = givenDeclaration == null
+
+        return NormalLexicalDeclarationNode(
             kind,
-            binding,
-            value,
+            bindings,
             withoutInitializer.range,
             inNormalContext.thenTake { takeOptionalSemicolonRange() },
         )
+            .withDuplicateNameCheck()
     }
     /**
      * Parses [ClassDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-functions-and-classes.html#prod-ClassDeclaration).

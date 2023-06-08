@@ -752,7 +752,7 @@ internal class ParserTest {
         """
             for (var i = 0; i < 5; i++);
         """.shouldBeValidStatementAnd<NormalForNode> {
-            assertIs<LexicalDeclarationNode>(init)
+            assertIs<NormalLexicalDeclarationNode>(init)
             assertIs<BinaryExpressionNode>(test)
             assertIs<UpdateNode>(update)
             assertIs<EmptyStatementNode>(body)
@@ -919,22 +919,24 @@ internal class ParserTest {
     fun testLexicalDeclaration() {
         """
             var a = 1
-        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
+        """.shouldBeValidStatementAnd<NormalLexicalDeclarationNode> {
             assert(kind == LexicalDeclarationKind.VAR)
-            binding.assertIdentifierNamed("a")
-            assertIs<NumberLiteralNode>(value)
+            bindings[0].run {
+                binding.assertIdentifierNamed("a")
+                assertIs<NumberLiteralNode>(value)
+            }
         }
 
         """
             let a = 1
-        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
+        """.shouldBeValidStatementAnd<NormalLexicalDeclarationNode> {
             assert(kind == LexicalDeclarationKind.LET)
         }
 
         """
             var a
-        """.shouldBeValidStatementAnd<LexicalDeclarationNode> {
-            assertNull(value)
+        """.shouldBeValidStatementAnd<NormalLexicalDeclarationNode> {
+            assertNull(bindings[0].value)
         }
 
         """
@@ -944,6 +946,19 @@ internal class ParserTest {
         """
             var {}
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DECLARATION_MISSING_INITIALIZER)
+
+        """
+            let a = 1, b = 2
+        """.shouldBeValidStatementAnd<NormalLexicalDeclarationNode> {
+            bindings[0].run {
+                binding.assertIdentifierNamed("a")
+                assertIs<NumberLiteralNode>(value)
+            }
+            bindings[1].run {
+                binding.assertIdentifierNamed("b")
+                assertIs<NumberLiteralNode>(value)
+            }
+        }
     }
     @Test
     fun testClass() {
@@ -1165,7 +1180,7 @@ internal class ParserTest {
         """
             export let a = 0
         """.shouldBeValidStatementAnd<NamedSingleExportDeclarationNode> {
-            assertIs<LexicalDeclarationNode>(declaration)
+            assertIs<NormalLexicalDeclarationNode>(declaration)
         }
 
         """

@@ -11,7 +11,7 @@ import io.github.andjsrk.v4.evaluate.type.spec.Completion
 internal fun toString(value: LanguageType): Completion {
     return Completion.normal(
         when (value) {
-            is NullType -> StringType("null")
+            NullType -> StringType("null")
             is BooleanType -> StringType(value.value.toString())
             is StringType -> value
             is NumericType<*> -> value.toString(10)

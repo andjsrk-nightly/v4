@@ -17,10 +17,47 @@ class BinaryExpressionNode(
     override fun toString() =
         stringifyLikeDataClass(::left, ::right, ::operation, ::range)
     override fun evaluate(): Completion {
-        val lref = left.evaluateOrReturn { return it }
-        val lval = getValueOrReturn(lref) { return it }
-        val rref = right.evaluateOrReturn { return it }
-        val rval = getValueOrReturn(rref) { return it }
+        val lval = left.evaluateValueOrReturn { return it }
+
+        when (operation) {
+            AND -> {
+                // NOTE: current behavior
+                // evaluate left side
+                // coerce left side to be a Boolean
+                // if left side is `false`, return `false`
+                // else,
+                //   evaluate right side
+                //   return right side
+                if (lval !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+                if (!lval.value) return Completion.normal(BooleanType.FALSE)
+                val rval = right.evaluateValueOrReturn { return it }
+                return Completion.normal(rval)
+            }
+            OR -> {
+                // NOTE: current behavior
+                // evaluate left side
+                // coerce left side to be a Boolean
+                // if left side is `true`, return `true`
+                // else,
+                //   evaluate right side
+                //   coerce right side to be a Boolean
+                //   return right side
+                if (lval !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+                if (lval.value) return Completion.normal(BooleanType.TRUE)
+                val rval = right.evaluateValueOrReturn { return it }
+                if (rval !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+                return Completion.normal(rval)
+            }
+            COALESCE -> return Completion.normal(
+                if (lval == NullType) {
+                    val rval = right.evaluateValueOrReturn { return it }
+                    rval
+                } else lval
+            )
+            else -> {}
+        }
+
+        val rval = right.evaluateValueOrReturn { return it }
 
         when (operation) {
             LT, GT, LT_EQ, GT_EQ -> return when {

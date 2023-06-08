@@ -479,6 +479,7 @@ class Parser(sourceText: String) {
         val leftParenTokenRange = expect(LEFT_PARENTHESIS)?.range ?: neverHappens()
         val expr = parseExpression()
         val rightParenTokenAfterExprRange = expect(RIGHT_PARENTHESIS)?.range
+        val parenCheckPoint = CheckPoint()
         val exprError = error
 
         checkPoint.load()
@@ -491,6 +492,7 @@ class Parser(sourceText: String) {
             // because parameters will be parsed without care about errors, we need to check it on here
             if (currToken.type == ARROW) if (paramsError == null) params!! else reportError(paramsError)
             else expr?.let {
+                parenCheckPoint.load()
                 ParenthesizedExpressionNode(it, leftParenTokenRange..rightParenTokenAfterExprRange!!)
             }
                 ?: reportError(exprError!!)

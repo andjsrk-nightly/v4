@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.parse.Parser
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
-class EvaluatorTest {
+internal class EvaluatorTest {
     @Test
     fun testPrimitiveLiteral() {
         evaluationOf("""
@@ -368,6 +368,81 @@ class EvaluatorTest {
                 assertNotEqual()
             }
         }
+    }
+    @Test
+    fun testLogicalOperator() {
+        evaluationOf("""
+            true && true
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            false && true
+        """).shouldBeNormalAnd<BooleanType> {
+            assertFalse(value)
+        }
+
+        evaluationOf("""
+            true && 0
+        """).shouldBeNormalAnd<NumberType> {}
+
+        evaluationOf("""
+            true || false
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            false || true
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            false || false
+        """).shouldBeNormalAnd<BooleanType> {
+            assertFalse(value)
+        }
+
+        evaluationOf("""
+            true || 0
+        """).shouldBeNormalAnd<BooleanType> {
+            // 0 will not be evaluated, so it is just `true`
+            assertTrue(value)
+        }
+
+        evaluationOf("""
+            false || 0
+        """).shouldBeThrow()
+
+        evaluationOf("""
+            null ?? 0
+        """).shouldBeNormalAnd<NumberType> {}
+
+        evaluationOf("""
+            true ?? false
+        """).shouldBeNormalAnd<BooleanType> {
+            assertTrue(value)
+        }
+    }
+    @Test
+    fun testIfExpression() {
+        evaluationOf("""
+            (if (true) 1 else 0)
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 1.0)
+        }
+
+        evaluationOf("""
+            (if (false) 1 else 0)
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 0.0)
+        }
+
+        evaluationOf("""
+            (if (1) 1 else 0)
+        """).shouldBeThrow()
     }
 }
 

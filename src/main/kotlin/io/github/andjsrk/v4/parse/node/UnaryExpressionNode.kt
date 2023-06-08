@@ -2,7 +2,8 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.UnaryOperationType.*
-import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
+import io.github.andjsrk.v4.evaluate.extractIfCompletion
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.spec.Completion
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
@@ -23,17 +24,15 @@ open class UnaryExpressionNode(
     override fun evaluate(): Completion {
         when (this.operation) {
             VOID -> {
-                val expr = operand.evaluateOrReturn { return it }
-                getValueOrReturn(expr) { return it }
+                operand.evaluateValueOrReturn { return it }
                 return Completion.normal(NullType)
             }
             TYPEOF -> {
-                val expr = operand.evaluateOrReturn { return it }
-                val value = getValueOrReturn(expr) { return it }
+                val value = operand.evaluateValueOrReturn { return it }
                 return Completion.normal(
                     StringType(
                         when (value) {
-                            is NullType -> "null"
+                            NullType -> "null"
                             is StringType -> "string"
                             is NumberType -> "number"
                             is BooleanType -> "boolean"
@@ -45,16 +44,14 @@ open class UnaryExpressionNode(
                 )
             }
             MINUS -> {
-                val expr = operand.evaluateOrReturn { return it }
-                val value = getValueOrReturn(expr) { return it }
+                val value = operand.evaluateValueOrReturn { return it }
                 return when (value) {
                     is NumericType<*> -> Completion.normal(-value)
                     else -> Completion(Completion.Type.THROW, NullType)
                 }
             }
             BITWISE_NOT -> {
-                val expr = operand.evaluateOrReturn { return it }
-                val value = getValueOrReturn(expr) { return it }
+                val value = operand.evaluateValueOrReturn { return it }
                 return when (value) {
                     is NumericType<*> -> {
                         val res = value.bitwiseNot().extractIfCompletion { return it }
@@ -64,8 +61,7 @@ open class UnaryExpressionNode(
                 }
             }
             NOT -> {
-                val expr = operand.evaluateOrReturn { return it }
-                val value = getValueOrReturn(expr) { return it }
+                val value = operand.evaluateValueOrReturn { return it }
                 if (value !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
                 return Completion.normal(!value)
             }

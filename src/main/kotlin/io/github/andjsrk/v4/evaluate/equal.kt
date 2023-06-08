@@ -8,7 +8,7 @@ fun equal(left: LanguageType, right: LanguageType): BooleanType =
     BooleanType.run {
         if (left::class != right::class) return@run FALSE
         return@run when (left) {
-            is NullType -> TRUE
+            NullType -> TRUE
             is NumericType<*> -> left.equal(right as NumericType<*>)
             is StringType -> BooleanType.from(left.value == right.value)
             is BooleanType -> BooleanType.from(left.value == right.value)

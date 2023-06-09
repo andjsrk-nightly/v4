@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.parse
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.evaluate.type.spec.*
 import io.github.andjsrk.v4.parse.node.*
 import kotlin.reflect.KClass
 
@@ -116,6 +117,7 @@ internal fun Node.propName(): ObjectLiteralKeyNode? =
     }
         ?.takeIf { it !is ComputedPropertyKeyNode }
 
+@EsSpec("ExportedNames")
 internal fun ModuleNode.exportedNames() =
     elements.asSequence()
         .filterIsInstance<ExportDeclarationNode>()
@@ -126,4 +128,42 @@ internal fun ModuleNode.exportedNames() =
                 else -> emptyList()
             }
         }
+        .toList()
+
+@EsSpec("ImportEntriesForModule")
+internal fun Node.importEntries(sourceModule: String): List<ImportEntry> =
+    when (this) {
+        is ImportOrExportSpecifierNode -> listOf(NormalImportEntry(sourceModule, name.value, alias.value))
+        is NamedImportDeclarationNode -> specifiers.flatMap { it.importEntries(sourceModule) }
+        is NamespaceImportDeclarationNode -> listOf(NamespaceImportEntry(sourceModule, binding.value))
+        else -> emptyList()
+    }
+
+@EsSpec("ImportEntries")
+internal fun ModuleNode.importEntries() =
+    elements.asSequence()
+        .filterIsInstance<ImportDeclarationNode>()
+        .flatMap { it.importEntries(it.moduleSpecifier.value) }
+        .toList()
+
+@EsSpec("ExportEntriesForModule")
+internal fun Node.exportEntries(sourceModule: String?): List<ExportEntry> =
+    when (this) {
+        is ImportOrExportSpecifierNode -> {
+            val (localName, importName) =
+                if (sourceModule == null) name.value to null
+                else null to name.value
+            listOf(ExportEntry(sourceModule, alias.value, localName, importName))
+        }
+        is AllReExportDeclarationNode -> listOf(ExportEntry(sourceModule, null, null, null))
+        is NamedExportDeclarationNode ->
+            specifiers.flatMap { it.exportEntries(sourceModule) }
+        else -> emptyList()
+    }
+
+@EsSpec("ExportEntries")
+internal fun ModuleNode.exportEntries() =
+    elements.asSequence()
+        .filterIsInstance<ExportDeclarationNode>()
+        .flatMap { it.exportEntries((it as? ExportDeclarationWithModuleSpecifierNode)?.moduleSpecifier?.value) }
         .toList()

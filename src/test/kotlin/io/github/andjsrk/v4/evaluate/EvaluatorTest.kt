@@ -459,6 +459,6 @@ private fun Completion.shouldBeThrow() {
 private fun evaluationOf(code: String): Completion {
     val parser = Parser(code.trimIndent())
     return parser.parseModule()
-        ?.let { Evaluator().evaluate(it) }
+        ?.let { Evaluator.evaluate(it) }
         ?: throw AssertionError(parser.createErrorMsg())
 }

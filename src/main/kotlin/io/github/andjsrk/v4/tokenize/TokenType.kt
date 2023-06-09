@@ -16,7 +16,7 @@ enum class TokenType(val staticContent: String?) {
     LEFT_BRACE("{"),
     COLON(":"),
     ELLIPSIS("..."),
-    CONDITIONAL("?"),
+    QUESTION("?"),
     SEMICOLON(";"),
     RIGHT_BRACE("}"),
     ARROW("=>"),

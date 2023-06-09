@@ -1,8 +1,7 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
-import io.github.andjsrk.v4.evaluate.type.spec.Completion
+import io.github.andjsrk.v4.evaluate.evaluateValue
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ExpressionStatementNode(
@@ -13,8 +12,6 @@ class ExpressionStatementNode(
     override val range = expression.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
-    override fun evaluate(): Completion {
-        val value = expression.evaluateValueOrReturn { return it }
-        return Completion.normal(value)
-    }
+    override fun evaluate() =
+        expression.evaluateValue()
 }

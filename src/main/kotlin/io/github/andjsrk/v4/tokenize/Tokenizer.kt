@@ -359,8 +359,8 @@ internal class Tokenizer(sourceText: String) {
                         advance()
                         return build()
                     }
-                    CONDITIONAL -> {
-                        // ? ?. ?? ??=
+                    QUESTION -> {
+                        // ?. ?? ??=
                         advance()
                         return when (curr) {
                             '.' -> {
@@ -368,7 +368,7 @@ internal class Tokenizer(sourceText: String) {
                                 build(QUESTION_DOT)
                             }
                             '?' -> select('=', ASSIGN_COALESCE, COALESCE)
-                            else -> build()
+                            else -> buildIllegal()
                         }
                     }
                     STRING -> return getStringToken()

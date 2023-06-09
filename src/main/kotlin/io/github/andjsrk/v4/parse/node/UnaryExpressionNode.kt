@@ -3,7 +3,7 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.UnaryOperationType.*
 import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
-import io.github.andjsrk.v4.evaluate.extractIfCompletion
+import io.github.andjsrk.v4.evaluate.extractFromCompletionOrReturn
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.spec.Completion
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
@@ -54,7 +54,7 @@ open class UnaryExpressionNode(
                 val value = operand.evaluateValueOrReturn { return it }
                 return when (value) {
                     is NumericType<*> -> {
-                        val res = value.bitwiseNot().extractIfCompletion { return it }
+                        val res = value.bitwiseNot().extractFromCompletionOrReturn { return it }
                         Completion.normal(res)
                     }
                     else -> Completion(Completion.Type.THROW, NullType/* TypeError */)

@@ -30,8 +30,7 @@ class BinaryExpressionNode(
                 //   return right side
                 if (lval !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
                 if (!lval.value) return Completion.normal(BooleanType.FALSE)
-                val rval = right.evaluateValueOrReturn { return it }
-                return Completion.normal(rval)
+                return right.evaluateValue()
             }
             OR -> {
                 // NOTE: current behavior
@@ -48,11 +47,9 @@ class BinaryExpressionNode(
                 if (rval !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
                 return Completion.normal(rval)
             }
-            COALESCE -> return Completion.normal(
-                if (lval == NullType) {
-                    val rval = right.evaluateValueOrReturn { return it }
-                    rval
-                } else lval
+            COALESCE -> return (
+                if (lval == NullType) right.evaluateValue()
+                else Completion.normal(lval)
             )
             else -> {}
         }
@@ -94,20 +91,21 @@ class BinaryExpressionNode(
 
         return Completion.normal(
             when (operation) {
-                EXPONENTIAL -> lval.pow(rval).extractIfCompletion { return it }
+                EXPONENTIAL -> lval.pow(rval)
                 MULTIPLY -> lval * rval
-                DIVIDE -> (lval / rval).extractIfCompletion { return it }
-                MOD -> (lval % rval).extractIfCompletion { return it }
+                DIVIDE -> (lval / rval)
+                MOD -> (lval % rval)
                 PLUS -> lval + rval
                 MINUS -> lval - rval
-                SHL -> lval.leftShift(rval).extractIfCompletion { return it }
-                SAR -> lval.signedRightShift(rval).extractIfCompletion { return it }
-                SHR -> lval.unsignedRightShift(rval).extractIfCompletion { return it }
-                BITWISE_AND -> lval.bitwiseAnd(rval).extractIfCompletion { return it }
-                BITWISE_XOR -> lval.bitwiseXor(rval).extractIfCompletion { return it }
-                BITWISE_OR -> lval.bitwiseOr(rval).extractIfCompletion { return it }
+                SHL -> lval.leftShift(rval)
+                SAR -> lval.signedRightShift(rval)
+                SHR -> lval.unsignedRightShift(rval)
+                BITWISE_AND -> lval.bitwiseAnd(rval)
+                BITWISE_XOR -> lval.bitwiseXor(rval)
+                BITWISE_OR -> lval.bitwiseOr(rval)
                 else -> missingBranch()
             }
+                .extractFromCompletionOrReturn { return it }
         )
     }
 }

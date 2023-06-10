@@ -3,6 +3,7 @@ package io.github.andjsrk.v4.evaluate.type.spec
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.AbstractType
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
 @EsSpec("Completion Record")
 data class Completion(
@@ -38,5 +39,8 @@ data class Completion(
             Completion(Type.NORMAL, value)
         inline fun normal(value: LanguageType) =
             wideNormal(value)
+        val empty by lazy {
+            Completion(Type.NORMAL, NullType, true)
+        }
     }
 }

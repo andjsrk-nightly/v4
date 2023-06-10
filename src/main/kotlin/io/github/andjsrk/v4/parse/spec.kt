@@ -1,9 +1,19 @@
 package io.github.andjsrk.v4.parse
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.evaluate.type.lang.StringType
 import io.github.andjsrk.v4.evaluate.type.spec.*
 import io.github.andjsrk.v4.parse.node.*
 import kotlin.reflect.KClass
+
+@EsSpec("IsAnonymousFunctionDefinition")
+internal val ExpressionNode.isAnonymous get(): Boolean =
+    when (this) {
+        is ParenthesizedExpressionNode -> expression.isAnonymous
+        is ArrowFunctionNode, is MethodExpressionNode -> true
+        is ClassExpressionNode -> name == null
+        else -> false
+    }
 
 /**
  * A convenient way to find a node that is matched by [Contains](https://tc39.es/ecma262/multipage/syntax-directed-operations.html#sec-static-semantics-contains).
@@ -63,6 +73,13 @@ internal fun Node.boundNames(): List<IdentifierNode> =
         else -> emptyList()
     }
 
+internal val DeclarationNode.isConstant get() =
+    when (this) {
+        is NormalLexicalDeclarationNode -> kind == LexicalDeclarationKind.LET
+        is ClassDeclarationNode -> true
+        else -> false
+    }
+
 @EsSpec("LexicallyDeclaredNames")
 internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
     when (this) {
@@ -70,6 +87,16 @@ internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
         is StatementListNode -> elements.flatMap { it.lexicallyDeclaredNames() }
         is ExpressionNode -> emptyList()
         // TODO: switch statement
+        else -> emptyList()
+    }
+
+@EsSpec("LexicallyScopedDeclarations")
+internal fun Node.lexicallyScopedDeclarations(): List<DeclarationNode> =
+    when (this) {
+        is NamedSingleExportDeclarationNode -> listOf(declaration)
+        is ImportDeclarationNode, is ExportDeclarationNode -> emptyList()
+        is DeclarationNode -> listOf(this)
+        is StatementListNode -> elements.flatMap { it.lexicallyScopedDeclarations() }
         else -> emptyList()
     }
 
@@ -116,6 +143,10 @@ internal fun Node.propName(): ObjectLiteralKeyNode? =
         else -> null
     }
         ?.takeIf { it !is ComputedPropertyKeyNode }
+
+@EsSpec("StringValue")
+internal val IdentifierNode.stringValue get() =
+    StringType(value)
 
 @EsSpec("ExportedNames")
 internal fun ModuleNode.exportedNames() =

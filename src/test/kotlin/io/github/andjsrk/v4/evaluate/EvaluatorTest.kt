@@ -444,13 +444,38 @@ internal class EvaluatorTest {
             (if (1) 1 else 0)
         """).shouldBeThrow()
     }
+    @Test
+    fun testLexicalDeclaration() {
+        evaluationOf("""
+            let a = 0
+        """).shouldBeNormalAnd<NullType> {
+            val bindings = Evaluator.runningExecutionContext.lexicalEnvironment.bindings
+            bindings["a"].run {
+                assertNotNull(this)
+                assertFalse(isMutable)
+                assertIs<NumberType>(value)
+            }
+        }
+
+        evaluationOf("""
+            var a
+        """).shouldBeNormalAnd<NullType> {
+            val bindings = Evaluator.runningExecutionContext.lexicalEnvironment.bindings
+            bindings["a"].run {
+                assertNotNull(this)
+                assertTrue(isMutable)
+                assertIs<NullType>(value)
+            }
+        }
+    }
 }
 
-private inline fun <reified ValueT> Completion.shouldBeNormalAnd(block: ValueT.() -> Unit) {
+private inline fun <reified Value> Completion.shouldBeNormalAnd(block: Value.() -> Unit) {
     assert(type.isNormal)
     val value = value
-    assertIs<ValueT>(value)
+    assertIs<Value>(value)
     block(value)
+    Evaluator.cleanup()
 }
 private fun Completion.shouldBeThrow() {
     assert(type == Completion.Type.THROW)

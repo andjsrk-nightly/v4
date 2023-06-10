@@ -21,7 +21,7 @@ open class DeclarativeEnvironment(outer: Environment? = null): Environment(outer
         bindings[name] = Binding(false, null)
     }
     @EsSpec("InitializeBinding")
-    fun initializeBinding(name: String, value: LanguageType) {
+    override fun initializeBinding(name: String, value: LanguageType) {
         val binding = bindings[name]
         assert(binding != null && binding.not { isInitialized })
         requireNotNull(binding)

@@ -1286,33 +1286,31 @@ class Parser(sourceText: String) {
      */
     @Careful
     private fun parseAssignment(): ExpressionNode? =
-        parseYield()
-            .pipeIfHasNoError {
-                parseIfExpression()
-                    ?.let {
-                        when (it) {
-                            is IdentifierNode ->
-                                if (currToken.type == ARROW) parseArrowFunctionWithoutParenthesis(it)
-                                else it
-                            is UniqueFormalParametersNode ->
-                                // we are sure of current token is =>
-                                parseArrowFunctionByUniqueFormalParameters(it)
-                            else -> it
-                        }
-                    }
-                    ?.let {
-                        if (currToken.type.not { isAssignLike }) return@let it
-                        val operation = BinaryOp.fromTokenType(currToken.type)
-                        advance()
-                        if (it.not { isAssignmentTarget() }) return@let reportError(SyntaxErrorKind.INVALID_LHS_IN_ASSIGNMENT, it.range)
-                        val right = parseAssignment() ?: return@let null
-                        BinaryExpressionNode(it, right, operation)
-                    }
-                    ?: when {
-                        currToken.isKeyword(ASYNC) || currToken.isKeyword(GEN) -> parseSpecialFunction()
-                        currToken.isKeyword(METHOD) -> parseMethodExpression(false, false, null)
-                        else -> reportUnexpectedToken()
-                    }
+        parseIfExpression()
+            ?.let {
+                when (it) {
+                    is IdentifierNode ->
+                        if (currToken.type == ARROW) parseArrowFunctionWithoutParenthesis(it)
+                        else it
+                    is UniqueFormalParametersNode ->
+                        // we are sure of current token is =>
+                        parseArrowFunctionByUniqueFormalParameters(it)
+                    else -> it
+                }
+            }
+            ?.let {
+                if (currToken.type.not { isAssignLike }) return@let it
+                val operation = BinaryOp.fromTokenType(currToken.type)
+                advance()
+                if (it.not { isAssignmentTarget() }) return@let reportError(SyntaxErrorKind.INVALID_LHS_IN_ASSIGNMENT, it.range)
+                val right = parseAssignment() ?: return@let null
+                BinaryExpressionNode(it, right, operation)
+            }
+            ?: when {
+                currToken.isKeyword(ASYNC) || currToken.isKeyword(GEN) -> parseSpecialFunction()
+                currToken.isKeyword(METHOD) -> parseMethodExpression(false, false, null)
+                currToken.isKeyword(YIELD) -> parseYield()
+                else -> reportUnexpectedToken()
             }
     /**
      * Parses [Expression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Expression).

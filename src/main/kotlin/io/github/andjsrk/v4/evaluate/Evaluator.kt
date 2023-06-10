@@ -1,7 +1,8 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.spec.DeclarativeEnvironment
+import io.github.andjsrk.v4.evaluate.type.spec.Completion
+import io.github.andjsrk.v4.evaluate.type.spec.ModuleEnvironment
 import io.github.andjsrk.v4.parse.node.ModuleNode
 
 /**
@@ -10,8 +11,13 @@ import io.github.andjsrk.v4.parse.node.ModuleNode
 object Evaluator {
     @EsSpec("running execution context")
     val runningExecutionContext = ExecutionContext(
-        DeclarativeEnvironment(),
+        ModuleEnvironment(),
     )
-    fun evaluate(module: ModuleNode) =
-        module.evaluate()
+    fun evaluate(module: ModuleNode): Completion {
+        instantiateBlockDeclaration(module, runningExecutionContext.lexicalEnvironment)
+        return module.evaluate()
+    }
+    fun cleanup() {
+        runningExecutionContext.lexicalEnvironment = ModuleEnvironment()
+    }
 }

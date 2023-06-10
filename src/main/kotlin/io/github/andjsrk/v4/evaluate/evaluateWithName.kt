@@ -9,3 +9,6 @@ internal fun ExpressionNode.evaluateWithName(name: LanguageType): Completion {
     if (this is ParenthesizedExpressionNode) return expression.evaluateWithName(name)
     TODO()
 }
+
+internal inline fun ExpressionNode.evaluateWithNameOrReturn(name: LanguageType, `return`: CompletionReturn): LanguageType =
+    getLanguageTypeOrReturn(evaluateWithName(name), `return`)

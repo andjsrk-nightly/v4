@@ -5,7 +5,8 @@ import io.github.andjsrk.v4.BinaryOperationType.*
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.spec.Completion
-import io.github.andjsrk.v4.parse.stringifyLikeDataClass
+import io.github.andjsrk.v4.evaluate.type.spec.Reference
+import io.github.andjsrk.v4.parse.*
 
 class BinaryExpressionNode(
     val left: ExpressionNode,
@@ -17,6 +18,16 @@ class BinaryExpressionNode(
     override fun toString() =
         stringifyLikeDataClass(::left, ::right, ::operation, ::range)
     override fun evaluate(): Completion {
+        if (operation.isAssignLike) {
+            // TODO: destructuring assignment
+            val lref = returnIfAbrupt<Reference>(left.evaluate()) { return it }
+            val rval =
+                if (left is IdentifierNode && right.isAnonymous) right.evaluateWithNameOrReturn(left.stringValue) { return it }
+                else right.evaluateValueOrReturn { return it }
+            returnIfAbrupt(lref.putValue(rval)) { return it }
+            return Completion.normal(rval)
+        }
+
         val lval = left.evaluateValueOrReturn { return it }
 
         when (operation) {

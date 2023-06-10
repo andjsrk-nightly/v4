@@ -9,6 +9,8 @@ sealed class Environment(var outer: Environment? = null): Record {
     abstract operator fun contains(name: String): Boolean
     @EsSpec("InitializeBinding")
     abstract fun initializeBinding(name: String, value: LanguageType)
+    @EsSpec("SetMutableBinding")
+    abstract fun setMutableBinding(name: String, value: LanguageType): Completion
     @EsSpec("GetBindingValue")
     abstract fun getValue(name: String): Completion
 }

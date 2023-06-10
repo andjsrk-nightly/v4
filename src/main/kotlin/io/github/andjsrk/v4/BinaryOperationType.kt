@@ -45,6 +45,10 @@ enum class BinaryOperationType {
     INSTANCEOF,
     IN;
 
+    val isAssignLike by lazy {
+        this in ASSIGN..ASSIGN_MINUS
+    }
+
     companion object {
         /**
          * Warning: call this function only if you are sure of the operation is included in this enum.

@@ -26,7 +26,7 @@ class NormalLexicalDeclarationNode(
                     val value = binding.run {
                         when {
                             value == null -> NullType
-                            value.isAnonymous -> getLanguageTypeOrReturn(value.evaluateWithName(name)) { return it }
+                            value.isAnonymous -> value.evaluateWithNameOrReturn(name) { return it }
                             else -> value.evaluateValueOrReturn { return it }
                         }
                     }

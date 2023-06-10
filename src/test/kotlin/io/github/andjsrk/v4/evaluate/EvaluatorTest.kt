@@ -2,6 +2,7 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.createErrorMsg
 import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.spec.Binding
 import io.github.andjsrk.v4.evaluate.type.spec.Completion
 import io.github.andjsrk.v4.parse.Parser
 import org.junit.jupiter.api.Test
@@ -449,9 +450,7 @@ internal class EvaluatorTest {
         evaluationOf("""
             let a = 0
         """).shouldBeNormalAnd<NullType> {
-            val bindings = Evaluator.runningExecutionContext.lexicalEnvironment.bindings
-            bindings["a"].run {
-                assertNotNull(this)
+            variableNamed("a").run {
                 assertFalse(isMutable)
                 assertIs<NumberType>(value)
             }
@@ -460,17 +459,33 @@ internal class EvaluatorTest {
         evaluationOf("""
             var a
         """).shouldBeNormalAnd<NullType> {
-            val bindings = Evaluator.runningExecutionContext.lexicalEnvironment.bindings
-            bindings["a"].run {
-                assertNotNull(this)
+            variableNamed("a").run {
                 assertTrue(isMutable)
                 assertIs<NullType>(value)
             }
         }
     }
+    @Test
+    fun testAssignment() {
+        evaluationOf("""
+            var a = 0
+            a = 1
+        """).shouldBeNormalAnd<NumberType> {
+            variableNamed("a").run {
+                val value = value
+                assertIs<NumberType>(value)
+                assert(value.value == 1.0)
+            }
+        }
+    }
 }
 
-private inline fun <reified Value> Completion.shouldBeNormalAnd(block: Value.() -> Unit) {
+private fun variableNamed(name: String): Binding {
+    val binding = Evaluator.runningExecutionContext.lexicalEnvironment.bindings[name]
+    assertNotNull(binding)
+    return binding
+}
+private inline fun <reified Value: LanguageType> Completion.shouldBeNormalAnd(block: Value.() -> Unit) {
     assert(type.isNormal)
     val value = value
     assertIs<Value>(value)

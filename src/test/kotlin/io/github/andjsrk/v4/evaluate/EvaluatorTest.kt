@@ -477,6 +477,17 @@ internal class EvaluatorTest {
                 assert(value.value == 1.0)
             }
         }
+
+        evaluationOf("""
+            var a = 0
+            a += 1
+        """).shouldBeNormalAnd<NumberType> {
+            variableNamed("a").run {
+                val value = value
+                assertIs<NumberType>(value)
+                assert(value.value == 1.0)
+            }
+        }
     }
 }
 

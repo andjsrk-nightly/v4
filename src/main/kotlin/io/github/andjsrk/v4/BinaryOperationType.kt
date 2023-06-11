@@ -48,6 +48,10 @@ enum class BinaryOperationType {
     val isAssignLike by lazy {
         this in ASSIGN..ASSIGN_MINUS
     }
+    fun toNonAssign(): BinaryOperationType {
+        require(this in ASSIGN_COALESCE..ASSIGN_MINUS)
+        return items[ordinal + (COALESCE.ordinal - ASSIGN_COALESCE.ordinal)]
+    }
 
     companion object {
         /**
@@ -55,5 +59,6 @@ enum class BinaryOperationType {
          */
         fun fromTokenType(tokenType: TokenType) =
             BinaryOperationType.valueOf(tokenType.name)
+        private val items by lazy { values() }
     }
 }

@@ -528,7 +528,7 @@ internal class EvaluatorTest {
             for (var i = 0; i < 5; i += 1) a += i
         """).shouldBeNormalAnd<NumberType> {
             variableNamed("a").shouldBeTypedAs<NumberType> {
-                assert(value == (0..4).reduce(Int::plus).toDouble())
+                assert(value == (0..4).sum().toDouble())
             }
         }
 

@@ -103,7 +103,7 @@ class Parser(sourceText: String) {
             reportError(SyntaxErrorKind.VAR_REDECLARATION, it.range, it.value)
         },
     ) {
-        val duplicate = names.findDuplicateBoundName(names.toRawNames())
+        val duplicate = names.findDuplicateBoundName(names.map{ it.value })
         if (duplicate != null) reporter(duplicate)
     }
     private inline fun <R> ifHasNoError(valueProvider: () -> R) =
@@ -1831,8 +1831,6 @@ private fun List<IdentifierNode>.findDuplicateBoundName(rawNames: List<String>/*
             it.value in rawNames.take(i)
         }
         .firstOrNull()
-private fun List<IdentifierNode>.toRawNames() =
-    map { it.value }
 
 /**
  * Returns whether the identifier is [Identifier](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Identifier).

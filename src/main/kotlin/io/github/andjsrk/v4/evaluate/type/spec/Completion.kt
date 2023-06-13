@@ -15,8 +15,13 @@ data class Completion(
      */
     val isEmpty: Boolean = false,
 ): Record {
+    val isNormal get() =
+        type == Type.NORMAL
+    val isAbrupt get() =
+        !isNormal
+
     fun map(transform: (AbstractType) -> AbstractType) =
-        if (type.isNormal) copy(value=transform(value))
+        if (this.isNormal) copy(value=transform(value))
         else this
 
     enum class Type {
@@ -24,12 +29,7 @@ data class Completion(
         BREAK,
         CONTINUE,
         RETURN,
-        THROW;
-
-        val isNormal get() =
-            this == NORMAL
-        val isAbrupt get() =
-            !isNormal
+        THROW
     }
     companion object {
         /**

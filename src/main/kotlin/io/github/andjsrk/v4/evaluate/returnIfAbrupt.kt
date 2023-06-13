@@ -10,7 +10,7 @@ internal typealias CompletionReturn = (Completion) -> Nothing
 
 @EsSpec("ReturnIfAbrupt")
 internal inline fun returnIfAbrupt(completion: Completion, `return`: CompletionReturn) =
-    if (completion.type.isAbrupt) `return`(completion)
+    if (completion.isAbrupt) `return`(completion)
     else completion.value
 
 @EsSpec("ReturnIfAbrupt")
@@ -25,5 +25,5 @@ internal inline fun neverAbrupt(completion: Completion) =
     returnIfAbrupt(completion) { neverHappens() }
 
 @JvmName("neverAbruptWithCast")
-internal inline fun <reified R> neverAbrupt(completion: Completion) =
+internal inline fun <reified R: AbstractType> neverAbrupt(completion: Completion) =
     neverAbrupt(completion) as R

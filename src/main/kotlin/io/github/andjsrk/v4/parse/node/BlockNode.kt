@@ -14,14 +14,19 @@ class BlockNode(
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
     override fun evaluate(): Completion {
-        val oldEnv = Evaluator.runningExecutionContext.lexicalEnvironment
+        if (elements.isEmpty()) return Completion.empty
+
+        val oldEnv = runningExecutionContext.lexicalEnvironment
         val blockEnv = DeclarativeEnvironment(oldEnv)
         instantiateBlockDeclaration(this, blockEnv)
-        Evaluator.runningExecutionContext.lexicalEnvironment = blockEnv
-        val value = elements
-            .map { it.evaluate() }
-            .reduceRight(::updateEmpty)
-        Evaluator.runningExecutionContext.lexicalEnvironment = oldEnv
-        return value
+        runningExecutionContext.lexicalEnvironment = blockEnv
+        try {
+            val value = elements
+                .map { it.evaluateValueOrReturn { return it } }
+                .foldRight(Completion.empty) { it, acc -> updateEmpty(acc, it) }
+            return value
+        } finally {
+            runningExecutionContext.lexicalEnvironment = oldEnv
+        }
     }
 }

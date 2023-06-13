@@ -471,10 +471,8 @@ internal class EvaluatorTest {
             var a = 0
             a = 1
         """).shouldBeNormalAnd<NumberType> {
-            variableNamed("a").run {
-                val value = value
-                assertIs<NumberType>(value)
-                assert(value.value == 1.0)
+            variableNamed("a").shouldBeTypedAs<NumberType> {
+                assert(value == 1.0)
             }
         }
 
@@ -482,10 +480,73 @@ internal class EvaluatorTest {
             var a = 0
             a += 1
         """).shouldBeNormalAnd<NumberType> {
-            variableNamed("a").run {
-                val value = value
-                assertIs<NumberType>(value)
-                assert(value.value == 1.0)
+            variableNamed("a").shouldBeTypedAs<NumberType> {
+                assert(value == 1.0)
+            }
+        }
+    }
+    @Test
+    fun testIfStatement() {
+        evaluationOf("""
+            if (true) 0
+            else 1
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 0.0)
+        }
+
+        evaluationOf("""
+            if (true) 0
+        """).shouldBeNormalAnd<NumberType> {}
+
+        evaluationOf("""
+            if (false) 0
+        """).shouldBeNormalAnd<NullType> {}
+    }
+    @Test
+    fun testWhile() {
+        evaluationOf("""
+            var run = true
+            var count = 0
+            while (run) {
+                count += 1
+                run = false
+            }
+        """).shouldBeNormalAnd<BooleanType> {
+            variableNamed("count").shouldBeTypedAs<NumberType> {
+                assert(value == 1.0)
+            }
+        }
+
+        evaluationOf("""
+            while (false) 0
+        """).shouldBeNormalAnd<NullType> {}
+    }
+    @Test
+    fun testNormalFor() {
+        evaluationOf("""
+            var a = 0
+            for (var i = 0; i < 5; i += 1) a += i
+        """).shouldBeNormalAnd<NumberType> {
+            variableNamed("a").shouldBeTypedAs<NumberType> {
+                assert(value == (0..4).reduce(Int::plus).toDouble())
+            }
+        }
+
+        evaluationOf("""
+            var i = 0
+            for (; i < 5; i += 1);
+        """).shouldBeNormalAnd<NullType> {
+            variableNamed("i").shouldBeTypedAs<NumberType> {
+                assert(value == 5.0)
+            }
+        }
+
+        evaluationOf("""
+            var i = 0
+            for (; i < 5;) i += 1
+        """).shouldBeNormalAnd<NumberType> {
+            variableNamed("i").shouldBeTypedAs<NumberType> {
+                assert(value == 5.0)
             }
         }
     }
@@ -496,8 +557,13 @@ private fun variableNamed(name: String): Binding {
     assertNotNull(binding)
     return binding
 }
+private inline fun <reified Value> Binding.shouldBeTypedAs(block: Value.() -> Unit) {
+    val value = value
+    assertIs<Value>(value)
+    block(value)
+}
 private inline fun <reified Value: LanguageType> Completion.shouldBeNormalAnd(block: Value.() -> Unit) {
-    assert(type.isNormal)
+    assert(this.isNormal)
     val value = value
     assertIs<Value>(value)
     block(value)

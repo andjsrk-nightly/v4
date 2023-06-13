@@ -76,7 +76,7 @@ internal fun Node.boundNames(): List<IdentifierNode> =
 @EsSpec("IsConstantDeclaration")
 internal val DeclarationNode.isConstant get() =
     when (this) {
-        is NormalLexicalDeclarationNode -> kind == LexicalDeclarationKind.LET
+        is LexicalDeclarationNode -> kind == LexicalDeclarationKind.LET
         is ClassDeclarationNode -> true
         else -> false
     }

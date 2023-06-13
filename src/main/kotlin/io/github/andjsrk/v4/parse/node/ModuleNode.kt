@@ -16,7 +16,7 @@ class ModuleNode(override val elements: List<StatementNode>): StatementListNode 
         val itemList = elements
             .map { it.evaluateValueOrReturn { return it } }
             .foldRight(Completion.empty) { it, acc -> updateEmpty(acc, it) }
-        if (itemList.type.isNormal && itemList.isEmpty) return Completion.normal(NullType)
+        if (itemList.isNormal && itemList.isEmpty) return Completion.normal(NullType)
         return itemList
     }
 }

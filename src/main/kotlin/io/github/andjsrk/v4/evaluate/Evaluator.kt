@@ -21,3 +21,5 @@ object Evaluator {
         runningExecutionContext.lexicalEnvironment = ModuleEnvironment()
     }
 }
+
+inline val runningExecutionContext get() = Evaluator.runningExecutionContext

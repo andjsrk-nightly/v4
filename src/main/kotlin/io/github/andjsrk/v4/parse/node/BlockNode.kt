@@ -20,13 +20,8 @@ class BlockNode(
         val blockEnv = DeclarativeEnvironment(oldEnv)
         instantiateBlockDeclaration(this, blockEnv)
         runningExecutionContext.lexicalEnvironment = blockEnv
-        try {
-            val value = elements
-                .map { it.evaluateValueOrReturn { return it } }
-                .foldRight(Completion.empty) { it, acc -> updateEmpty(acc, it) }
-            return value
-        } finally {
-            runningExecutionContext.lexicalEnvironment = oldEnv
-        }
+        val res = evaluateStatements()
+        runningExecutionContext.lexicalEnvironment = oldEnv
+        return res
     }
 }

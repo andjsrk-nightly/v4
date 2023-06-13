@@ -17,7 +17,7 @@ class WhileNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::test, ::body, ::atLeastOnce, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluateLoop(): Completion {
         var res: LanguageType = NullType
         if (atLeastOnce) res = body.evaluate().returnIfShouldNotContinue(res) { return it }
         while (true) {

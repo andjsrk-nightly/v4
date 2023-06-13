@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
+import io.github.andjsrk.v4.evaluate.type.spec.Completion
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ForInNode(
@@ -13,4 +14,7 @@ class ForInNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::declaration, ::target, ::body, ::range)
+    override fun evaluateLoop(): Completion {
+        TODO()
+    }
 }

@@ -19,7 +19,7 @@ class NormalForNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::init, ::test, ::update, ::body, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluateLoop(): Completion {
         var bindingNames = emptyList<String>()
         val oldEnv = runningExecutionContext.lexicalEnvironment
         if (init != null) {

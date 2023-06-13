@@ -15,7 +15,7 @@ internal inline fun returnIfAbrupt(completion: Completion, `return`: CompletionR
 
 @EsSpec("ReturnIfAbrupt")
 @JvmName("returnIfAbruptWithCast")
-internal inline fun <reified R: AbstractType> returnIfAbrupt(completion: Completion, `return`: CompletionReturn) =
+internal inline fun <reified R: AbstractType?> returnIfAbrupt(completion: Completion, `return`: CompletionReturn) =
     returnIfAbrupt(completion, `return`) as R
 
 internal inline fun getLanguageTypeOrReturn(completion: Completion, `return`: CompletionReturn) =
@@ -25,5 +25,5 @@ internal inline fun neverAbrupt(completion: Completion) =
     returnIfAbrupt(completion) { neverHappens() }
 
 @JvmName("neverAbruptWithCast")
-internal inline fun <reified R: AbstractType> neverAbrupt(completion: Completion) =
+internal inline fun <reified R: AbstractType?> neverAbrupt(completion: Completion) =
     neverAbrupt(completion) as R

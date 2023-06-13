@@ -522,6 +522,29 @@ internal class EvaluatorTest {
         """).shouldBeNormalAnd<NullType> {}
     }
     @Test
+    fun testIterationFlowControlStatement() {
+        evaluationOf("""
+            var i = 0
+            var a = 0
+            while (i < 3) {
+                i += 1
+                if (i == 2) continue
+                a += 1
+            }
+        """).shouldBeNormalAnd<NumberType> {
+            variableNamed("a").shouldBeTypedAs<NumberType> {
+                assert(value == 2.0)
+            }
+        }
+
+        evaluationOf("""
+            while (true) {
+                break
+                0
+            }
+        """).shouldBeNormalAnd<NullType> {}
+    }
+    @Test
     fun testNormalFor() {
         evaluationOf("""
             var a = 0

@@ -6,7 +6,8 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.spec.*
 
 @EsSpec("GetValue")
-internal fun getValue(v: AbstractType): Completion {
+internal fun getValue(v: AbstractType?): Completion {
+    requireNotNull(v) // requires v should not be null but the function accepts null due to convenience
     if (v is LanguageType) return Completion.normal(v)
     require(v is Reference)
     if (v.isProperty) {

@@ -9,5 +9,5 @@ val Completion.continuesLoop get() =
         type == Completion.Type.NORMAL -> true
         type != Completion.Type.CONTINUE -> false
         // TODO: label
-        else -> false
+        else -> true
     }

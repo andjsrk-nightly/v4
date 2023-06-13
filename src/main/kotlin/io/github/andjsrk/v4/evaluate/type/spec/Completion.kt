@@ -35,6 +35,8 @@ data class Completion(
             Completion(Type.NORMAL, value)
         inline fun normal(value: LanguageType) =
             wideNormal(value)
+        inline fun `throw`(value: LanguageType) =
+            Completion(Type.THROW, value)
         /**
          * Indicates a normal completion containing `empty`.
          */

@@ -25,7 +25,7 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             // else,
             //   evaluate right side
             //   return right side
-            if (lval !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+            if (lval !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
             if (!lval.value) return Completion.normal(BooleanType.FALSE)
             return other.evaluateValue()
         }
@@ -38,10 +38,10 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             //   evaluate right side
             //   coerce right side to be a Boolean
             //   return right side
-            if (lval !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+            if (lval !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
             if (lval.value) return Completion.normal(BooleanType.TRUE)
             val rval = other.evaluateValueOrReturn { return it }
-            if (rval !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+            if (rval !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
             return Completion.normal(rval)
         }
         COALESCE -> return (
@@ -55,7 +55,7 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
 
     when (operation) {
         LT, GT, LT_EQ, GT_EQ -> return when {
-            lval::class != rval::class -> Completion(Completion.Type.THROW, NullType/* TypeError */)
+            lval::class != rval::class -> Completion.`throw`(NullType/* TypeError */)
             lval is StringType || lval is NumericType<*> ->
                 BooleanType.run {
                     when (operation) {
@@ -66,7 +66,7 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
                         else -> neverHappens()
                     }
                 }
-            else -> Completion(Completion.Type.THROW, NullType/* TypeError */)
+            else -> Completion.`throw`(NullType/* TypeError */)
         }
         PLUS -> {
             val leftAsString = lval as? StringType
@@ -83,9 +83,9 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
         else -> {}
     }
 
-    if (lval !is NumericType<*>) return Completion(Completion.Type.THROW, NullType/* TypeError */)
-    if (rval !is NumericType<*>) return Completion(Completion.Type.THROW, NullType/* TypeError */)
-    if (lval::class != rval::class) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+    if (lval !is NumericType<*>) return Completion.`throw`(NullType/* TypeError */)
+    if (rval !is NumericType<*>) return Completion.`throw`(NullType/* TypeError */)
+    if (lval::class != rval::class) return Completion.`throw`(NullType/* TypeError */)
 
     return Completion.normal(
         when (operation) {

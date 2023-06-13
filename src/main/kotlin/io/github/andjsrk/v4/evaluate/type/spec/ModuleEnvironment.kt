@@ -11,7 +11,7 @@ class ModuleEnvironment(outer: Environment? = null): DeclarativeEnvironment(oute
         assert(binding != null)
         requireNotNull(binding)
         // TODO: implement step 3
-        if (binding.not { isInitialized }) return Completion(Completion.Type.THROW, NullType/* ReferenceError */)
+        if (binding.not { isInitialized }) return Completion.`throw`(NullType/* ReferenceError */)
         return Completion.normal(binding.value!!)
     }
     fun createImportBinding(name: String, module: Module, ) {

@@ -26,16 +26,16 @@ open class DeclarativeEnvironment(outer: Environment? = null): Environment(outer
         binding.value = value
     }
     override fun setMutableBinding(name: String, value: LanguageType): Completion {
-        val binding = bindings[name] ?: return Completion(Completion.Type.THROW, NullType/* ReferenceError */)
-        if (binding.not { isInitialized }) return Completion(Completion.Type.THROW, NullType/* ReferenceError */)
-        if (binding.not { isMutable }) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+        val binding = bindings[name] ?: return Completion.`throw`(NullType/* ReferenceError */)
+        if (binding.not { isInitialized }) return Completion.`throw`(NullType/* ReferenceError */)
+        if (binding.not { isMutable }) return Completion.`throw`(NullType/* TypeError */)
         binding.value = value
         return Completion.normal(NullType)
     }
     override fun getValue(name: String): Completion {
         assert(name in bindings)
         val binding = bindings[name] ?: neverHappens()
-        if (binding.not { isInitialized }) return Completion(Completion.Type.THROW, NullType/* ReferenceError */)
+        if (binding.not { isInitialized }) return Completion.`throw`(NullType/* ReferenceError */)
         return Completion.normal(binding.value!!)
     }
 }

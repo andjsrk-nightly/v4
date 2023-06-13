@@ -1,5 +1,8 @@
 package io.github.andjsrk.v4.evaluate.type.spec
 
+import io.github.andjsrk.v4.EsSpec
+
+@EsSpec("ExportEntry Record")
 class ExportEntry(
     val sourceModule: String?,
     val exportName: String?,

@@ -33,7 +33,7 @@ data class Reference(
     @EsSpec("PutValue")
     fun putValue(value: LanguageType): Completion {
         when {
-            this.isUnresolvable -> return Completion(Completion.Type.THROW, NullType/* ReferenceError */)
+            this.isUnresolvable -> return Completion.`throw`(NullType/* ReferenceError */)
             this.isProperty -> {
                 TODO()
             }

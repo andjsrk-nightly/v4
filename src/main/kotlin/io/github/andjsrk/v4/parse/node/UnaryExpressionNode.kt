@@ -47,7 +47,7 @@ open class UnaryExpressionNode(
                 val value = operand.evaluateValueOrReturn { return it }
                 return when (value) {
                     is NumericType<*> -> Completion.normal(-value)
-                    else -> Completion(Completion.Type.THROW, NullType)
+                    else -> Completion.`throw`(NullType)
                 }
             }
             BITWISE_NOT -> {
@@ -57,12 +57,12 @@ open class UnaryExpressionNode(
                         val res = value.bitwiseNot().extractFromCompletionOrReturn { return it }
                         Completion.normal(res)
                     }
-                    else -> Completion(Completion.Type.THROW, NullType/* TypeError */)
+                    else -> Completion.`throw`(NullType/* TypeError */)
                 }
             }
             NOT -> {
                 val value = operand.evaluateValueOrReturn { return it }
-                if (value !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+                if (value !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
                 return Completion.normal(!value)
             }
             // TODO: await expression

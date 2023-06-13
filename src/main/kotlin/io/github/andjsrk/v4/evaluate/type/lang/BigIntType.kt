@@ -11,17 +11,17 @@ internal value class BigIntType(override val value: BigInteger): NumericType<Big
         BigIntType(-value - BigInteger.ONE)
     override fun pow(other: BigIntType) =
         when {
-            other.value < BigInteger.ZERO -> Completion(Completion.Type.THROW, NullType/* RangeError */)
+            other.value < BigInteger.ZERO -> Completion.`throw`(NullType/* RangeError */)
             else -> Completion.normal(BigIntType(value.operate(BigInteger::pow, other.value)))
         }
     override fun times(other: BigIntType) =
         BigIntType(value * other.value)
     override fun div(other: BigIntType): Completion {
-        if (other.value == BigInteger.ZERO) return Completion(Completion.Type.THROW, NullType/* RangeError */)
+        if (other.value == BigInteger.ZERO) return Completion.`throw`(NullType/* RangeError */)
         return Completion.normal(BigIntType(value / other.value))
     }
     override fun rem(other: BigIntType): Completion {
-        if (other.value == BigInteger.ZERO) return Completion(Completion.Type.THROW, NullType/* RangeError */)
+        if (other.value == BigInteger.ZERO) return Completion.`throw`(NullType/* RangeError */)
         return Completion.normal(BigIntType(value % other.value))
     }
     override fun plus(other: BigIntType) =
@@ -33,7 +33,7 @@ internal value class BigIntType(override val value: BigInteger): NumericType<Big
     override fun signedRightShift(other: BigIntType) =
         leftShift(-other)
     override fun unsignedRightShift(other: BigIntType) =
-        Completion(Completion.Type.THROW, NullType/* TypeError */)
+        Completion.`throw`(NullType/* TypeError */)
     override fun lessThan(other: BigIntType, undefinedReplacement: BooleanType): BooleanType =
         BooleanType.from(value < other.value)
     override fun equal(other: BigIntType) =

@@ -22,7 +22,7 @@ class WhileNode(
         if (atLeastOnce) res = body.evaluate().returnIfShouldNotContinue(res) { return it }
         while (true) {
             val testVal = test.evaluateValueOrReturn { return it }
-            if (testVal !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+            if (testVal !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
             if (!testVal.value) return Completion.normal(res)
             res = body.evaluate().returnIfShouldNotContinue(res) { return it }
         }

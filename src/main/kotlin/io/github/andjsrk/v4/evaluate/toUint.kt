@@ -10,7 +10,7 @@ import kotlin.math.truncate
  * An extraction of common code for `ToIntN`/`ToUintN`
  */
 internal inline fun NumberType.toUint(moduloValue: Long, transform: (Double) -> Double = { it }): Completion {
-    if (this.not { isFinite }) return Completion(Completion.Type.THROW, NullType/* RangeError */)
+    if (this.not { isFinite }) return Completion.`throw`(NullType/* RangeError */)
     if (this.isZero) return Completion.normal(NumberType.POSITIVE_ZERO)
     val intPart = truncate(value)
     val intPartBits = intPart.mod(moduloValue.toDouble())

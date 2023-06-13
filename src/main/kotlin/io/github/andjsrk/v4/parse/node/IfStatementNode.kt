@@ -16,7 +16,7 @@ class IfStatementNode(
     override val range = startRange..(`else` ?: then).range
     override fun evaluate(): Completion {
         val testVal = test.evaluateValueOrReturn { return it }
-        if (testVal !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+        if (testVal !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
         val completion =
             if (testVal.value) then.evaluate()
             else `else`?.evaluate() ?: Completion.empty

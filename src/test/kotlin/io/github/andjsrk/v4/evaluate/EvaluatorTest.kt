@@ -77,7 +77,7 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             -true
-        """).shouldBeThrow()
+        """).shouldBeThrowAnd {}
 
         evaluationOf("""
             ~123
@@ -87,7 +87,7 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             ~true
-        """).shouldBeThrow()
+        """).shouldBeThrowAnd {}
 
         evaluationOf("""
             !true
@@ -97,7 +97,7 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             !0
-        """).shouldBeThrow()
+        """).shouldBeThrowAnd {}
     }
     @Test
     fun testArithmeticOperator() {
@@ -115,11 +115,11 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             "a" ** 1
-        """).shouldBeThrow()
+        """).shouldBeThrowAnd {}
 
         evaluationOf("""
             1 ** 1n
-        """).shouldBeThrow()
+        """).shouldBeThrowAnd {}
 
         evaluationOf("""
             2 * 3
@@ -129,7 +129,7 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             "2" * 3
-        """).shouldBeThrow()
+        """).shouldBeThrowAnd {}
 
         evaluationOf("""
             4 / 2
@@ -181,7 +181,7 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             "2" - 1
-        """).shouldBeThrow()
+        """).shouldBeThrowAnd {}
     }
     @Test
     fun testBitwiseOperator() {
@@ -310,64 +310,50 @@ internal class EvaluatorTest {
     @Test
     fun testEqualOperator() {
         arrayOf("==" to true, "!==" to false).forEach { (op, expected) ->
-            fun BooleanType.assertEqual() =
-                assert(value == expected)
-            fun BooleanType.assertNotEqual() =
-                assert(value != expected)
+            fun Completion.shouldEqual() =
+                this.shouldBeNormalAnd<BooleanType> {
+                    assert(value == expected)
+                }
+            fun Completion.shouldNotEqual() =
+                this.shouldBeNormalAnd<BooleanType> {
+                    assert(value != expected)
+                }
 
             evaluationOf("""
                 1 $op 1
-            """).shouldBeNormalAnd<BooleanType> {
-                assertEqual()
-            }
+            """).shouldEqual()
 
             evaluationOf("""
                 1 $op 2
-            """).shouldBeNormalAnd<BooleanType> {
-                assertNotEqual()
-            }
+            """).shouldNotEqual()
 
             evaluationOf("""
                 -0 $op 0
-            """).shouldBeNormalAnd<BooleanType> {
-                assertEqual()
-            }
+            """).shouldEqual()
 
             evaluationOf("""
                 (0 / 0) $op (0 / 0)
-            """).shouldBeNormalAnd<BooleanType> {
-                assertNotEqual()
-            }
+            """).shouldNotEqual()
 
             evaluationOf("""
                 1 $op "a"
-            """).shouldBeNormalAnd<BooleanType> {
-                assertNotEqual()
-            }
+            """).shouldNotEqual()
 
             evaluationOf("""
                 "abc" $op "abc"
-            """).shouldBeNormalAnd<BooleanType> {
-                assertEqual()
-            }
+            """).shouldEqual()
 
             evaluationOf("""
                 "abc" $op "abd"
-            """).shouldBeNormalAnd<BooleanType> {
-                assertNotEqual()
-            }
+            """).shouldNotEqual()
 
             evaluationOf("""
                 true $op true
-            """).shouldBeNormalAnd<BooleanType> {
-                assertEqual()
-            }
+            """).shouldEqual()
 
             evaluationOf("""
                 true $op false
-            """).shouldBeNormalAnd<BooleanType> {
-                assertNotEqual()
-            }
+            """).shouldNotEqual()
         }
     }
     @Test
@@ -415,7 +401,7 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             false || 0
-        """).shouldBeThrow()
+        """).shouldBeThrowAnd {}
 
         evaluationOf("""
             null ?? 0
@@ -443,7 +429,7 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             (if (1) 1 else 0)
-        """).shouldBeThrow()
+        """).shouldBeThrowAnd {}
     }
     @Test
     fun testLexicalDeclaration() {
@@ -511,7 +497,7 @@ internal class EvaluatorTest {
                 count += 1
                 run = false
             }
-        """).shouldBeNormalAnd<BooleanType> {
+        """).shouldBeNormalAnd {
             variableNamed("count").shouldBeTypedAs<NumberType> {
                 assert(value == 1.0)
             }
@@ -531,7 +517,7 @@ internal class EvaluatorTest {
                 if (i == 2) continue
                 a += 1
             }
-        """).shouldBeNormalAnd<NumberType> {
+        """).shouldBeNormalAnd {
             variableNamed("a").shouldBeTypedAs<NumberType> {
                 assert(value == 2.0)
             }
@@ -567,10 +553,82 @@ internal class EvaluatorTest {
         evaluationOf("""
             var i = 0
             for (; i < 5;) i += 1
-        """).shouldBeNormalAnd<NumberType> {
+        """).shouldBeNormalAnd {
             variableNamed("i").shouldBeTypedAs<NumberType> {
                 assert(value == 5.0)
             }
+        }
+
+        evaluationOf("""
+            var i = 0
+            for (;;) {
+                i += 1
+                if (i == 5) break
+            }
+        """).shouldBeNormalAnd {
+            variableNamed("i").shouldBeTypedAs<NumberType> {
+                assert(value == 5.0)
+            }
+        }
+    }
+    @Test
+    fun testThrow() {
+        evaluationOf("""
+            throw 0
+        """).shouldBeThrowAnd {}
+
+        evaluationOf("""
+            while (true) throw 0
+        """).shouldBeThrowAnd {}
+    }
+    @Test
+    fun testTry() {
+        evaluationOf("""
+            var threw = false
+            try {
+                throw 0
+            } catch {
+                threw = true
+            }
+        """).shouldBeNormalAnd {
+            variableNamed("threw").shouldBeTypedAs<BooleanType> {
+                assertTrue(value)
+            }
+        }
+
+        evaluationOf("""
+            var threw = false
+            try {
+                throw 0
+            } finally {
+                threw = true
+            }
+        """).shouldBeThrowAnd {
+            variableNamed("threw").shouldBeTypedAs<BooleanType> {
+                assertTrue(value)
+            }
+        }
+
+        evaluationOf("""
+            try {
+                throw 0
+            } catch {
+                0
+            } finally {
+                1
+            }
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 0.0)
+        }
+
+        evaluationOf("""
+            try {
+                throw 0
+            } finally {
+                throw 1
+            }
+        """).shouldBeThrowAnd<NumberType> {
+            assert(value == 1.0)
         }
     }
 }
@@ -580,22 +638,32 @@ private fun variableNamed(name: String): Binding {
     assertNotNull(binding)
     return binding
 }
-private inline fun <reified Value> Binding.shouldBeTypedAs(block: Value.() -> Unit) {
+private inline fun <reified Value: LanguageType> Binding.shouldBeTypedAs(block: Value.() -> Unit) {
     val value = value
     assertIs<Value>(value)
     block(value)
 }
-private inline fun <reified Value: LanguageType> Completion.shouldBeNormalAnd(block: Value.() -> Unit) {
+private fun Completion.shouldBeNormalAnd(block: () -> Unit) {
     assert(this.isNormal)
-    val value = value
-    assertIs<Value>(value)
-    block(value)
+    block()
     Evaluator.cleanup()
 }
-private fun Completion.shouldBeThrow() {
+private inline fun <reified Value: LanguageType> Completion.shouldBeNormalAnd(crossinline block: Value.() -> Unit) =
+    this.shouldBeNormalAnd {
+        val value = value
+        assertIs<Value>(value)
+        block(value)
+    }
+private fun Completion.shouldBeThrowAnd(block: () -> Unit) {
     assert(type == Completion.Type.THROW)
     // TODO: put more assertions
 }
+private inline fun <reified Value: LanguageType> Completion.shouldBeThrowAnd(crossinline block: Value.() -> Unit) =
+    this.shouldBeThrowAnd {
+        val value = value
+        assertIs<Value>(value)
+        block(value)
+    }
 private fun evaluationOf(code: String): Completion {
     val parser = Parser(code.trimIndent())
     return parser.parseModule()

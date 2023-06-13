@@ -72,6 +72,8 @@ internal fun Node.boundNames(): List<IdentifierNode> =
         is NamedSingleExportDeclarationNode -> declaration.boundNames()
         else -> emptyList()
     }
+internal fun Node.boundStringNames() =
+    boundNames().map { it.value }
 
 @EsSpec("IsConstantDeclaration")
 internal val DeclarationNode.isConstant get() =

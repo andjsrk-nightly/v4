@@ -24,7 +24,7 @@ class NormalForNode(
         val oldEnv = runningExecutionContext.lexicalEnvironment
         if (init != null) {
             val loopEnv = DeclarativeEnvironment(oldEnv)
-            val names = init.boundNames().map { it.value }
+            val names = init.boundStringNames()
             init.instantiateIn(loopEnv, names)
             runningExecutionContext.lexicalEnvironment = loopEnv
             val initRes = init.evaluate()
@@ -45,7 +45,7 @@ class NormalForNode(
         while (true) {
             if (test != null) {
                 val testValue = test.evaluateValueOrReturn { return it }
-                if (testValue !is BooleanType) return Completion(Completion.Type.THROW, NullType/* TypeError */)
+                if (testValue !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
                 if (!testValue.value) return Completion.normal(res)
             }
             res = body.evaluate().returnIfShouldNotContinue(res) { return it }

@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.AbstractType
 
 private typealias SelfOrCompletion = AbstractType
 
-internal sealed interface NumericType<out Self: NumericType<Self>>: LanguageType {
+internal sealed interface NumericType<out Self: NumericType<Self>>: PrimitiveLanguageType {
     @EsSpec("::unaryMinus")
     operator fun unaryMinus(): Self
 

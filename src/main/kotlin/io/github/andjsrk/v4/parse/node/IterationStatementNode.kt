@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
-import io.github.andjsrk.v4.evaluate.type.spec.Completion
+import io.github.andjsrk.v4.evaluate.type.Completion
 
 sealed interface IterationStatementNode: StatementNode, NonAtomicNode {
     val body: StatementNode

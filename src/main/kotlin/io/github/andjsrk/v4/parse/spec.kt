@@ -1,8 +1,8 @@
 package io.github.andjsrk.v4.parse
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.StringType
-import io.github.andjsrk.v4.evaluate.type.spec.*
 import io.github.andjsrk.v4.parse.node.*
 import kotlin.reflect.KClass
 

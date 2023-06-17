@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.spec.DeclarativeEnvironment
+import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
 import io.github.andjsrk.v4.parse.boundStringNames
 import io.github.andjsrk.v4.parse.isConstant
 import io.github.andjsrk.v4.parse.node.DeclarationNode

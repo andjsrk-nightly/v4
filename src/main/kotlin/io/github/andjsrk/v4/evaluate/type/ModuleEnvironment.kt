@@ -1,4 +1,4 @@
-package io.github.andjsrk.v4.evaluate.type.spec
+package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.lang.NullType

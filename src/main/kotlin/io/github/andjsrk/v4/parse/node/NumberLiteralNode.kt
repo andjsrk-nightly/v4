@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.lang.NumberType
-import io.github.andjsrk.v4.evaluate.type.spec.Completion
+import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.parse.foldElvis
 import io.github.andjsrk.v4.tokenize.Token
 

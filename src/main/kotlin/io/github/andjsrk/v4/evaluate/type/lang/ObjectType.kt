@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.spec.*
+import io.github.andjsrk.v4.evaluate.type.*
 
 /**
  * Note that methods which its name start with underscore means it is an internal method in ES specification.

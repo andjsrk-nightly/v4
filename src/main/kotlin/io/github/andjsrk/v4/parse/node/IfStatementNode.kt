@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
-import io.github.andjsrk.v4.evaluate.type.spec.Completion
+import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.updateEmpty
 
 class IfStatementNode(

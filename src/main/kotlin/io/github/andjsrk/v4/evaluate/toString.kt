@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.spec.Completion
+import io.github.andjsrk.v4.evaluate.type.Completion
 
 /**
  * Note that the function is not an extension exceptionally due to shadowing of extensions.

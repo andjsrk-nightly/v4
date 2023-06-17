@@ -4,8 +4,8 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.spec.Completion
-import io.github.andjsrk.v4.evaluate.type.spec.DeclarativeEnvironment
+import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
 import io.github.andjsrk.v4.parse.*
 
 class NormalForNode(

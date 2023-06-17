@@ -1,9 +1,9 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.StringType
-import io.github.andjsrk.v4.evaluate.type.spec.*
 
 @EsSpec("InitializeBoundName")
 internal fun initializeBoundName(name: StringType, value: LanguageType, env: DeclarativeEnvironment?): Completion {

@@ -30,7 +30,7 @@ open class DeclarativeEnvironment(outer: Environment? = null): Environment(outer
         if (binding.not { isInitialized }) return Completion.`throw`(NullType/* ReferenceError */)
         if (binding.not { isMutable }) return Completion.`throw`(NullType/* TypeError */)
         binding.value = value
-        return Completion.normal(NullType)
+        return Completion.empty
     }
     override fun getValue(name: String): Completion {
         assert(name in bindings)

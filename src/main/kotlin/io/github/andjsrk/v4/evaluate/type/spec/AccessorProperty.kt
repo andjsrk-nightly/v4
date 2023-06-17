@@ -9,4 +9,6 @@ data class AccessorProperty(
     var set: ObjectType? = null,
     override var enumerable: Boolean = true,
     override var configurable: Boolean = true,
-): Property
+): Property {
+    override fun clone() = copy()
+}

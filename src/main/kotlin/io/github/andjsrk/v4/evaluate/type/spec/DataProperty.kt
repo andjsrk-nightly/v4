@@ -6,7 +6,9 @@ import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 @EsSpec("data property")
 data class DataProperty(
     var value: LanguageType,
-    var writable: Boolean = false,
+    var writable: Boolean = true,
     override var enumerable: Boolean = true,
     override var configurable: Boolean = true,
-): Property
+): Property {
+    override fun clone() = copy()
+}

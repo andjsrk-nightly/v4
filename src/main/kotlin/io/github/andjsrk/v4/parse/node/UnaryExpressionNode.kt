@@ -25,7 +25,7 @@ open class UnaryExpressionNode(
         when (this.operation) {
             VOID -> {
                 operand.evaluateValueOrReturn { return it }
-                return Completion.normal(NullType)
+                return Completion.`null`
             }
             TYPEOF -> {
                 val value = operand.evaluateValueOrReturn { return it }

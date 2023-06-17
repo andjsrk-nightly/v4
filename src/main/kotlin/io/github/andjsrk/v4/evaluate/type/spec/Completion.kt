@@ -3,6 +3,7 @@ package io.github.andjsrk.v4.evaluate.type.spec
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.AbstractType
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
 @EsSpec("Completion Record")
 data class Completion(
@@ -39,9 +40,16 @@ data class Completion(
             Completion(Type.THROW, value)
         /**
          * Indicates a normal completion containing `empty`.
+         * Note that this covers `unused` as well.
          */
         val empty by lazy {
             wideNormal(null)
+        }
+        /**
+         * Indicates a normal completion containing `null`(a language value).
+         */
+        val `null` by lazy {
+            normal(NullType)
         }
     }
 }

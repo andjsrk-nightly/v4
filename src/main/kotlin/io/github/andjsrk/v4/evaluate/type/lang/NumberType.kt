@@ -8,20 +8,22 @@ import io.github.andjsrk.v4.evaluate.type.spec.Completion
 import io.github.andjsrk.v4.not
 import kotlin.math.*
 
-internal data class NumberType(
-    override val value: Double,
-    val isNegative: Boolean = value.isNegative
+@JvmInline
+internal value class NumberType(
+    override val value: Double
 ): NumericType<NumberType> {
+    inline val isNegative get() =
+        value.isNegative
     inline val isPositive get() =
         !isNegative
     inline val isNaN get() =
-        this === NaN
+        this == NaN
     inline val isZero get() =
         value == 0.0
     inline val isPositiveInfinity get() =
-        this === POSITIVE_INFINITY
+        this == POSITIVE_INFINITY
     inline val isNegativeInfinity get() =
-        this === NEGATIVE_INFINITY
+        this == NEGATIVE_INFINITY
     inline val isInfinity get() =
         this.isPositiveInfinity || this.isNegativeInfinity
     @EsSpec("finite")

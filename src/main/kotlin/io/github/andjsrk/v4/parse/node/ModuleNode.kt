@@ -2,7 +2,6 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.evaluateStatements
-import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import io.github.andjsrk.v4.evaluate.type.spec.Completion
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
@@ -13,7 +12,7 @@ class ModuleNode(override val elements: List<StatementNode>): StatementListNode 
         stringifyLikeDataClass(::elements, ::range)
     override fun evaluate(): Completion {
         val res = evaluateStatements()
-        if (res.isNormal && res.value == null) return Completion.normal(NullType)
+        if (res.isNormal && res.value == null) return Completion.`null`
         return res
     }
 }

@@ -2,10 +2,10 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
-import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
+import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import io.github.andjsrk.v4.parse.boundStringNames
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
@@ -36,7 +36,7 @@ class TryNode(
         val oldEnv = runningExecutionContext.lexicalEnvironment
         if (catch.binding != null) {
             val catchEnv = DeclarativeEnvironment(oldEnv)
-            for (name in catch.binding.boundStringNames()) catchEnv.createMutableBinding(name)
+            for (name in catch.binding.boundStringNames()) catchEnv.createNonConfigurableMutableBinding(name)
             runningExecutionContext.lexicalEnvironment = catchEnv
             val bindingRes = catch.binding.initialize(thrown, catchEnv)
             if (bindingRes.isAbrupt) {

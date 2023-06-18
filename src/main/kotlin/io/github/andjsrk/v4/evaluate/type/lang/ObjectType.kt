@@ -12,9 +12,9 @@ open class ObjectType(
     prototype: ObjectType? = null,
 ): LanguageType {
     var prototype = prototype
-        private set
+        protected set
     var extensible = true
-        private set
+        protected set
 
     @EsSpec("[[SetPrototypeOf]]")
     fun _setPrototype(prototype: ObjectType?): WasSuccessful {
@@ -151,6 +151,8 @@ open class ObjectType(
     @EsSpec("HasProperty")
     inline fun hasProperty(key: PropertyKey) =
         _hasProperty(key)
+    inline fun hasProperty(key: String) =
+        hasProperty(key.languageValue)
     @EsSpec("HasOwnProperty")
     fun hasOwnProperty(key: PropertyKey) =
         _getOwnProperty(key) != null
@@ -195,7 +197,9 @@ open class ObjectType(
     }
 
     companion object {
+        @EsSpec("MakeBasicObject")
         fun createBasic(): ObjectType =
+            // TODO: fix if needed
             ObjectType(mutableMapOf())
         @EsSpec("OrdinaryObjectCreate")
         fun create(prototype: ObjectType?) =

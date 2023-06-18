@@ -1,8 +1,8 @@
 package io.github.andjsrk.v4.parse
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.StringType
 import io.github.andjsrk.v4.parse.node.*
 import kotlin.reflect.KClass
 
@@ -149,7 +149,7 @@ internal fun Node.propName(): ObjectLiteralKeyNode? =
 
 @EsSpec("StringValue")
 internal val IdentifierNode.stringValue get() =
-    StringType(value)
+    value.languageValue
 
 @EsSpec("ExportedNames")
 internal fun ModuleNode.exportedNames() =

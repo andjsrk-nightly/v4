@@ -7,6 +7,6 @@ import io.github.andjsrk.v4.evaluate.type.Completion
 
 @EsSpec("GetMethod")
 internal fun LanguageType.getMethod(key: PropertyKey): Completion {
-    val func = get(key)
+    val func = getProperty(key)
     TODO()
 }

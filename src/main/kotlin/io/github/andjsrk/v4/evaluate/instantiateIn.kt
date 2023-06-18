@@ -9,6 +9,6 @@ internal fun DeclarationNode.instantiateIn(env: DeclarativeEnvironment, names: L
     val isConstant = this.isConstant
     for (name in names) {
         if (isConstant) env.createImmutableBinding(name)
-        else env.createMutableBinding(name)
+        else env.createNonConfigurableMutableBinding(name)
     }
 }

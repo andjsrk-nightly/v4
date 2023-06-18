@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
+import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.Completion
 import java.math.BigInteger
 
@@ -45,7 +46,7 @@ internal value class BigIntType(override val value: BigInteger): NumericType<Big
     override fun bitwiseOr(other: BigIntType) =
         BigIntType(value or other.value)
     override fun toString(radix: Int) =
-        StringType(value.toString(radix))
+        value.toString(radix).languageValue
 }
 
 private fun BigInteger.operate(operation: BigInteger.(Int) -> BigInteger, other: BigInteger): BigInteger {

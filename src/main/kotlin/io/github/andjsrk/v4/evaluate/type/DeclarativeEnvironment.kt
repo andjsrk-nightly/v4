@@ -5,25 +5,26 @@ import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
 @EsSpec("Declarative Environment Record")
-open class DeclarativeEnvironment(outer: Environment? = null): Environment(outer) {
+open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
     val bindings = mutableMapOf<String, Binding>()
-    override fun contains(name: String) =
+    override fun hasBinding(name: String) =
         name in bindings
-    @EsSpec("CreateMutableBinding")
-    fun createMutableBinding(name: String) {
+    override fun createMutableBinding(name: String): Completion {
         assert(name !in bindings)
         bindings[name] = Binding(true, null)
+        return Completion.empty
     }
-    @EsSpec("CreateImmutableBinding")
-    fun createImmutableBinding(name: String) {
+    override fun createImmutableBinding(name: String): Completion {
         assert(name !in bindings)
         bindings[name] = Binding(false, null)
+        return Completion.empty
     }
-    override fun initializeBinding(name: String, value: LanguageType) {
+    override fun initializeBinding(name: String, value: LanguageType): Completion {
         val binding = bindings[name]
         assert(binding != null && binding.not { isInitialized })
         requireNotNull(binding)
         binding.value = value
+        return Completion.empty
     }
     override fun setMutableBinding(name: String, value: LanguageType): Completion {
         val binding = bindings[name] ?: return Completion.`throw`(NullType/* ReferenceError */)

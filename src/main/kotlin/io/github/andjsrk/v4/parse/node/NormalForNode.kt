@@ -3,9 +3,9 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
+import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.parse.*
 
 class NormalForNode(
@@ -63,7 +63,7 @@ private fun DeclarativeEnvironment.coverBindingsPerIteration(bindingNames: List<
     requireNotNull(outer)
     val currIterationEnv = DeclarativeEnvironment(outer)
     for (name in bindingNames) {
-        currIterationEnv.createMutableBinding(name)
+        currIterationEnv.createNonConfigurableMutableBinding(name)
         val lastValue = neverAbrupt<LanguageType>(lastIterationEnv.getValue(name))
         currIterationEnv.initializeBinding(name, lastValue)
     }

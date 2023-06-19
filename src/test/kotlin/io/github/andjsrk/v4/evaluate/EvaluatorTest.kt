@@ -674,6 +674,15 @@ internal class EvaluatorTest {
                 }
             }
         }
+
+        evaluationOf("""
+            var evaluationCount = 0
+            ;({ [evaluationCount += 1] })
+        """).shouldBeNormalAnd {
+            variableNamed("evaluationCount").shouldBeTypedAs<NumberType> {
+                assert(value == 1.0)
+            }
+        }
     }
     @Test
     fun testMember() {

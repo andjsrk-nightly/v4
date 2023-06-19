@@ -37,8 +37,8 @@ class MemberExpressionNode(
         return Completion.wideNormal(
             if (this.isComputed) {
                 val key = property.evaluateValueOrReturn { return it }
-                if (key !is PropertyKey) return Completion.`throw`(NullType/* TypeError */)
-                Reference(base, key)
+                val coercedKey = returnIfAbrupt<PropertyKey>(key.toPropertyKey()) { return it }
+                Reference(base, coercedKey)
             } else {
                 require(property is IdentifierNode)
                 Reference(base, property.stringValue)

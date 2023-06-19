@@ -6,9 +6,3 @@ package io.github.andjsrk.v4
  */
 inline fun <T> T.not(block: T.() -> Boolean) =
     !block()
-
-/**
- * With this function, `(!a).b()` can be replaced with `not { a }.b()`.
- */
-inline fun not(block: () -> Boolean) =
-    !block()

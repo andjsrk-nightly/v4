@@ -1808,7 +1808,7 @@ class Parser(sourceText: String) {
             isLastStatementTerminated = false
             val statement = parseModuleItem() ?: return reportUnexpectedToken()
             statements += statement
-            isLastStatementTerminated = isLastStatementTerminated || currToken.isPrevLineTerminator
+            isLastStatementTerminated = isLastStatementTerminated || currToken.isPrevLineTerminator || statement is EmptyStatementNode
         }
 
         return ModuleNode(statements)

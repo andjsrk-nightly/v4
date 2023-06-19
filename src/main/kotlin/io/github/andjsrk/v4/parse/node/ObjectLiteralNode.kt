@@ -3,7 +3,8 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
+import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
 import io.github.andjsrk.v4.parse.*
 
 class ObjectLiteralNode(
@@ -30,8 +31,7 @@ class ObjectLiteralNode(
                     when (this) {
                         is ComputedPropertyKeyNode -> {
                             val value = expression.evaluateValueOrReturn { return it }
-                            if (value !is PropertyKey) return Completion.`throw`(NullType/* TypeError */)
-                            value
+                            returnIfAbrupt<PropertyKey>(value.toPropertyKey()) { return it }
                         }
                         is IdentifierNode -> stringValue
                         is NumberLiteralNode -> value.languageValue.toString(10)

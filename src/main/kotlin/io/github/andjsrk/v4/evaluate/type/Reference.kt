@@ -10,8 +10,12 @@ data class Reference(
      * Note that `null` indicates `unresolvable`(spec).
      */
     val base: AbstractType?,
-    val referencedName: LanguageType/* StringType or SymbolType */,
+    /**
+     * Note that value of the property is nullable because key must not be evaluated if [base] is [NullType] in optional chain.
+     */
+    val referencedName: PropertyKey?,
     val thisValue: LanguageType? = null,
+    val isOptionalChain: Boolean = false,
 ): Record {
     @EsSpec("IsPropertyReference")
     val isProperty get() =

@@ -2,14 +2,15 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.builtin.Object
 import io.github.andjsrk.v4.evaluate.type.*
 
 /**
  * Note that methods which its name start with underscore means it is an internal method in ES specification.
  */
 open class ObjectType(
-    val properties: MutableMap<PropertyKey, Property>,
-    prototype: ObjectType? = null,
+    prototype: PrototypeObject? = null,
+    val properties: MutableMap<PropertyKey, Property> = mutableMapOf(),
 ): LanguageType {
     var prototype = prototype
         protected set
@@ -17,10 +18,10 @@ open class ObjectType(
         protected set
 
     @EsSpec("[[SetPrototypeOf]]")
-    fun _setPrototype(prototype: ObjectType?): WasSuccessful {
+    fun _setPrototype(prototype: PrototypeObject?): WasSuccessful {
         val curr = this.prototype
         if (!extensible) return false
-        var proto: ObjectType? = prototype
+        var proto: PrototypeObject? = prototype
         while (true) {
             if (proto == null) break
             else if (curr != null && sameValue(curr, proto).value) return false
@@ -151,8 +152,6 @@ open class ObjectType(
     @EsSpec("HasProperty")
     inline fun hasProperty(key: PropertyKey) =
         _hasProperty(key)
-    inline fun hasProperty(key: String) =
-        hasProperty(key.languageValue)
     @EsSpec("HasOwnProperty")
     fun hasOwnProperty(key: PropertyKey) =
         _getOwnProperty(key) != null
@@ -198,11 +197,16 @@ open class ObjectType(
 
     companion object {
         @EsSpec("MakeBasicObject")
-        fun createBasic(): ObjectType =
+        fun createBasic() =
             // TODO: fix if needed
-            ObjectType(mutableMapOf())
+            ObjectType()
+        /**
+         * Returns an Object that `[[Prototype]]` is set to `%Object.prototype%`.
+         */
+        fun createNormal() =
+            ObjectType(Object.instancePrototype)
         @EsSpec("OrdinaryObjectCreate")
-        fun create(prototype: ObjectType?) =
-            ObjectType(mutableMapOf(), prototype)
+        fun create(prototype: PrototypeObject?) =
+            ObjectType(prototype)
     }
 }

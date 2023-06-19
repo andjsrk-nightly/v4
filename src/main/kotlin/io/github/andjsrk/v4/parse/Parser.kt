@@ -108,9 +108,6 @@ class Parser(sourceText: String) {
     }
     private inline fun <R> ifHasNoError(valueProvider: () -> R) =
         not { hasError }.thenTake(valueProvider)
-    private fun <T> T?.pipeIfHasNoError(valueProvider: () -> T?) =
-        if (hasError) null
-        else this ?: valueProvider()
     private fun <T> Iterable<Deferred<T>>.foldElvisIfHasNoError() =
         this.asSequence().foldNull<_, T> { acc, it ->
             acc ?: ifHasNoError(it)
@@ -121,10 +118,8 @@ class Parser(sourceText: String) {
         }
     // <editor-fold desc="expressions">
     // <editor-fold desc="primary expressions">
-    private fun Token.toIdentifier() =
-        IdentifierNode(rawContent, range).also {
-            assert(type == IDENTIFIER)
-        }
+    private fun <T: Node> Token.to(constructor: (String, Range) -> T) =
+        constructor(rawContent, range)
     /**
      * Parses [Identifier](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Identifier).
      */
@@ -133,23 +128,25 @@ class Parser(sourceText: String) {
         if (currToken.type != IDENTIFIER) return null
         if (ReservedWord.values().any { it.not { isContextual } && currToken.isKeyword(it, true) }) return null
 
-        return currToken.toIdentifier().also { advance() }
+        return currToken.to(::IdentifierNode).also { advance() }
     }
     /**
      * Parses [IdentifierName](https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#prod-IdentifierName).
      */
     @Careful
     private fun parseIdentifierName() =
-        takeIfMatches(IDENTIFIER)?.toIdentifier()
+        takeIfMatches(IDENTIFIER)?.to(::IdentifierNode)
     @Careful
     private fun parseNumberLiteral() =
-        takeIfMatches(NUMBER)?.let(::NumberLiteralNode)
+        takeIfMatches(NUMBER)?.to(::NumberLiteralNode)
     @Careful
     private fun parseBigintLiteral() =
-        takeIfMatches(BIGINT)?.let(::BigintLiteralNode)
+        takeIfMatches(BIGINT)?.to(::BigintLiteralNode)
     @Careful
     private fun parseStringLiteral() =
-        takeIfMatches(STRING)?.let(::StringLiteralNode)
+        takeIfMatches(STRING)?.let {
+            StringLiteralNode(it.rawContent, it.literal, it.range)
+        }
     @Careful
     private fun parsePrimitiveLiteral(): LiteralNode? =
         when (currToken.type) {
@@ -157,8 +154,8 @@ class Parser(sourceText: String) {
             NUMBER -> parseNumberLiteral()
             BIGINT -> parseBigintLiteral()
             IDENTIFIER -> when {
-                currToken.isKeyword(NULL, true) -> NullLiteralNode(currToken)
-                currToken.isKeyword(TRUE, true) || currToken.isKeyword(FALSE, true) -> BooleanLiteralNode(currToken)
+                currToken.isKeyword(NULL, true) -> NullLiteralNode(currToken.range)
+                currToken.isKeyword(TRUE, true) || currToken.isKeyword(FALSE, true) -> currToken.to(::BooleanLiteralNode)
                 else -> null
             }
                 ?.also { advance() }
@@ -217,6 +214,7 @@ class Parser(sourceText: String) {
         parseLiteralPropertyName() ?: parseComputedPropertyName()
     @Careful(false)
     private fun parseMethod(name: ObjectLiteralKeyNode, isAsync: Boolean, isGenerator: Boolean, startRange: Range): ObjectMethodNode? {
+        if (!isAsync && !isGenerator && currToken.type != LEFT_PARENTHESIS) return null
         val parameters = parseArrowFormalParameters() ?: return null
         val body = withParseContext({ copy(allowReturn=true) }) {
             parseBlock(false) ?: return null
@@ -279,7 +277,7 @@ class Parser(sourceText: String) {
                     val isSetter = name.isKeyword(SET)
                     if (!isGetter && !isSetter) return null
                     val actualName = parsePropertyName() ?: return null
-                    val method = parseMethod(actualName, false, false, actualName.range) ?: return null
+                    val method = parseMethod(actualName, false, false, actualName.range) ?: return reportUnexpectedToken()
                     val params = method.parameters
                     when {
                         isGetter -> {
@@ -332,7 +330,20 @@ class Parser(sourceText: String) {
                         parseMethodLike(propertyName)
                             .withDirectSuperCallCheck() as ObjectElementNode?
                     },
-                    { PropertyShorthandNode(propertyName) },
+                    {
+                        PropertyNode(
+                            propertyName,
+                            when (propertyName) {
+                                is ComputedPropertyKeyNode -> propertyName.expression
+                                is IdentifierNode -> when (propertyName.value) {
+                                    "null" -> NullLiteralNode(propertyName.range)
+                                    "true", "false" -> BooleanLiteralNode(propertyName.value, propertyName.range)
+                                    else -> propertyName
+                                }
+                                else -> propertyName
+                            }
+                        )
+                    },
                 )
                     .foldElvisIfHasNoError()
         }

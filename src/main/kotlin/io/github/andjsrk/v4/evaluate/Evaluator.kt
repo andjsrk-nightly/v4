@@ -11,8 +11,15 @@ object Evaluator {
     @EsSpec("running execution context")
     lateinit var runningExecutionContext: ExecutionContext
         internal set
+    @EsSpec("InitializeHostDefinedRealm")
+    fun initialize() {
+        val realm = Realm()
+        val newContext = ExecutionContext(ModuleEnvironment(), realm)
+        runningExecutionContext = newContext
+        realm.setGlobalObject(null)
+        realm.setDefaultGlobalBindings()
+    }
     fun evaluate(module: ModuleNode): Completion {
-        Realm().initialize(null)
         instantiateBlockDeclaration(module, runningExecutionContext.lexicalEnvironment)
         return module.evaluate()
     }

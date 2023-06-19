@@ -6,9 +6,9 @@ import io.github.andjsrk.v4.evaluate.type.Property
 class ClassType(
     val parent: ClassType?,
     staticProperties: MutableMap<PropertyKey, Property>,
-    instancePrototypeInitializer: ObjectType.() -> Unit,
-): ObjectType(staticProperties, null) {
-    val instancePrototype = ObjectType.create(parent?.prototype).apply(instancePrototypeInitializer)
+    instancePrototypeInitializer: PrototypeObject.() -> Unit,
+): ObjectType(null, staticProperties) {
+    val instancePrototype: PrototypeObject = ObjectType.create(parent?.instancePrototype).apply(instancePrototypeInitializer)
     fun construct(): Completion {
         TODO()
     }

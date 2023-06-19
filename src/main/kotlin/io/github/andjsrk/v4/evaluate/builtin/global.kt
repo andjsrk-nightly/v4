@@ -10,4 +10,5 @@ val global = ObjectType.createBasic().apply {
     // TODO: function properties
     set("Object".languageValue, Object)
     set("String".languageValue, String)
+    set("Number".languageValue, Number)
 }

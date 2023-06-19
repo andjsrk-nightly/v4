@@ -1,10 +1,10 @@
 package io.github.andjsrk.v4.parse.node
 
-import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
+import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.tokenize.Token
+import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 
-class BooleanLiteralNode(token: Token): DynamicPrimitiveLiteralNode<Boolean>(token) {
+class BooleanLiteralNode(rawContent: String, range: Range): DynamicPrimitiveLiteralNode<Boolean>(rawContent, range) {
     override val value = raw.toBooleanStrict()
     override fun evaluate() =
         Completion.normal(BooleanType.from(value))

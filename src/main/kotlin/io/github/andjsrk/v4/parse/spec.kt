@@ -140,7 +140,6 @@ internal fun ExpressionNode.isAssignmentTarget(): Boolean =
 internal fun Node.propName(): ObjectLiteralKeyNode? =
     when (this) {
         is PropertyNode -> key
-        is PropertyShorthandNode -> key
         is MethodNode -> name
         is FieldNode -> name
         else -> null

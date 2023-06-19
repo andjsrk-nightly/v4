@@ -5,7 +5,10 @@ import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("GetV")
-internal fun LanguageType.getProperty(key: PropertyKey): Completion {
-    if (this is ObjectType) return get(key) // calls a method that is implemented on concrete type
-    TODO()
-}
+internal fun LanguageType.getProperty(key: PropertyKey) =
+    when (this) {
+        NullType -> Completion.`throw`(NullType/* TypeError */)
+        is ObjectType -> get(key)
+        else -> prototype!!.get(key)
+//                       ^^ every primitive types have its own prototype object, so it cannot be `null`
+    }

@@ -2,19 +2,19 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.FALSE
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.TRUE
-import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.not
 import kotlin.math.*
 
 @JvmInline
-internal value class NumberType(
+value class NumberType(
     override val value: Double
 ): NumericType<NumberType> {
-    inline val isNegative get() =
+    internal inline val isNegative get() =
         value.isNegative
-    inline val isPositive get() =
+    internal inline val isPositive get() =
         !isNegative
     inline val isNaN get() =
         this == NaN

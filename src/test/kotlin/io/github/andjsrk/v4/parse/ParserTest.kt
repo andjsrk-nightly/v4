@@ -90,14 +90,14 @@ internal class ParserTest {
             { a: 1, b, ...c }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
             assert(elements.size == 3)
-            elements[0].assertTypeThen<PropertyNode> {
+            elements[0].assertTypeAnd<PropertyNode> {
                 key.assertIdentifierNamed("a")
                 assertIs<NumberLiteralNode>(value)
             }
-            elements[1].assertTypeThen<PropertyShorthandNode> {
+            elements[1].assertTypeAnd<PropertyNode> {
                 key.assertIdentifierNamed("b")
             }
-            elements[2].assertTypeThen<SpreadNode> {
+            elements[2].assertTypeAnd<SpreadNode> {
                 expression.assertIdentifierNamed("c")
             }
         }
@@ -105,8 +105,16 @@ internal class ParserTest {
         """
             { a }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<PropertyShorthandNode> {
+            elements[0].assertTypeAnd<PropertyNode> {
                 key.assertIdentifierNamed("a")
+            }
+        }
+
+        """
+            { [0] }
+        """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
+            elements[0].assertTypeAnd<PropertyNode> {
+                assertIs<ComputedPropertyKeyNode>(key)
             }
         }
 
@@ -123,7 +131,7 @@ internal class ParserTest {
         """
             { a() {} }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<ObjectMethodNode> {
+            elements[0].assertTypeAnd<ObjectMethodNode> {
                 name.assertIdentifierNamed("a")
                 assert(parameters.elements.isEmpty())
                 assert(!isAsync && !isGenerator)
@@ -133,7 +141,7 @@ internal class ParserTest {
         """
             { async a() {} }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<ObjectMethodNode> {
+            elements[0].assertTypeAnd<ObjectMethodNode> {
                 name.assertIdentifierNamed("a")
                 assert(isAsync)
             }
@@ -142,7 +150,7 @@ internal class ParserTest {
         """
             { gen a() {} }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<ObjectMethodNode> {
+            elements[0].assertTypeAnd<ObjectMethodNode> {
                 name.assertIdentifierNamed("a")
                 assert(isGenerator)
             }
@@ -151,7 +159,7 @@ internal class ParserTest {
         """
             { async gen a() {} }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<ObjectMethodNode> {
+            elements[0].assertTypeAnd<ObjectMethodNode> {
                 name.assertIdentifierNamed("a")
                 assert(isAsync && isGenerator)
             }
@@ -164,7 +172,7 @@ internal class ParserTest {
         """
             { async() {} }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<ObjectMethodNode> {
+            elements[0].assertTypeAnd<ObjectMethodNode> {
                 name.assertIdentifierNamed("async")
                 assert(!isAsync)
             }
@@ -173,7 +181,7 @@ internal class ParserTest {
         """
             { get a() {} }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<ObjectGetterNode> {
+            elements[0].assertTypeAnd<ObjectGetterNode> {
                 name.assertIdentifierNamed("a")
             }
         }
@@ -185,7 +193,7 @@ internal class ParserTest {
         """
             { set a(x) {} }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<ObjectSetterNode> {
+            elements[0].assertTypeAnd<ObjectSetterNode> {
                 name.assertIdentifierNamed("a")
                 parameter.binding.assertIdentifierNamed("x")
             }
@@ -202,7 +210,7 @@ internal class ParserTest {
         """
             { async get() {} }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<ObjectMethodNode> {
+            elements[0].assertTypeAnd<ObjectMethodNode> {
                 name.assertIdentifierNamed("get")
                 assert(isAsync)
             }
@@ -212,13 +220,15 @@ internal class ParserTest {
     fun testDistinguishBetweenObjectLiteralAndBlock() {
         """
             {}
-            [{}]
         """.shouldBeValidModuleAnd {
             assertIs<BlockNode>(elements[0])
+        }
 
-            val obj = elements[1]
-                .unwrapExprStmt<ArrayLiteralNode>()
-                .elements[0]
+        """
+            ({})
+        """.shouldBeValidModuleAnd {
+            val obj = elements[0]
+                .unwrapExprStmt<ParenthesizedExpressionNode>()
                 .expression
             assertIs<ObjectLiteralNode>(obj)
         }
@@ -360,7 +370,7 @@ internal class ParserTest {
         """
             a().b
         """.shouldBeValidExpressionAnd<MemberExpressionNode> {
-            `object`.assertTypeThen<NormalCallNode> {
+            `object`.assertTypeAnd<NormalCallNode> {
                 callee.assertIdentifierNamed("a")
             }
             property.assertIdentifierNamed("b")
@@ -369,7 +379,7 @@ internal class ParserTest {
         """
             a?.().b
         """.shouldBeValidExpressionAnd<MemberExpressionNode> {
-            `object`.assertTypeThen<NormalCallNode> {
+            `object`.assertTypeAnd<NormalCallNode> {
                 callee.assertIdentifierNamed("a")
                 assert(isOptionalChain)
             }
@@ -410,7 +420,7 @@ internal class ParserTest {
         """
             new A.B(1, ...a)
         """.shouldBeValidExpressionAnd<NewExpressionNode> {
-            callee.assertTypeThen<MemberExpressionNode> {
+            callee.assertTypeAnd<MemberExpressionNode> {
                 `object`.assertIdentifierNamed("A")
                 property.assertIdentifierNamed("B")
             }
@@ -439,7 +449,7 @@ internal class ParserTest {
             val exprs = elements.map { it.unwrapExprStmt<ExpressionNode>() }
 
             exprs[0].assertIdentifierNamed("a")
-            exprs[1].assertTypeThen<UpdateNode> {
+            exprs[1].assertTypeAnd<UpdateNode> {
                 assert(isPrefixed)
             }
         }
@@ -451,7 +461,7 @@ internal class ParserTest {
             val exprs = elements.map { it.unwrapExprStmt<ExpressionNode>() }
 
             exprs[0].assertIdentifierNamed("a")
-            exprs[1].assertTypeThen<UpdateNode> {
+            exprs[1].assertTypeAnd<UpdateNode> {
                 assert(isPrefixed)
             }
         }
@@ -565,7 +575,7 @@ internal class ParserTest {
             }
         """.shouldBeValidModuleAnd {
             forBothSyncAndAsync {
-                body.assertTypeThen<BlockNode> {
+                body.assertTypeAnd<BlockNode> {
                     assert(elements.size == 1)
                 }
             }
@@ -604,7 +614,7 @@ internal class ParserTest {
                 params[0].unwrapNonRest<ArrayBindingPatternNode>().run {
                     assert(elements.size == 2)
                     elements[0].unwrapNonRest<IdentifierNode>()
-                    elements[1].assertTypeThen<NonRestNode> {
+                    elements[1].assertTypeAnd<NonRestNode> {
                         assertIs<IdentifierNode>(binding)
                         assertIs<NumberLiteralNode>(default)
                     }
@@ -663,15 +673,15 @@ internal class ParserTest {
                 assert(params.size == 1)
                 params[0].unwrapNonRest<ObjectBindingPatternNode>().run {
                     assert(elements.size == 4)
-                    elements[0].assertTypeThen<NonRestObjectPropertyNode> {
+                    elements[0].assertTypeAnd<NonRestObjectPropertyNode> {
                         key.assertIdentifierNamed("ab")
                         binding.assertIdentifierNamed("a")
                     }
-                    elements[1].assertTypeThen<NonRestNode> {
+                    elements[1].assertTypeAnd<NonRestNode> {
                         binding.assertIdentifierNamed("b")
                         assertIs<NumberLiteralNode>(default)
                     }
-                    elements[2].assertTypeThen<NonRestObjectPropertyNode> {
+                    elements[2].assertTypeAnd<NonRestObjectPropertyNode> {
                         binding.assertIdentifierNamed("c")
                         assert(binding == key)
                     }
@@ -720,7 +730,7 @@ internal class ParserTest {
             a = a = a
         """.shouldBeValidExpressionAnd<BinaryExpressionNode> {
             assert(operation == BinaryOperationType.ASSIGN)
-            assertTypeThen<BinaryExpressionNode> {
+            assertTypeAnd<BinaryExpressionNode> {
                 assert(operation == BinaryOperationType.ASSIGN)
             }
         }
@@ -836,8 +846,8 @@ internal class ParserTest {
             }
         """.shouldBeValidStatementAnd<ExpressionStatementNode> {
             unwrapExprStmt<ArrowFunctionNode>().run {
-                body.assertTypeThen<BlockNode> {
-                    elements[0].assertTypeThen<ReturnNode> {
+                body.assertTypeAnd<BlockNode> {
+                    elements[0].assertTypeAnd<ReturnNode> {
                         assertIs<NumberLiteralNode>(expression)
                     }
                 }
@@ -851,11 +861,11 @@ internal class ParserTest {
             }
         """.shouldBeValidStatementAnd<ExpressionStatementNode> {
             unwrapExprStmt<ArrowFunctionNode>().run {
-                body.assertTypeThen<BlockNode> {
-                    elements[0].assertTypeThen<ReturnNode> {
+                body.assertTypeAnd<BlockNode> {
+                    elements[0].assertTypeAnd<ReturnNode> {
                         assertNull(expression)
                     }
-                    elements[1].assertTypeThen<ExpressionStatementNode> {
+                    elements[1].assertTypeAnd<ExpressionStatementNode> {
                         assertIs<NumberLiteralNode>(expression)
                     }
                 }
@@ -983,7 +993,7 @@ internal class ParserTest {
                 a = 0
             }
         """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            elements[0].assertTypeThen<FieldNode> {
+            elements[0].assertTypeAnd<FieldNode> {
                 assert(!isStatic)
                 name.assertIdentifierNamed("a")
                 assertIs<NumberLiteralNode>(value)
@@ -995,7 +1005,7 @@ internal class ParserTest {
                 a
             }
         """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            elements[0].assertTypeThen<FieldNode> {
+            elements[0].assertTypeAnd<FieldNode> {
                 assertNull(value)
             }
         }
@@ -1005,7 +1015,7 @@ internal class ParserTest {
                 static a = 0
             }
         """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            elements[0].assertTypeThen<FieldNode> {
+            elements[0].assertTypeAnd<FieldNode> {
                 assert(isStatic)
             }
         }
@@ -1023,7 +1033,7 @@ internal class ParserTest {
                 if = 0
             }
         """.shouldBeValidStatementAnd<ClassDeclarationNode> {
-            elements[0].assertTypeThen<FieldNode> {
+            elements[0].assertTypeAnd<FieldNode> {
                 name.assertIdentifierNamed("if")
             }
         }
@@ -1135,7 +1145,7 @@ internal class ParserTest {
                 }
             }
         """.shouldBeValidExpressionAnd<ObjectLiteralNode> {
-            elements[0].assertTypeThen<ObjectMethodNode> {
+            elements[0].assertTypeAnd<ObjectMethodNode> {
                 assertIs<SuperPropertyNode>(body.elements[0].unwrapExprStmt())
             }
         }
@@ -1265,13 +1275,9 @@ private inline fun <reified Expr: ExpressionNode> StatementNode.unwrapExprStmt()
         expression as Expr
     }
 private fun Node.assertIdentifierNamed(name: String) {
-    assertTypeThen<IdentifierNode> {
+    assertTypeAnd<IdentifierNode> {
         assert(value == name)
     }
-}
-private inline fun <reified T> Any?.assertTypeThen(block: T.() -> Unit) {
-    assertIs<T>(this)
-    run(block)
 }
 private inline fun <RN: Node, reified N: Node> Code.shouldBeValidAnd(parseFn: Parser.() -> RN?, block: N.() -> Unit) {
     block(

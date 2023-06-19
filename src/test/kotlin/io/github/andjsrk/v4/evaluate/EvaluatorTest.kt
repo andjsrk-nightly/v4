@@ -1,9 +1,8 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.createErrorMsg
+import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.Binding
-import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.parse.Parser
 import org.junit.jupiter.api.Test
 import kotlin.test.*
@@ -631,17 +630,88 @@ internal class EvaluatorTest {
             assert(value == 1.0)
         }
     }
+    @Test
+    fun testObjectBasic() {
+        evaluationOf("""
+            ({ a: 0 })
+        """).shouldBeNormalAnd<ObjectType> {
+            dataPropertyNamed("a").run {
+                value.assertTypeAnd<NumberType> {
+                    assert(value == 0.0)
+                }
+            }
+        }
+
+        evaluationOf("""
+            let a = 0
+            let b = { a }
+        """).shouldBeNormalAnd {
+            variableNamed("b").shouldBeTypedAs<ObjectType> {
+                dataPropertyNamed("a").run {
+                    value.assertTypeAnd<NumberType> {
+                        assert(value == 0.0)
+                    }
+                }
+            }
+        }
+
+        evaluationOf("""
+            ({ true })
+        """).shouldBeNormalAnd<ObjectType> {
+            dataPropertyNamed("true").run {
+                value.assertTypeAnd<BooleanType> {
+                    assertTrue(value)
+                }
+            }
+        }
+
+        evaluationOf("""
+            ({ ["a"] })
+        """).shouldBeNormalAnd<ObjectType> {
+            dataPropertyNamed("a").run {
+                value.assertTypeAnd<StringType> {
+                    assert(value == "a")
+                }
+            }
+        }
+    }
+    @Test
+    fun testMember() {
+        evaluationOf("""
+            ({ a: 0 }).a
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 0.0)
+        }
+
+        evaluationOf("""
+            ({ a: { b: 0 } })?.a.b
+        """).shouldBeNormalAnd<NumberType> {
+            assert(value == 0.0)
+        }
+
+        evaluationOf("""
+            null?.a
+        """).shouldBeNormalAnd<NullType> {}
+
+        evaluationOf("""
+            null?.a.b
+        """).shouldBeNormalAnd<NullType> {}
+    }
 }
 
+private fun ObjectType.dataPropertyNamed(name: String): DataProperty {
+    properties[name.languageValue].assertTypeAnd<DataProperty> {
+        return this
+    }
+    neverHappens()
+}
 private fun variableNamed(name: String): Binding {
     val binding = Evaluator.runningExecutionContext.lexicalEnvironment.bindings[name]
     assertNotNull(binding)
     return binding
 }
 private inline fun <reified Value: LanguageType> Binding.shouldBeTypedAs(block: Value.() -> Unit) {
-    val value = value
-    assertIs<Value>(value)
-    block(value)
+    value.assertTypeAnd<Value>(block)
 }
 private fun Completion.shouldBeNormalAnd(block: () -> Unit) {
     assert(this.isNormal)
@@ -650,9 +720,7 @@ private fun Completion.shouldBeNormalAnd(block: () -> Unit) {
 }
 private inline fun <reified Value: LanguageType> Completion.shouldBeNormalAnd(crossinline block: Value.() -> Unit) =
     this.shouldBeNormalAnd {
-        val value = value
-        assertIs<Value>(value)
-        block(value)
+        value.assertTypeAnd<Value>(block)
     }
 private fun Completion.shouldBeThrowAnd(block: () -> Unit) {
     assert(type == Completion.Type.THROW)
@@ -660,13 +728,14 @@ private fun Completion.shouldBeThrowAnd(block: () -> Unit) {
 }
 private inline fun <reified Value: LanguageType> Completion.shouldBeThrowAnd(crossinline block: Value.() -> Unit) =
     this.shouldBeThrowAnd {
-        val value = value
-        assertIs<Value>(value)
-        block(value)
+        value.assertTypeAnd<Value>(block)
     }
 private fun evaluationOf(code: String): Completion {
     val parser = Parser(code.trimIndent())
     return parser.parseModule()
-        ?.let { Evaluator.evaluate(it) }
+        ?.let {
+            Evaluator.initialize()
+            Evaluator.evaluate(it)
+        }
         ?: throw AssertionError(parser.createErrorMsg())
 }

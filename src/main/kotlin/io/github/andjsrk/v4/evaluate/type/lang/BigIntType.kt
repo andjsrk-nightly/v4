@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.Completion
 import java.math.BigInteger
 
 @JvmInline
-internal value class BigIntType(override val value: BigInteger): NumericType<BigIntType> {
+value class BigIntType(override val value: BigInteger): NumericType<BigIntType> {
     override fun unaryMinus() =
         BigIntType(-value)
     override fun bitwiseNot() =

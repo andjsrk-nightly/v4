@@ -20,7 +20,7 @@ class ArrowFunctionNode(
     override fun toString() =
         stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator, ::range)
     override fun evaluate() =
-        Completion.normal(instantiateArrowFunction(null))
+        Completion.Normal(instantiateArrowFunction(null))
     internal fun instantiateArrowFunction(name: PropertyKey?): FunctionType {
         val env = runningExecutionContext.lexicalEnvironment
         return FunctionType(parameters, body, env, ThisMode.ARROW, name)

@@ -19,7 +19,7 @@ class NumberLiteralNode(rawContent: String, range: Range): DynamicPrimitiveLiter
         parsedNonDecimal ?: raw.toDouble()
     }
     override fun evaluate() =
-        Completion.normal(NumberType(value))
+        Completion.Normal(NumberType(value))
 }
 
 private fun String.removePrefixOrNull(prefix: CharSequence) =

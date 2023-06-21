@@ -8,7 +8,7 @@ sealed class Environment(var outer: Environment?): Record {
     @EsSpec("HasBinding")
     abstract fun hasBinding(name: String): Boolean
     @EsSpec("CreateMutableBinding")
-    abstract fun createMutableBinding(name: String): Completion
+    abstract fun createMutableBinding(name: String): EmptyOrAbrupt
     /**
      * Indicates `CreateMutableBinding` with argument `D` that is set to `false`.
      */
@@ -16,11 +16,11 @@ sealed class Environment(var outer: Environment?): Record {
     open fun createNonConfigurableMutableBinding(name: String) =
         createMutableBinding(name)
     @EsSpec("CreateImmutableBinding")
-    abstract fun createImmutableBinding(name: String): Completion
+    abstract fun createImmutableBinding(name: String): EmptyOrAbrupt
     @EsSpec("InitializeBinding")
-    abstract fun initializeBinding(name: String, value: LanguageType): Completion
+    abstract fun initializeBinding(name: String, value: LanguageType): EmptyOrAbrupt
     @EsSpec("SetMutableBinding")
-    abstract fun setMutableBinding(name: String, value: LanguageType): Completion
+    abstract fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt
     @EsSpec("GetBindingValue")
-    abstract fun getValue(name: String): Completion
+    abstract fun getValue(name: String): NonEmptyNormalOrAbrupt
 }

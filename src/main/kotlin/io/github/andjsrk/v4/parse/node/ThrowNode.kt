@@ -14,8 +14,8 @@ class ThrowNode(
     override val range = startRange..expression.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluate(): Completion.Abrupt {
         val value = expression.evaluateValueOrReturn { return it }
-        return Completion.`throw`(value)
+        return Completion.Throw(value)
     }
 }

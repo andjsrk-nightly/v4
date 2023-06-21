@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
 import io.github.andjsrk.v4.parse.*
@@ -14,12 +14,12 @@ class ObjectLiteralNode(
     override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluate(): NonEmptyNormalOrAbrupt {
         val obj = ObjectType.createNormal()
         for (element in elements) returnIfAbrupt(evaluatePropertyDefinition(obj, element)) { return it }
-        return Completion.normal(obj)
+        return Completion.Normal(obj)
     }
-    private fun evaluatePropertyDefinition(obj: ObjectType, property: ObjectElementNode): Completion {
+    private fun evaluatePropertyDefinition(obj: ObjectType, property: ObjectElementNode): EmptyOrAbrupt {
         when (property) {
             is PropertyNode -> {
                 val keyNode = property.key
@@ -44,7 +44,7 @@ class ObjectLiteralNode(
                     else -> property.value.evaluateValueOrReturn { return it }
                 }
                 obj.createDataPropertyOrThrow(key, value)
-                return Completion.empty
+                return Completion.Normal.empty
             }
             is SpreadNode -> {
                 val value = property.expression.evaluateValueOrReturn { return it }

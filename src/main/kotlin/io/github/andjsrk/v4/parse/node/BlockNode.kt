@@ -2,8 +2,7 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class BlockNode(
@@ -13,8 +12,8 @@ class BlockNode(
     override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
-    override fun evaluate(): Completion {
-        if (elements.isEmpty()) return Completion.empty
+    override fun evaluate(): NormalOrAbrupt {
+        if (elements.isEmpty()) return Completion.Normal.empty
 
         val oldEnv = runningExecutionContext.lexicalEnvironment
         val blockEnv = DeclarativeEnvironment(oldEnv)

@@ -7,5 +7,5 @@ import io.github.andjsrk.v4.evaluate.type.lang.SymbolType
 
 @EsSpec("ToPropertyKey")
 internal fun LanguageType.toPropertyKey() =
-    if (this is SymbolType) Completion.normal(this)
+    if (this is SymbolType) Completion.Normal(this)
     else toString(this)

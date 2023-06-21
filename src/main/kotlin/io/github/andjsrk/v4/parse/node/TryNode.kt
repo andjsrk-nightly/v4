@@ -1,9 +1,9 @@
 package io.github.andjsrk.v4.parse.node
 
-import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import io.github.andjsrk.v4.parse.boundStringNames
@@ -19,19 +19,17 @@ class TryNode(
     override val range = startRange..(finallyBody ?: catch!!.body).range
     override fun toString() =
         stringifyLikeDataClass(::tryBody, ::catch, ::finallyBody, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluate(): NormalOrAbrupt {
         val tryRes = tryBody.evaluate()
-        val didTryBlockThrow = tryRes.type == Completion.Type.THROW
         val catchRes = catch?.run {
-            didTryBlockThrow.thenTake {
-                evaluateCatch(tryRes.languageValue!!)
-            }
+            if (tryRes is Completion.Throw) evaluateCatch(tryRes.value)
+            else null
         }
-        val finallyRes = finallyBody?.evaluate()?.takeIf { it.isAbrupt } // its result will be ignored unless it is an abrupt completion
+        val finallyRes = finallyBody?.evaluate()?.takeIf { it is Completion.Abrupt } // its result will be ignored unless it is an abrupt completion
         return updateEmpty(finallyRes ?: catchRes ?: tryRes, NullType)
     }
     @EsSpec("CatchClauseEvaluation")
-    private fun evaluateCatch(thrown: LanguageType): Completion {
+    private fun evaluateCatch(thrown: LanguageType): NormalOrAbrupt {
         requireNotNull(catch)
         val oldEnv = runningExecutionContext.lexicalEnvironment
         if (catch.binding != null) {
@@ -39,7 +37,7 @@ class TryNode(
             for (name in catch.binding.boundStringNames()) catchEnv.createNonConfigurableMutableBinding(name)
             runningExecutionContext.lexicalEnvironment = catchEnv
             val bindingRes = catch.binding.initialize(thrown, catchEnv)
-            if (bindingRes.isAbrupt) {
+            if (bindingRes is Completion.Abrupt) {
                 runningExecutionContext.lexicalEnvironment = oldEnv
                 return bindingRes
             }

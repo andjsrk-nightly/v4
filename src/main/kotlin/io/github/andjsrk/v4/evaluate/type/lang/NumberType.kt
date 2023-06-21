@@ -3,6 +3,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.FALSE
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.TRUE
 import io.github.andjsrk.v4.not
@@ -38,10 +39,10 @@ value class NumberType(
             NEGATIVE_ZERO -> POSITIVE_ZERO
             else -> NumberType(-value)
         }
-    override fun bitwiseNot(): Completion {
-        val value = returnIfAbrupt<NumberType>(this.toInt32()) { return it }
+    override fun bitwiseNot(): MaybeAbrupt<NumberType> {
+        val value = returnIfAbrupt(this.toInt32()) { return it }
             .value.toInt()
-        return Completion.normal(NumberType(value.inv().toDouble()))
+        return Completion.Normal(NumberType(value.inv().toDouble()))
     }
     override fun pow(other: NumberType): NumberType =
         when {
@@ -162,17 +163,17 @@ value class NumberType(
         this + -other
     private fun <T> generalShift(
         other: NumberType,
-        leftCoercion: () -> Completion,
+        leftCoercion: () -> Completion<NumberType>,
         leftTransform: Double.() -> T,
         operation: (T, Int) -> Double,
-    ): Completion {
-        val left = returnIfAbrupt<NumberType>(leftCoercion()) { return it }
+    ): MaybeAbrupt<NumberType> {
+        val left = returnIfAbrupt(leftCoercion()) { return it }
             .value.leftTransform()
-        val right = returnIfAbrupt<NumberType>(other.toUint32()) { return it }
+        val right = returnIfAbrupt(other.toUint32()) { return it }
             .value.toInt()
         val shiftCount = right % 32
         val result = operation(left, shiftCount)
-        return Completion.normal(NumberType(result))
+        return Completion.Normal(NumberType(result))
     }
     override fun leftShift(other: NumberType) =
         generalShift(other, ::toInt32, Double::toInt) { a, b -> (a shl b).toDouble() }
@@ -211,13 +212,13 @@ value class NumberType(
             else -> BooleanType.from(this == other)
         }
     @EsSpec("NumberBitwiseOp")
-    private fun generalBitwiseOp(other: NumberType, operation: (Int, Int) -> Int): Completion {
-        val left = returnIfAbrupt<NumberType>(this.toInt32()) { return it }
+    private fun generalBitwiseOp(other: NumberType, operation: (Int, Int) -> Int): MaybeAbrupt<NumberType> {
+        val left = returnIfAbrupt(this.toInt32()) { return it }
             .value.toInt()
-        val right = returnIfAbrupt<NumberType>(other.toInt32()) { return it }
+        val right = returnIfAbrupt(other.toInt32()) { return it }
             .value.toInt()
         val result = operation(left, right)
-        return Completion.normal(NumberType(result.toDouble()))
+        return Completion.Normal(NumberType(result.toDouble()))
     }
     @EsSpec("::bitwiseAND")
     override fun bitwiseAnd(other: NumberType) =

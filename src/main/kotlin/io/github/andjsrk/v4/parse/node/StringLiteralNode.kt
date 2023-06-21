@@ -9,5 +9,5 @@ class StringLiteralNode(rawContent: String, content: String, range: Range): Dyna
     @EsSpec("SV")
     override val value = content
     override fun evaluate() =
-        Completion.normal(StringType(value))
+        Completion.Normal(StringType(value))
 }

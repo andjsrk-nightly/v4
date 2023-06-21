@@ -8,10 +8,10 @@ class GlobalEnvironment(global: ObjectType): Environment(null) {
     override fun hasBinding(name: String) =
         declarative.hasBinding(name) || `object`.hasBinding(name)
     override fun createMutableBinding(name: String) =
-        if (declarative.hasBinding(name)) Completion.`throw`(NullType/* TypeError */)
+        if (declarative.hasBinding(name)) Completion.Throw(NullType/* TypeError */)
         else declarative.createMutableBinding(name)
     override fun createImmutableBinding(name: String) =
-        if (declarative.hasBinding(name)) Completion.`throw`(NullType/* TypeError */)
+        if (declarative.hasBinding(name)) Completion.Throw(NullType/* TypeError */)
         else declarative.createImmutableBinding(name)
     override fun initializeBinding(name: String, value: LanguageType) =
         ifHasBinding(name) {
@@ -25,7 +25,7 @@ class GlobalEnvironment(global: ObjectType): Environment(null) {
         ifHasBinding(name) {
             it.getValue(name)
         }
-    private inline fun ifHasBinding(name: String, task: (Environment) -> Completion) =
+    private inline fun <R: AbstractType?> ifHasBinding(name: String, task: (Environment) -> Completion<R>) =
         if (declarative.hasBinding(name)) task(declarative)
         else task(`object`)
 }

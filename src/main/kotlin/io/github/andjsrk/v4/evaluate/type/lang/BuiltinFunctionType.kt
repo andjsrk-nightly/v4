@@ -2,10 +2,10 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.FunctionEnvironment
+import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
 
-typealias BuiltinFunctionBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> Completion
+typealias BuiltinFunctionBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyNormalOrAbrupt
 
 @EsSpec("CreateBuiltinFunction")
 class BuiltinFunctionType(
@@ -13,7 +13,7 @@ class BuiltinFunctionType(
     requiredParameterCount: UInt,
     val behavior: BuiltinFunctionBehavior,
 ): AbstractFunctionType(name, requiredParameterCount, runningExecutionContext.lexicalEnvironment) {
-    override fun _call(thisArg: LanguageType, args: List<LanguageType>): Completion {
+    override fun _call(thisArg: LanguageType, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
         val callerContext = runningExecutionContext
         val calleeContext = ExecutionContext(FunctionEnvironment.from(this, thisArg), realm, this)
         val res = behavior(thisArg, args)

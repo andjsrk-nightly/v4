@@ -8,5 +8,5 @@ class NullLiteralNode(range: Range): PrimitiveLiteralNode("null", range) {
     override fun toString() =
         stringifyLikeDataClass(::range)
     override fun evaluate() =
-        Completion.`null`
+        Completion.Normal.`null`
 }

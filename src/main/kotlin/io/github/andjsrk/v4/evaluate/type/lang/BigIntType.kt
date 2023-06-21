@@ -2,6 +2,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import java.math.BigInteger
 
 @JvmInline
@@ -12,18 +13,18 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
         BigIntType(-value - BigInteger.ONE)
     override fun pow(other: BigIntType) =
         when {
-            other.value < BigInteger.ZERO -> Completion.`throw`(NullType/* RangeError */)
-            else -> Completion.normal(BigIntType(value.operate(BigInteger::pow, other.value)))
+            other.value < BigInteger.ZERO -> Completion.Throw(NullType/* RangeError */)
+            else -> Completion.Normal(BigIntType(value.operate(BigInteger::pow, other.value)))
         }
     override fun times(other: BigIntType) =
         BigIntType(value * other.value)
-    override fun div(other: BigIntType): Completion {
-        if (other.value == BigInteger.ZERO) return Completion.`throw`(NullType/* RangeError */)
-        return Completion.normal(BigIntType(value / other.value))
+    override fun div(other: BigIntType): MaybeAbrupt<BigIntType> {
+        if (other.value == BigInteger.ZERO) return Completion.Throw(NullType/* RangeError */)
+        return Completion.Normal(BigIntType(value / other.value))
     }
-    override fun rem(other: BigIntType): Completion {
-        if (other.value == BigInteger.ZERO) return Completion.`throw`(NullType/* RangeError */)
-        return Completion.normal(BigIntType(value % other.value))
+    override fun rem(other: BigIntType): MaybeAbrupt<BigIntType> {
+        if (other.value == BigInteger.ZERO) return Completion.Throw(NullType/* RangeError */)
+        return Completion.Normal(BigIntType(value % other.value))
     }
     override fun plus(other: BigIntType) =
         BigIntType(value + other.value)
@@ -34,7 +35,7 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
     override fun signedRightShift(other: BigIntType) =
         leftShift(-other)
     override fun unsignedRightShift(other: BigIntType) =
-        Completion.`throw`(NullType/* TypeError */)
+        Completion.Throw(NullType/* TypeError */)
     override fun lessThan(other: BigIntType, undefinedReplacement: BooleanType): BooleanType =
         BooleanType.from(value < other.value)
     override fun equal(other: BigIntType) =

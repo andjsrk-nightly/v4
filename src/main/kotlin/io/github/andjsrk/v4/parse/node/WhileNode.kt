@@ -3,8 +3,9 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
 import io.github.andjsrk.v4.evaluate.returnIfShouldNotContinue
-import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class WhileNode(
@@ -17,13 +18,13 @@ class WhileNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::test, ::body, ::atLeastOnce, ::range)
-    override fun evaluateLoop(): Completion {
+    override fun evaluateLoop(): NonEmptyNormalOrAbrupt {
         var res: LanguageType = NullType
         if (atLeastOnce) res = body.evaluate().returnIfShouldNotContinue(res) { return it }
         while (true) {
             val testVal = test.evaluateValueOrReturn { return it }
-            if (testVal !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
-            if (!testVal.value) return Completion.normal(res)
+            if (testVal !is BooleanType) return Completion.Throw(NullType/* TypeError */)
+            if (!testVal.value) return Completion.Normal(res)
             res = body.evaluate().returnIfShouldNotContinue(res) { return it }
         }
     }

@@ -19,5 +19,5 @@ sealed class AbstractFunctionType(
     }
     val realm = runningExecutionContext.realm
     @EsSpec("[[Call]]")
-    abstract fun _call(thisArg: LanguageType, args: List<LanguageType>): Completion
+    abstract fun _call(thisArg: LanguageType, args: List<LanguageType>): NonEmptyNormalOrAbrupt
 }

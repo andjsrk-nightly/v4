@@ -19,7 +19,7 @@ object Evaluator {
         realm.setGlobalObject(null)
         realm.setDefaultGlobalBindings()
     }
-    fun evaluate(module: ModuleNode): Completion {
+    fun evaluate(module: ModuleNode): Completion<*> {
         instantiateBlockDeclaration(module, runningExecutionContext.lexicalEnvironment)
         return module.evaluate()
     }

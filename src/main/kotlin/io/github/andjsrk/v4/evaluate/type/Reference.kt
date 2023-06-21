@@ -34,9 +34,9 @@ data class Reference(
         base.initializeBinding(referencedName.value, value)
     }
     @EsSpec("PutValue")
-    fun putValue(value: LanguageType): Completion {
+    fun putValue(value: LanguageType): EmptyOrAbrupt {
         when {
-            this.isUnresolvable -> return Completion.`throw`(NullType/* ReferenceError */)
+            this.isUnresolvable -> return Completion.Throw(NullType/* ReferenceError */)
             this.isProperty -> {
                 TODO()
             }

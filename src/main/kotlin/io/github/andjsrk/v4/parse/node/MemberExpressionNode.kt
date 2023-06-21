@@ -2,10 +2,8 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.Reference
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
-import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
 import io.github.andjsrk.v4.parse.stringValue
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
@@ -20,24 +18,24 @@ class MemberExpressionNode(
     override val range = `object`.range..endRange
     override fun toString() =
         stringifyLikeDataClass(::`object`, ::property, ::isOptionalChain, ::isComputed, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluate(): MaybeAbrupt<Reference> {
         val baseRef = returnIfAbrupt(`object`.evaluate()) { return it }
 
         if (baseRef is Reference) {
             val isOptionalChain = baseRef.isOptionalChain || this.isOptionalChain
-            if (isOptionalChain && baseRef.base == NullType) return Completion.wideNormal(baseRef) // continue resulting null
+            if (isOptionalChain && baseRef.base == NullType) return Completion.WideNormal(baseRef) // continue resulting null
         }
 
-        val base = getLanguageTypeOrReturn(getValue(baseRef)) { return it }
+        val base = returnIfAbrupt(getValue(baseRef)) { return it }
 
-        if (this.isOptionalChain && base == NullType) return Completion.wideNormal(
+        if (this.isOptionalChain && base == NullType) return Completion.WideNormal(
             Reference(NullType, null, isOptionalChain=true)
         )
 
-        return Completion.wideNormal(
+        return Completion.WideNormal(
             if (this.isComputed) {
                 val key = property.evaluateValueOrReturn { return it }
-                val coercedKey = returnIfAbrupt<PropertyKey>(key.toPropertyKey()) { return it }
+                val coercedKey = returnIfAbrupt(key.toPropertyKey()) { return it }
                 Reference(base, coercedKey)
             } else {
                 require(property is IdentifierNode)

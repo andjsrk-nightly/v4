@@ -9,5 +9,5 @@ class ContinueNode(startRange: Range, semicolonRange: Range?): StatementNode {
     override fun toString() =
         stringifyLikeDataClass(::range)
     override fun evaluate() =
-        Completion(Completion.Type.CONTINUE, null)
+        Completion.Continue(null, null)
 }

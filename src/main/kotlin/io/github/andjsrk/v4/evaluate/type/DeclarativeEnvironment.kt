@@ -9,34 +9,34 @@ open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
     val bindings = mutableMapOf<String, Binding>()
     override fun hasBinding(name: String) =
         name in bindings
-    override fun createMutableBinding(name: String): Completion {
+    override fun createMutableBinding(name: String): Empty {
         assert(name !in bindings)
         bindings[name] = Binding(true, null)
-        return Completion.empty
+        return Completion.Normal.empty
     }
-    override fun createImmutableBinding(name: String): Completion {
+    override fun createImmutableBinding(name: String): Empty {
         assert(name !in bindings)
         bindings[name] = Binding(false, null)
-        return Completion.empty
+        return Completion.Normal.empty
     }
-    override fun initializeBinding(name: String, value: LanguageType): Completion {
+    override fun initializeBinding(name: String, value: LanguageType): Empty {
         val binding = bindings[name]
         assert(binding != null && binding.not { isInitialized })
         requireNotNull(binding)
         binding.value = value
-        return Completion.empty
+        return Completion.Normal.empty
     }
-    override fun setMutableBinding(name: String, value: LanguageType): Completion {
-        val binding = bindings[name] ?: return Completion.`throw`(NullType/* ReferenceError */)
-        if (binding.not { isInitialized }) return Completion.`throw`(NullType/* ReferenceError */)
-        if (binding.not { isMutable }) return Completion.`throw`(NullType/* TypeError */)
+    override fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt {
+        val binding = bindings[name] ?: return Completion.Throw(NullType/* ReferenceError */)
+        if (binding.not { isInitialized }) return Completion.Throw(NullType/* ReferenceError */)
+        if (binding.not { isMutable }) return Completion.Throw(NullType/* TypeError */)
         binding.value = value
-        return Completion.empty
+        return Completion.Normal.empty
     }
-    override fun getValue(name: String): Completion {
+    override fun getValue(name: String): NonEmptyNormalOrAbrupt {
         assert(name in bindings)
         val binding = bindings[name] ?: neverHappens()
-        if (binding.not { isInitialized }) return Completion.`throw`(NullType/* ReferenceError */)
-        return Completion.normal(binding.value!!)
+        if (binding.not { isInitialized }) return Completion.Throw(NullType/* ReferenceError */)
+        return Completion.Normal(binding.value!!)
     }
 }

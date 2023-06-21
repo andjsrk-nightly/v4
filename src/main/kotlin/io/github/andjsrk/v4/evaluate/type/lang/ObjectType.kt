@@ -34,26 +34,26 @@ open class ObjectType(
     fun _getOwnProperty(key: PropertyKey) =
         properties[key]
     @EsSpec("[[DefineOwnProperty]]")
-    fun _defineOwnProperty(key: PropertyKey, descriptor: Property): Completion {
+    fun _defineOwnProperty(key: PropertyKey, descriptor: Property): EmptyOrAbrupt {
         val current = _getOwnProperty(key)
         return _applyPropertyDescriptor(key, descriptor, current)
     }
     /**
      * Returns a normal completion containing empty or a throw completion.
      */
-    fun _throwIfNotCompatiblePropertyDescriptor(current: Property?): Completion {
+    fun _throwIfNotCompatiblePropertyDescriptor(current: Property?): EmptyOrAbrupt {
         when {
-            current == null -> if (!extensible) return Completion.`throw`(NullType/* TypeError */)
-            current.not { configurable } -> return Completion.`throw`(NullType/* TypeError */)
+            current == null -> if (!extensible) return Completion.Throw(NullType/* TypeError */)
+            current.not { configurable } -> return Completion.Throw(NullType/* TypeError */)
         }
-        return Completion.empty
+        return Completion.Normal.empty
     }
     @EsSpec("IsCompatiblePropertyDescriptor")
     fun _isCompatiblePropertyDescriptor(current: Property?): Boolean {
         if (current == null) return extensible
         return current.configurable
     }
-    fun _applyPropertyDescriptor(key: PropertyKey, descriptor: Property, current: Property?): Completion {
+    fun _applyPropertyDescriptor(key: PropertyKey, descriptor: Property, current: Property?): EmptyOrAbrupt {
         returnIfAbrupt(_throwIfNotCompatiblePropertyDescriptor(current)) { return it }
 
         properties[key] = when (descriptor) {
@@ -61,25 +61,25 @@ open class ObjectType(
             is DataProperty -> descriptor.copy()
         }
 
-        return Completion.empty
+        return Completion.Normal.empty
     }
     @EsSpec("[[HasProperty]]")
     fun _hasProperty(key: PropertyKey): Boolean =
         hasOwnProperty(key) || prototype?._hasProperty(key) ?: false
     @EsSpec("[[Get]]")
-    fun _get(key: PropertyKey, receiver: LanguageType): Completion {
+    fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyNormalOrAbrupt {
         val descriptor = _getOwnProperty(key)
         if (descriptor == null) {
-            val proto = prototype ?: return Completion.`null`
+            val proto = prototype ?: return Completion.Normal.`null`
             return proto._get(key, receiver)
         }
-        if (descriptor is DataProperty) return Completion.normal(descriptor.value)
+        if (descriptor is DataProperty) return Completion.Normal(descriptor.value)
         require(descriptor is AccessorProperty)
-        val getter = descriptor.get ?: return Completion.`null`
+        val getter = descriptor.get ?: return Completion.Normal.`null`
         TODO()
     }
     @EsSpec("[[Set]]")
-    fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): Completion {
+    fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): MaybeAbrupt<BooleanType?> {
         when (val ownDesc = _getOwnProperty(key)) {
             null -> {
                 val parent = prototype
@@ -87,31 +87,31 @@ open class ObjectType(
                 else properties[key] = DataProperty(value)
             }
             is DataProperty -> {
-                if (ownDesc.not { writable }) return Completion.`throw`(NullType/* TypeError */)
-                if (receiver !is ObjectType) return Completion.`throw`(NullType/* TypeError */)
+                if (ownDesc.not { writable }) return Completion.Throw(NullType/* TypeError */)
+                if (receiver !is ObjectType) return Completion.Throw(NullType/* TypeError */)
                 // TODO: clarify what `receiver` means and fix code if needed
                 val existingDesc = receiver._getOwnProperty(key)
                 if (existingDesc == null) createDataProperty(key, value)
                 else {
-                    if (existingDesc is AccessorProperty) return Completion.normal(BooleanType.FALSE)
+                    if (existingDesc is AccessorProperty) return Completion.Normal(BooleanType.FALSE)
                     require(existingDesc is DataProperty)
-                    if (existingDesc.not { writable }) return Completion.`throw`(NullType/* TypeError */)
+                    if (existingDesc.not { writable }) return Completion.Throw(NullType/* TypeError */)
                     receiver._defineOwnProperty(key, existingDesc.copy(value=value))
                 }
             }
             is AccessorProperty -> {
-                val setter = ownDesc.set ?: return Completion.`throw`(NullType/*  */)
+                val setter = ownDesc.set ?: return Completion.Throw(NullType/*  */)
                 TODO()
             }
         }
-        return Completion.empty
+        return Completion.Normal.empty
     }
     @EsSpec("[[Delete]]")
-    fun _delete(key: PropertyKey): Completion {
-        val desc = _getOwnProperty(key) ?: return Completion.empty
-        if (desc.not { configurable }) return Completion.`throw`(NullType/* TypeError */)
+    fun _delete(key: PropertyKey): EmptyOrAbrupt {
+        val desc = _getOwnProperty(key) ?: return Completion.Normal.empty
+        if (desc.not { configurable }) return Completion.Throw(NullType/* TypeError */)
         properties.remove(key)
-        return Completion.empty
+        return Completion.Normal.empty
     }
     @EsSpec("[[OwnPropertyKeys]]")
     fun _ownPropertyKeys() =
@@ -156,7 +156,7 @@ open class ObjectType(
     fun hasOwnProperty(key: PropertyKey) =
         _getOwnProperty(key) != null
     @EsSpec("SetIntegrityLevel")
-    fun setImmutabilityLevel(level: ObjectImmutabilityLevel): Completion {
+    fun setImmutabilityLevel(level: ObjectImmutabilityLevel): EmptyOrAbrupt {
         val keys = _ownPropertyKeys()
         when (level) {
             ObjectImmutabilityLevel.SEALED -> {
@@ -180,7 +180,7 @@ open class ObjectType(
                 }
             }
         }
-        return Completion.empty
+        return Completion.Normal.empty
     }
     @EsSpec("TestIntegrityLevel")
     fun satisfiesImmutabilityLevel(level: ObjectImmutabilityLevel): Boolean {

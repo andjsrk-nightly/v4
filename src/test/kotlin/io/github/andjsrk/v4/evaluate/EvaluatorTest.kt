@@ -309,11 +309,11 @@ internal class EvaluatorTest {
     @Test
     fun testEqualOperator() {
         arrayOf("==" to true, "!==" to false).forEach { (op, expected) ->
-            fun Completion.shouldEqual() =
+            fun Completion<*>.shouldEqual() =
                 this.shouldBeNormalAnd<BooleanType> {
                     assert(value == expected)
                 }
-            fun Completion.shouldNotEqual() =
+            fun Completion<*>.shouldNotEqual() =
                 this.shouldBeNormalAnd<BooleanType> {
                     assert(value != expected)
                 }
@@ -722,24 +722,24 @@ private fun variableNamed(name: String): Binding {
 private inline fun <reified Value: LanguageType> Binding.shouldBeTypedAs(block: Value.() -> Unit) {
     value.assertTypeAnd<Value>(block)
 }
-private fun Completion.shouldBeNormalAnd(block: () -> Unit) {
-    assert(this.isNormal)
+private fun Completion<*>.shouldBeNormalAnd(block: () -> Unit) {
+    assertIs<Completion.Normal<*>>(this)
     block()
     Evaluator.cleanup()
 }
-private inline fun <reified Value: LanguageType> Completion.shouldBeNormalAnd(crossinline block: Value.() -> Unit) =
+private inline fun <reified Value: LanguageType> Completion<*>.shouldBeNormalAnd(crossinline block: Value.() -> Unit) =
     this.shouldBeNormalAnd {
         value.assertTypeAnd<Value>(block)
     }
-private fun Completion.shouldBeThrowAnd(block: () -> Unit) {
-    assert(type == Completion.Type.THROW)
+private fun Completion<*>.shouldBeThrowAnd(block: () -> Unit) {
+    assertIs<Completion.Throw>(this)
     // TODO: put more assertions
 }
-private inline fun <reified Value: LanguageType> Completion.shouldBeThrowAnd(crossinline block: Value.() -> Unit) =
+private inline fun <reified Value: LanguageType> Completion<*>.shouldBeThrowAnd(crossinline block: Value.() -> Unit) =
     this.shouldBeThrowAnd {
         value.assertTypeAnd<Value>(block)
     }
-private fun evaluationOf(code: String): Completion {
+private fun evaluationOf(code: String): Completion<*> {
     val parser = Parser(code.trimIndent())
     return parser.parseModule()
         ?.let {

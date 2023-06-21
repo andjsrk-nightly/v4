@@ -12,5 +12,5 @@ class BigintLiteralNode(rawContent: String, range: Range): DynamicPrimitiveLiter
         raw.removeSuffix("n").toBigInteger()
     }
     override fun evaluate() =
-        Completion.normal(BigIntType(value))
+        Completion.Normal(BigIntType(value))
 }

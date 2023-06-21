@@ -7,5 +7,5 @@ import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 class BooleanLiteralNode(rawContent: String, range: Range): DynamicPrimitiveLiteralNode<Boolean>(rawContent, range) {
     override val value = raw.toBooleanStrict()
     override fun evaluate() =
-        Completion.normal(BooleanType.from(value))
+        Completion.Normal(BooleanType.from(value))
 }

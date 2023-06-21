@@ -9,5 +9,5 @@ class BreakNode(startRange: Range, semicolonRange: Range?): StatementNode {
     override fun toString() =
         stringifyLikeDataClass(::range)
     override fun evaluate() =
-        Completion(Completion.Type.BREAK, null)
+        Completion.Break(null, null)
 }

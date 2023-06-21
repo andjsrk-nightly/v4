@@ -10,9 +10,9 @@ class ModuleNode(override val elements: List<StatementNode>): StatementListNode 
     override val range = Range(0, elements.lastOrNull()?.range?.end ?: 0)
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluate(): Completion<*> {
         val res = evaluateStatements()
-        if (res.isNormal && res.value == null) return Completion.`null`
+        if (res is Completion.WideNormal<*> && res.value == null) return Completion.Normal.`null`
         return res
     }
 }

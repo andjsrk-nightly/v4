@@ -7,5 +7,5 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 class EmptyStatementNode(override val range: Range): StatementNode, ClassElementNode {
     override fun toString() =
         stringifyLikeDataClass(::range)
-    override fun evaluate() = Completion.empty
+    override fun evaluate() = Completion.Normal.empty
 }

@@ -3,8 +3,7 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.parse.*
 
@@ -19,7 +18,7 @@ class NormalForNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::init, ::test, ::update, ::body, ::range)
-    override fun evaluateLoop(): Completion {
+    override fun evaluateLoop(): NonEmptyNormalOrAbrupt {
         var bindingNames = emptyList<String>()
         val oldEnv = runningExecutionContext.lexicalEnvironment
         if (init != null) {
@@ -28,7 +27,7 @@ class NormalForNode(
             init.instantiateIn(loopEnv, names)
             runningExecutionContext.lexicalEnvironment = loopEnv
             val initRes = init.evaluate()
-            if (initRes.isAbrupt) {
+            if (initRes is Completion.Abrupt) {
                 runningExecutionContext.lexicalEnvironment = oldEnv
                 return initRes
             }
@@ -39,14 +38,14 @@ class NormalForNode(
         return body
     }
     @EsSpec("ForBodyEvaluation")
-    private fun evaluateBody(bindingNames: List<String>): Completion {
+    private fun evaluateBody(bindingNames: List<String>): NonEmptyNormalOrAbrupt {
         var res: LanguageType = NullType
         runningExecutionContext.lexicalEnvironment.coverBindingsPerIteration(bindingNames)
         while (true) {
             if (test != null) {
                 val testValue = test.evaluateValueOrReturn { return it }
-                if (testValue !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
-                if (!testValue.value) return Completion.normal(res)
+                if (testValue !is BooleanType) return Completion.Throw(NullType/* TypeError */)
+                if (!testValue.value) return Completion.Normal(res)
             }
             res = body.evaluate().returnIfShouldNotContinue(res) { return it }
             runningExecutionContext.lexicalEnvironment.coverBindingsPerIteration(bindingNames)
@@ -64,7 +63,7 @@ private fun DeclarativeEnvironment.coverBindingsPerIteration(bindingNames: List<
     val currIterationEnv = DeclarativeEnvironment(outer)
     for (name in bindingNames) {
         currIterationEnv.createNonConfigurableMutableBinding(name)
-        val lastValue = neverAbrupt<LanguageType>(lastIterationEnv.getValue(name))
+        val lastValue = neverAbrupt(lastIterationEnv.getValue(name))
         currIterationEnv.initializeBinding(name, lastValue)
     }
     runningExecutionContext.lexicalEnvironment = currIterationEnv

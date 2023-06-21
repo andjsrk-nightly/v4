@@ -16,13 +16,13 @@ class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environm
         throw NotImplementedError()
     override fun initializeBinding(name: String, value: LanguageType) =
         setMutableBinding(name, value)
-    override fun setMutableBinding(name: String, value: LanguageType): Completion {
-        if (`object`.not { hasProperty(name.languageValue) }) return Completion.`throw`(NullType/* ReferenceError */)
+    override fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt {
+        if (`object`.not { hasProperty(name.languageValue) }) return Completion.Throw(NullType/* ReferenceError */)
         returnIfAbrupt(`object`.set(name.languageValue, value)) { return it }
-        return Completion.empty
+        return Completion.Normal.empty
     }
-    override fun getValue(name: String): Completion {
-        if (`object`.not { hasProperty(name.languageValue) }) return Completion.`throw`(NullType/* ReferenceError */)
+    override fun getValue(name: String): NonEmptyNormalOrAbrupt {
+        if (`object`.not { hasProperty(name.languageValue) }) return Completion.Throw(NullType/* ReferenceError */)
         return `object`.get(name.languageValue)
     }
 }

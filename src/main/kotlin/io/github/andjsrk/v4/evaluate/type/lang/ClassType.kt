@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
-import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.Property
 
 class ClassType(
@@ -9,7 +9,7 @@ class ClassType(
     instancePrototypeInitializer: PrototypeObject.() -> Unit,
 ): ObjectType(null, staticProperties) {
     val instancePrototype: PrototypeObject = ObjectType.create(parent?.instancePrototype).apply(instancePrototypeInitializer)
-    fun construct(): Completion {
+    fun construct(): MaybeAbrupt<ObjectType> {
         TODO()
     }
 }

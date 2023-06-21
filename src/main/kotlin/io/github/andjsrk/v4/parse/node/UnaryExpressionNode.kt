@@ -4,8 +4,9 @@ import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.UnaryOperationType.*
 import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
 import io.github.andjsrk.v4.evaluate.extractFromCompletionOrReturn
-import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 open class UnaryExpressionNode(
@@ -21,15 +22,15 @@ open class UnaryExpressionNode(
     }
     override fun toString() =
         stringifyLikeDataClass(::operand, ::operation, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluate(): NonEmptyNormalOrAbrupt {
         when (this.operation) {
             VOID -> {
                 operand.evaluateValueOrReturn { return it }
-                return Completion.`null`
+                return Completion.Normal.`null`
             }
             TYPEOF -> {
                 val value = operand.evaluateValueOrReturn { return it }
-                return Completion.normal(
+                return Completion.Normal(
                     StringType(
                         when (value) {
                             NullType -> "null"
@@ -46,8 +47,8 @@ open class UnaryExpressionNode(
             MINUS -> {
                 val value = operand.evaluateValueOrReturn { return it }
                 return when (value) {
-                    is NumericType<*> -> Completion.normal(-value)
-                    else -> Completion.`throw`(NullType)
+                    is NumericType<*> -> Completion.Normal(-value)
+                    else -> Completion.Throw(NullType)
                 }
             }
             BITWISE_NOT -> {
@@ -55,15 +56,15 @@ open class UnaryExpressionNode(
                 return when (value) {
                     is NumericType<*> -> {
                         val res = value.bitwiseNot().extractFromCompletionOrReturn { return it }
-                        Completion.normal(res)
+                        Completion.Normal(res)
                     }
-                    else -> Completion.`throw`(NullType/* TypeError */)
+                    else -> Completion.Throw(NullType/* TypeError */)
                 }
             }
             NOT -> {
                 val value = operand.evaluateValueOrReturn { return it }
-                if (value !is BooleanType) return Completion.`throw`(NullType/* TypeError */)
-                return Completion.normal(!value)
+                if (value !is BooleanType) return Completion.Throw(NullType/* TypeError */)
+                return Completion.Normal(!value)
             }
             // TODO: await expression
             else -> missingBranch()

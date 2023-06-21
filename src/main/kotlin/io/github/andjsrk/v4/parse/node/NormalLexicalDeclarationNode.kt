@@ -2,9 +2,8 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.Reference
 import io.github.andjsrk.v4.parse.*
 
 class NormalLexicalDeclarationNode(
@@ -17,7 +16,7 @@ class NormalLexicalDeclarationNode(
     override val range = startRange..bindings.last().range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::kind, ::bindings, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluate(): EmptyOrAbrupt {
         for (binding in bindings) {
             when (binding.binding) {
                 is IdentifierNode -> {
@@ -35,6 +34,6 @@ class NormalLexicalDeclarationNode(
                 is BindingPatternNode -> TODO()
             }
         }
-        return Completion.empty
+        return Completion.Normal.empty
     }
 }

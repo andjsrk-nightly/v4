@@ -3,8 +3,7 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.BinaryOperationType
 import io.github.andjsrk.v4.BinaryOperationType.ASSIGN
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.Reference
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.parse.*
 
 class BinaryExpressionNode(
@@ -16,21 +15,21 @@ class BinaryExpressionNode(
     override val range = left.range..right.range
     override fun toString() =
         stringifyLikeDataClass(::left, ::right, ::operation, ::range)
-    override fun evaluate(): Completion {
+    override fun evaluate(): NonEmptyNormalOrAbrupt {
         if (operation.isAssignLike) {
             // TODO: destructuring assignment
 
-            val lref = returnIfAbrupt<Reference>(left.evaluate()) { return it }
+            val lref = returnIfAbrupt(left.evaluate() as Completion<Reference>) { return it }
             val rval =
                 if (operation == ASSIGN) {
                     if (left is IdentifierNode && right.isAnonymous) right.evaluateWithNameOrReturn(left.stringValue) { return it }
                     else right.evaluateValueOrReturn { return it }
                 } else {
-                    val lval = getLanguageTypeOrReturn(getValue(lref)) { return it }
-                    getLanguageTypeOrReturn(lval.operate(operation.toNonAssign(), right)) { return it }
+                    val lval = returnIfAbrupt(getValue(lref)) { return it }
+                    returnIfAbrupt(lval.operate(operation.toNonAssign(), right)) { return it }
                 }
             returnIfAbrupt(lref.putValue(rval)) { return it }
-            return Completion.normal(rval)
+            return Completion.Normal(rval)
         }
 
         val lval = left.evaluateValueOrReturn { return it }

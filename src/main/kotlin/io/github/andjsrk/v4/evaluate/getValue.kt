@@ -6,13 +6,13 @@ import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.StringType
 
 @EsSpec("GetValue")
-internal fun getValue(v: AbstractType?): Completion {
+internal fun getValue(v: AbstractType?): NonEmptyNormalOrAbrupt {
     requireNotNull(v) // requires v should not be null but the function accepts null due to convenience
-    if (v is LanguageType) return Completion.normal(v)
+    if (v is LanguageType) return Completion.Normal(v)
     require(v is Reference)
     if (v.isProperty) {
         require(v.base is LanguageType)
-        if (v.referencedName == null) return Completion.`null`
+        if (v.referencedName == null) return Completion.Normal.`null`
         return v.base.getProperty(v.referencedName)
     } else {
         val base = v.base

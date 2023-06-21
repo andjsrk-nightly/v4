@@ -4,51 +4,32 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
+typealias MaybeAbrupt<NormalV> = Completion<NormalV>
+typealias Empty = Completion.Normal<Nothing?>
+typealias EmptyOrAbrupt = Completion<Nothing?>
+typealias NormalOrAbrupt = Completion<LanguageType?>
+typealias NonEmptyNormal = Completion.Normal<LanguageType>
+typealias NonEmptyNormalOrAbrupt = Completion<LanguageType>
+
 @EsSpec("Completion Record")
-data class Completion(
-    val type: Type,
-    val value: AbstractType?,
-): Record {
-    val languageValue get() =
-        value as LanguageType?
-    val isNormal get() =
-        type == Type.NORMAL
-    val isAbrupt get() =
-        !isNormal
+sealed interface Completion<out V: AbstractType?>: Record {
+    val value: AbstractType?
 
-    fun map(transform: (AbstractType?) -> AbstractType?) =
-        if (this.isNormal) copy(value=transform(value))
-        else this
-
-    enum class Type {
-        NORMAL,
-        BREAK,
-        CONTINUE,
-        RETURN,
-        THROW
-    }
-    companion object {
-        /**
-         * Returns a normal completion containing a [AbstractType] which is wider than [LanguageType].
-         */
-        inline fun wideNormal(value: AbstractType?) =
-            Completion(Type.NORMAL, value)
-        inline fun normal(value: LanguageType) =
-            wideNormal(value)
-        inline fun `throw`(value: LanguageType) =
-            Completion(Type.THROW, value)
-        /**
-         * Indicates a normal completion containing `empty`.
-         * Note that this covers `unused` as well.
-         */
-        val empty by lazy {
-            wideNormal(null)
-        }
-        /**
-         * Indicates a normal completion containing `null`(a language value).
-         */
-        val `null` by lazy {
-            normal(NullType)
+    open class WideNormal<V: AbstractType?>(override val value: V): Completion<V>
+    class Normal<V: LanguageType?>(override val value: V): WideNormal<V>(value) {
+        companion object {
+            /**
+             * Note that this covers `unused` as well.
+             */
+            val empty = Normal(null)
+            val `null` = Normal(NullType)
         }
     }
+    sealed class Abrupt(override val value: LanguageType?): Completion<Nothing>
+    sealed class NonEmptyAbrupt(override val value: LanguageType): Abrupt(value)
+    class Return(value: LanguageType): NonEmptyAbrupt(value)
+    class Throw(value: LanguageType): NonEmptyAbrupt(value)
+    sealed class IterationStop(value: LanguageType?, val target: String?): Abrupt(value)
+    class Continue(value: LanguageType?, target: String?): IterationStop(value, target)
+    class Break(value: LanguageType?, target: String?): IterationStop(value, target)
 }

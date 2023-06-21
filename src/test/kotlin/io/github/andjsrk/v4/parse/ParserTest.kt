@@ -1258,22 +1258,15 @@ internal class ParserTest {
     }
 }
 
-private inline fun <reified T: Node> MaybeRestNode.unwrapNonRest() =
-    run {
-        assertIs<NonRestNode>(this)
-        binding as T
-    }
-private inline fun <reified T: Node> MaybeRestNode.unwrapRest() =
-    run {
-        assertIs<RestNode>(this)
-        binding as T
-    }
+private inline fun <reified T: BindingElementNode> MaybeRestNode.unwrapNonRest() =
+    this.assertType<NonRestNode>()
+        .binding.assertType<T>()
+private inline fun <reified T: BindingElementNode> MaybeRestNode.unwrapRest() =
+    this.assertType<RestNode>()
+        .binding.assertType<T>()
 private inline fun <reified Expr: ExpressionNode> StatementNode.unwrapExprStmt() =
-    run {
-        assertIs<ExpressionStatementNode>(this)
-        assertIs<Expr>(expression)
-        expression as Expr
-    }
+    this.assertType<ExpressionStatementNode>()
+        .expression.assertType<Expr>()
 private fun Node.assertIdentifierNamed(name: String) {
     assertTypeAnd<IdentifierNode> {
         assert(value == name)
@@ -1288,10 +1281,7 @@ private inline fun <RN: Node, reified N: Node> Code.shouldBeValidAnd(parseFn: Pa
 private inline fun <reified Expr: ExpressionNode> Code.shouldBeValidExpressionAnd(block: Expr.() -> Unit) =
     shouldBeValidAnd(Parser::parseExpression, block)
 private inline fun <reified Stmt: StatementNode> Code.shouldBeValidStatementAnd(block: Stmt.() -> Unit) =
-    shouldBeValidAnd(
-        Parser::parseModuleItem,
-        block,
-    )
+    shouldBeValidAnd(Parser::parseModuleItem, block)
 private inline fun Code.shouldBeValidModuleAnd(block: ModuleNode.() -> Unit) =
     shouldBeValidAnd(Parser::parseModule, block)
 private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: ErrorKind, args: List<String>? = null, range: Range? = null) {
@@ -1313,12 +1303,7 @@ private fun Code.shouldBeInvalidWithError(parseFn: Parser.() -> Node?, kind: Err
 private fun Code.shouldBeInvalidExpressionWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
     shouldBeInvalidWithError(Parser::parseExpression, kind, args, range)
 private fun Code.shouldBeInvalidStatementWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
-    shouldBeInvalidWithError(
-        Parser::parseModuleItem,
-        kind,
-        args,
-        range,
-    )
+    shouldBeInvalidWithError(Parser::parseModuleItem, kind, args, range)
 private fun Code.shouldBeInvalidModuleWithError(kind: ErrorKind, args: List<String>? = null, range: Range? = null) =
     shouldBeInvalidWithError(Parser::parseModule, kind, args, range)
 private inline fun <N: Node> Parser.parseSuccessfully(parseFn: Parser.() -> N?) =

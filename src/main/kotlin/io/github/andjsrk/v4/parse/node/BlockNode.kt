@@ -9,7 +9,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 class BlockNode(
     override val elements: List<StatementNode>,
     override val range: Range,
-): StatementNode, StatementListNode {
+): StatementNode, StatementListNode, ConciseBodyNode {
     override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)

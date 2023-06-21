@@ -11,4 +11,9 @@ data class DataProperty(
     override var configurable: Boolean = true,
 ): Property {
     override fun clone() = copy()
+
+    companion object {
+        fun sealed(value: LanguageType) =
+            DataProperty(value, writable=false, enumerable=false, configurable=false)
+    }
 }

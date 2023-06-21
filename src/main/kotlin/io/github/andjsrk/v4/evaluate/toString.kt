@@ -15,7 +15,7 @@ internal fun toString(value: LanguageType): Completion {
             is BooleanType -> value.value.toString().languageValue
             is StringType -> value
             is NumericType<*> -> value.toString(10)
-            is SymbolType -> return Completion.`throw`(NullType)
+            is SymbolType -> return Completion.`throw`(NullType/* TypeError */)
             is ObjectType -> TODO()
         }
     )

@@ -353,6 +353,10 @@ internal class EvaluatorTest {
             evaluationOf("""
                 true $op false
             """).shouldNotEqual()
+
+            evaluationOf("""
+                ({} $op {})
+            """).shouldNotEqual()
         }
     }
     @Test
@@ -708,12 +712,8 @@ internal class EvaluatorTest {
     }
 }
 
-private fun ObjectType.dataPropertyNamed(name: String): DataProperty {
-    properties[name.languageValue].assertTypeAnd<DataProperty> {
-        return this
-    }
-    neverHappens()
-}
+private fun ObjectType.dataPropertyNamed(name: String) =
+    properties[name.languageValue].assertType<DataProperty>()
 private fun variableNamed(name: String): Binding {
     val binding = Evaluator.runningExecutionContext.lexicalEnvironment.bindings[name]
     assertNotNull(binding)

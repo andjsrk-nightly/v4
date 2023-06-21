@@ -156,10 +156,10 @@ open class ObjectType(
     fun hasOwnProperty(key: PropertyKey) =
         _getOwnProperty(key) != null
     @EsSpec("SetIntegrityLevel")
-    fun setImmutabilityLevel(level: ImmutabilityLevel): Completion {
+    fun setImmutabilityLevel(level: ObjectImmutabilityLevel): Completion {
         val keys = _ownPropertyKeys()
         when (level) {
-            ImmutabilityLevel.SEALED -> {
+            ObjectImmutabilityLevel.SEALED -> {
                 for (key in keys) {
                     val desc = _getOwnProperty(key)!!
                         .clone()
@@ -169,7 +169,7 @@ open class ObjectType(
                     returnIfAbrupt(definePropertyOrThrow(key, desc)) { return it }
                 }
             }
-            ImmutabilityLevel.FROZEN -> {
+            ObjectImmutabilityLevel.FROZEN -> {
                 for (key in keys) {
                     val desc = _getOwnProperty(key)!!.clone()
                         .apply {
@@ -183,12 +183,12 @@ open class ObjectType(
         return Completion.empty
     }
     @EsSpec("TestIntegrityLevel")
-    fun satisfiesImmutabilityLevel(level: ImmutabilityLevel): Boolean {
+    fun satisfiesImmutabilityLevel(level: ObjectImmutabilityLevel): Boolean {
         if (extensible) return false
         for (key in _ownPropertyKeys()) {
             val desc = _getOwnProperty(key)!!
             if (desc.configurable) return false
-            if (level == ImmutabilityLevel.FROZEN && desc is DataProperty) {
+            if (level == ObjectImmutabilityLevel.FROZEN && desc is DataProperty) {
                 if (desc.writable) return false
             }
         }

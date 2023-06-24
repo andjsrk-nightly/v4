@@ -19,7 +19,7 @@ class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environm
     override fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt {
         if (`object`.not { hasProperty(name.languageValue) }) return Completion.Throw(NullType/* ReferenceError */)
         returnIfAbrupt(`object`.set(name.languageValue, value)) { return it }
-        return Completion.Normal.empty
+        return empty
     }
     override fun getValue(name: String): NonEmptyNormalOrAbrupt {
         if (`object`.not { hasProperty(name.languageValue) }) return Completion.Throw(NullType/* ReferenceError */)

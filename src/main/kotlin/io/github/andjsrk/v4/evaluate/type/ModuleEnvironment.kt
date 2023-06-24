@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import io.github.andjsrk.v4.not
 
 @EsSpec("Module Environment Record")
-class ModuleEnvironment(outer: Environment? = null): DeclarativeEnvironment(outer) {
+class ModuleEnvironment(outer: Environment?): DeclarativeEnvironment(outer) {
     override fun getValue(name: String): NonEmptyNormalOrAbrupt {
         val binding = bindings[name]
         assert(binding != null)
@@ -14,7 +14,7 @@ class ModuleEnvironment(outer: Environment? = null): DeclarativeEnvironment(oute
         if (binding.not { isInitialized }) return Completion.Throw(NullType/* ReferenceError */)
         return Completion.Normal(binding.value!!)
     }
-    fun createImportBinding(name: String, module: Module, ) {
+    fun createImportBinding(name: String, module: SourceTextModule, ) {
         TODO()
     }
 }

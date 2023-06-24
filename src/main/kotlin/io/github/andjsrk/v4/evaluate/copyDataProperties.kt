@@ -1,8 +1,8 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.EmptyOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.empty
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("CopyDataProperties")
@@ -11,7 +11,7 @@ internal fun copyDataProperties(
     source: LanguageType,
     exclude: List<PropertyKey> = emptyList(),
 ): EmptyOrAbrupt {
-    if (source == NullType) return Completion.Normal.empty
+    if (source == NullType) return empty
     val keys = source.ownPropertyKeys()
     for (key in keys) {
         if (key in exclude) continue
@@ -21,5 +21,5 @@ internal fun copyDataProperties(
             target.createDataProperty(key, value)
         }
     }
-    return Completion.Normal.empty
+    return empty
 }

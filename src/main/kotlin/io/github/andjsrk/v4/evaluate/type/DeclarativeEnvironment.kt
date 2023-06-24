@@ -12,26 +12,26 @@ open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
     override fun createMutableBinding(name: String): Empty {
         assert(name !in bindings)
         bindings[name] = Binding(true, null)
-        return Completion.Normal.empty
+        return empty
     }
     override fun createImmutableBinding(name: String): Empty {
         assert(name !in bindings)
         bindings[name] = Binding(false, null)
-        return Completion.Normal.empty
+        return empty
     }
     override fun initializeBinding(name: String, value: LanguageType): Empty {
         val binding = bindings[name]
         assert(binding != null && binding.not { isInitialized })
         requireNotNull(binding)
         binding.value = value
-        return Completion.Normal.empty
+        return empty
     }
     override fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt {
         val binding = bindings[name] ?: return Completion.Throw(NullType/* ReferenceError */)
         if (binding.not { isInitialized }) return Completion.Throw(NullType/* ReferenceError */)
         if (binding.not { isMutable }) return Completion.Throw(NullType/* TypeError */)
         binding.value = value
-        return Completion.Normal.empty
+        return empty
     }
     override fun getValue(name: String): NonEmptyNormalOrAbrupt {
         assert(name in bindings)

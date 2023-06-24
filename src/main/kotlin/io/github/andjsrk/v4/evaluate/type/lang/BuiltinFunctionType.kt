@@ -13,11 +13,12 @@ class BuiltinFunctionType(
     requiredParameterCount: UInt,
     val behavior: BuiltinFunctionBehavior,
 ): AbstractFunctionType(name, requiredParameterCount, runningExecutionContext.lexicalEnvironment) {
+    override val isArrow = false
     override fun _call(thisArg: LanguageType, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
-        val callerContext = runningExecutionContext
         val calleeContext = ExecutionContext(FunctionEnvironment.from(this, thisArg), realm, this)
+        executionContextStack.push(calleeContext)
         val res = behavior(thisArg, args)
-        Evaluator.runningExecutionContext = callerContext
+        executionContextStack.pop()
         return res
     }
 }

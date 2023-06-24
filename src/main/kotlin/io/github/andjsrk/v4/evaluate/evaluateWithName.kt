@@ -1,14 +1,23 @@
 package io.github.andjsrk.v4.evaluate
 
+import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.NonEmptyNormal
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
-import io.github.andjsrk.v4.parse.node.ExpressionNode
-import io.github.andjsrk.v4.parse.node.ParenthesizedExpressionNode
+import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
+import io.github.andjsrk.v4.missingBranch
+import io.github.andjsrk.v4.parse.node.*
 
-internal fun ExpressionNode.evaluateWithName(name: LanguageType): NonEmptyNormal {
+internal fun ExpressionNode.evaluateWithName(name: PropertyKey): NonEmptyNormal {
     if (this is ParenthesizedExpressionNode) return expression.evaluateWithName(name)
-    TODO()
+    return Completion.Normal(
+        when (this) {
+            is ArrowFunctionNode -> instantiateArrowFunction(name)
+            is MethodExpressionNode -> TODO()
+            is ClassExpressionNode -> TODO()
+            else -> missingBranch()
+        }
+    )
 }
 
-internal inline fun ExpressionNode.evaluateWithNameOrReturn(name: LanguageType, `return`: CompletionReturn): LanguageType =
+internal inline fun ExpressionNode.evaluateWithNameOrReturn(name: PropertyKey, `return`: CompletionReturn): LanguageType =
     returnIfAbrupt(evaluateWithName(name), `return`)

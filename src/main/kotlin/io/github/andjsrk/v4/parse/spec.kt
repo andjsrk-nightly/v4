@@ -200,3 +200,13 @@ internal fun ModuleNode.exportEntries() =
         .filterIsInstance<ExportDeclarationNode>()
         .flatMap { it.exportEntries((it as? ExportDeclarationWithModuleSpecifierNode)?.moduleSpecifier?.value) }
         .toList()
+
+@EsSpec("ModuleRequests")
+internal fun ModuleNode.moduleRequests() =
+    elements.flatMap {
+        when (it) {
+            is ImportDeclarationNode -> listOf(it.moduleSpecifier.value)
+            is ExportDeclarationWithModuleSpecifierNode -> listOf(it.moduleSpecifier.value)
+            else -> emptyList()
+        }
+    }

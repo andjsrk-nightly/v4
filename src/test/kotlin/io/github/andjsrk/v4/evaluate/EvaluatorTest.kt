@@ -3,7 +3,6 @@ package io.github.andjsrk.v4.evaluate
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.parse.Parser
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
@@ -309,11 +308,11 @@ internal class EvaluatorTest {
     @Test
     fun testEqualOperator() {
         arrayOf("==" to true, "!==" to false).forEach { (op, expected) ->
-            fun Completion<*>.shouldEqual() =
+            fun EvaluationResult.shouldEqual() =
                 this.shouldBeNormalAnd<BooleanType> {
                     assert(value == expected)
                 }
-            fun Completion<*>.shouldNotEqual() =
+            fun EvaluationResult.shouldNotEqual() =
                 this.shouldBeNormalAnd<BooleanType> {
                     assert(value != expected)
                 }
@@ -438,41 +437,41 @@ internal class EvaluatorTest {
     fun testLexicalDeclaration() {
         evaluationOf("""
             let a = 0
-        """).shouldBeNormalAnd<NullType> {
+        """).shouldBeNormalAnd<NullType>(moduleBlock={
             variableNamed("a").run {
                 assertFalse(isMutable)
                 assertIs<NumberType>(value)
             }
-        }
+        })
 
         evaluationOf("""
             var a
-        """).shouldBeNormalAnd<NullType> {
+        """).shouldBeNormalAnd<NullType>(moduleBlock={
             variableNamed("a").run {
                 assertTrue(isMutable)
                 assertIs<NullType>(value)
             }
-        }
+        })
     }
     @Test
     fun testAssignment() {
         evaluationOf("""
             var a = 0
             a = 1
-        """).shouldBeNormalAnd<NumberType> {
+        """).shouldBeNormalAnd<NumberType>(moduleBlock={
             variableNamed("a").shouldBeTypedAs<NumberType> {
                 assert(value == 1.0)
             }
-        }
+        })
 
         evaluationOf("""
             var a = 0
             a += 1
-        """).shouldBeNormalAnd<NumberType> {
+        """).shouldBeNormalAnd<NumberType>(moduleBlock={
             variableNamed("a").shouldBeTypedAs<NumberType> {
                 assert(value == 1.0)
             }
-        }
+        })
     }
     @Test
     fun testIfStatement() {
@@ -538,7 +537,7 @@ internal class EvaluatorTest {
         evaluationOf("""
             var a = 0
             for (var i = 0; i < 5; i += 1) a += i
-        """).shouldBeNormalAnd<NumberType> {
+        """).shouldBeNormalAnd {
             variableNamed("a").shouldBeTypedAs<NumberType> {
                 assert(value == (0..4).sum().toDouble())
             }
@@ -547,7 +546,7 @@ internal class EvaluatorTest {
         evaluationOf("""
             var i = 0
             for (; i < 5; i += 1);
-        """).shouldBeNormalAnd<NullType> {
+        """).shouldBeNormalAnd {
             variableNamed("i").shouldBeTypedAs<NumberType> {
                 assert(value == 5.0)
             }
@@ -710,41 +709,72 @@ internal class EvaluatorTest {
             null?.a.b
         """).shouldBeNormalAnd<NullType> {}
     }
+    @Test
+    fun testArrowFunction() {
+        evaluationOf("""
+            let a = () => 0
+            let b = a()
+        """).shouldBeNormalAnd {
+            variableNamed("b").shouldBeTypedAs<NumberType> {
+                assert(value == 0.0)
+            }
+        }
+    }
 }
 
 private fun ObjectType.dataPropertyNamed(name: String) =
     properties[name.languageValue].assertType<DataProperty>()
-private fun variableNamed(name: String): Binding {
-    val binding = Evaluator.runningExecutionContext.lexicalEnvironment.bindings[name]
+private fun SourceTextModule.variableNamed(name: String): Binding {
+    val binding = environment.bindings[name]
     assertNotNull(binding)
     return binding
 }
 private inline fun <reified Value: LanguageType> Binding.shouldBeTypedAs(block: Value.() -> Unit) {
     value.assertTypeAnd<Value>(block)
 }
-private fun Completion<*>.shouldBeNormalAnd(block: () -> Unit) {
-    assertIs<Completion.Normal<*>>(this)
-    block()
-    Evaluator.cleanup()
+private fun EvaluationResult.shouldBeNormalAnd(block: SourceTextModule.() -> Unit) {
+    assertIs<Completion.Normal<*>>(completion)
+    block(module)
 }
-private inline fun <reified Value: LanguageType> Completion<*>.shouldBeNormalAnd(crossinline block: Value.() -> Unit) =
+private inline fun <reified Value: LanguageType> EvaluationResult.shouldBeNormalAnd(
+    crossinline moduleBlock: SourceTextModule.() -> Unit = {},
+    crossinline valueBlock: Value.() -> Unit = {},
+) =
     this.shouldBeNormalAnd {
-        value.assertTypeAnd<Value>(block)
+        completion.value.assertTypeAnd<Value> {
+            valueBlock(this)
+            moduleBlock(module)
+        }
     }
-private fun Completion<*>.shouldBeThrowAnd(block: () -> Unit) {
-    assertIs<Completion.Throw>(this)
+private fun EvaluationResult.shouldBeThrowAnd(block: SourceTextModule.() -> Unit) {
+    assertIs<Completion.Throw>(completion)
+    block(module)
     // TODO: put more assertions
 }
-private inline fun <reified Value: LanguageType> Completion<*>.shouldBeThrowAnd(crossinline block: Value.() -> Unit) =
+@JvmName("shouldBeThrowTypedAnd")
+private inline fun <reified Value: LanguageType> EvaluationResult.shouldBeThrowAnd(crossinline block: Value.() -> Unit) =
     this.shouldBeThrowAnd {
-        value.assertTypeAnd<Value>(block)
+        completion.value.assertTypeAnd<Value>(block)
     }
-private fun evaluationOf(code: String): Completion<*> {
-    val parser = Parser(code.trimIndent())
-    return parser.parseModule()
-        ?.let {
-            Evaluator.initialize()
-            Evaluator.evaluate(it)
+private fun evaluationOf(code: String): EvaluationResult {
+    initializeRealm()
+    return when (val moduleOrError = parseModule(code.trimIndent(), runningExecutionContext.realm)) {
+        is Valid -> {
+            val module = moduleOrError.value
+            module.initializeEnvironment()
+            val res = module.executeModuleWithoutIgnoringValue()
+            EvaluationResult(res, module)
         }
-        ?: throw AssertionError(parser.createErrorMsg())
+        is Invalid -> throw moduleOrError.value
+    }
 }
+/**
+ * @see SourceTextModule.executeModule
+ */
+private fun SourceTextModule.executeModuleWithoutIgnoringValue(): NormalOrAbrupt {
+    executionContextStack.push(ExecutionContext(environment, realm))
+    val res = node.evaluate()
+    executionContextStack.pop()
+    return res
+}
+private data class EvaluationResult(val completion: Completion<*>, val module: SourceTextModule)

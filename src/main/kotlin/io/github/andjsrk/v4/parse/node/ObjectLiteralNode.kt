@@ -31,7 +31,7 @@ class ObjectLiteralNode(
                     when (this) {
                         is ComputedPropertyKeyNode -> {
                             val value = expression.evaluateValueOrReturn { return it }
-                            returnIfAbrupt<PropertyKey>(value.toPropertyKey()) { return it }
+                            returnIfAbrupt(value.toPropertyKey()) { return it }
                         }
                         is IdentifierNode -> stringValue
                         is NumberLiteralNode -> value.languageValue.toString(10)
@@ -44,7 +44,7 @@ class ObjectLiteralNode(
                     else -> property.value.evaluateValueOrReturn { return it }
                 }
                 obj.createDataPropertyOrThrow(key, value)
-                return Completion.Normal.empty
+                return empty
             }
             is SpreadNode -> {
                 val value = property.expression.evaluateValueOrReturn { return it }

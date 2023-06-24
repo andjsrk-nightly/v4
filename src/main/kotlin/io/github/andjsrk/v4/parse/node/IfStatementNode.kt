@@ -3,6 +3,7 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
 import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.empty
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import io.github.andjsrk.v4.evaluate.updateEmpty
@@ -19,7 +20,7 @@ class IfStatementNode(
         if (testVal !is BooleanType) return Completion.Throw(NullType/* TypeError */)
         val completion =
             if (testVal.value) then.evaluate()
-            else `else`?.evaluate() ?: Completion.Normal.empty
+            else `else`?.evaluate() ?: empty
         return updateEmpty(completion, NullType)
     }
 }

@@ -4,6 +4,7 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
+typealias NonEmpty = Completion<AbstractType>
 typealias MaybeAbrupt<NormalV> = Completion<NormalV>
 typealias Empty = Completion.Normal<Nothing?>
 typealias EmptyOrAbrupt = Completion<Nothing?>
@@ -33,3 +34,5 @@ sealed interface Completion<out V: AbstractType?>: Record {
     class Continue(value: LanguageType?, target: String?): IterationStop(value, target)
     class Break(value: LanguageType?, target: String?): IterationStop(value, target)
 }
+
+internal inline val empty get() = Completion.Normal.empty

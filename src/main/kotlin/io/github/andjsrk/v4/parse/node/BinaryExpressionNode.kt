@@ -19,13 +19,13 @@ class BinaryExpressionNode(
         if (operation.isAssignLike) {
             // TODO: destructuring assignment
 
-            val lref = returnIfAbrupt(left.evaluate() as Completion<Reference>) { return it }
+            val lref = left.evaluateOrReturn { return it } as Reference
             val rval =
                 if (operation == ASSIGN) {
                     if (left is IdentifierNode && right.isAnonymous) right.evaluateWithNameOrReturn(left.stringValue) { return it }
                     else right.evaluateValueOrReturn { return it }
                 } else {
-                    val lval = returnIfAbrupt(getValue(lref)) { return it }
+                    val lval = getValueOrReturn(lref) { return it }
                     returnIfAbrupt(lval.operate(operation.toNonAssign(), right)) { return it }
                 }
             returnIfAbrupt(lref.putValue(rval)) { return it }

@@ -34,6 +34,6 @@ class NormalLexicalDeclarationNode(
                 is BindingPatternNode -> TODO()
             }
         }
-        return Completion.Normal.empty
+        return empty
     }
 }

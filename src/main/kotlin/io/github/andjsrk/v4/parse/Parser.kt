@@ -106,7 +106,7 @@ class Parser(sourceText: String) {
         val duplicate = names.findDuplicateBoundName(names.map{ it.value })
         if (duplicate != null) reporter(duplicate)
     }
-    private inline fun <R> ifHasNoError(valueProvider: () -> R) =
+    private inline fun <R> ifHasNoError(valueProvider: Deferred<R>) =
         not { hasError }.thenTake(valueProvider)
     private fun <T> Iterable<Deferred<T>>.foldElvisIfHasNoError() =
         this.asSequence().foldNull<_, T> { acc, it ->

@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.evaluate.returnIfAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
 
@@ -38,7 +39,10 @@ data class Reference(
         when {
             this.isUnresolvable -> return Completion.Throw(NullType/* ReferenceError */)
             this.isProperty -> {
-                TODO()
+                // primitives are immutable
+                if (base !is ObjectType) return Completion.Throw(NullType/* TypeError */)
+                returnIfAbrupt(base._set(referencedName!!, value, getThis())) { return it }
+                return empty
             }
             else -> {
                 require(base is DeclarativeEnvironment)
@@ -47,4 +51,7 @@ data class Reference(
             }
         }
     }
+    @EsSpec("GetThisValue")
+    fun getThis() =
+        thisValue ?: base as LanguageType
 }

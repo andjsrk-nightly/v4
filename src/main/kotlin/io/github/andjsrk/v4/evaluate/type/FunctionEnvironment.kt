@@ -1,8 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.lang.AbstractFunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("Function Environment Record")
 class FunctionEnvironment(
@@ -10,6 +9,15 @@ class FunctionEnvironment(
     var function: AbstractFunctionType,
     var thisValue: LanguageType? = null,
 ): DeclarativeEnvironment(outer) {
+    var initialized = false
+    @EsSpec("BindThisValue")
+    fun bindThisValue(value: LanguageType): EmptyOrAbrupt {
+        if (initialized) return Completion.Throw(NullType/* ReferenceError */)
+        thisValue = value
+        initialized = true
+        return empty
+    }
+
     companion object {
         fun from(func: AbstractFunctionType, thisValue: LanguageType? = null) =
             FunctionEnvironment(func.env, func, thisValue)

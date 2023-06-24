@@ -46,7 +46,7 @@ open class ObjectType(
             current == null -> if (!extensible) return Completion.Throw(NullType/* TypeError */)
             current.not { configurable } -> return Completion.Throw(NullType/* TypeError */)
         }
-        return Completion.Normal.empty
+        return empty
     }
     @EsSpec("IsCompatiblePropertyDescriptor")
     fun _isCompatiblePropertyDescriptor(current: Property?): Boolean {
@@ -61,7 +61,7 @@ open class ObjectType(
             is DataProperty -> descriptor.copy()
         }
 
-        return Completion.Normal.empty
+        return empty
     }
     @EsSpec("[[HasProperty]]")
     fun _hasProperty(key: PropertyKey): Boolean =
@@ -89,7 +89,6 @@ open class ObjectType(
             is DataProperty -> {
                 if (ownDesc.not { writable }) return Completion.Throw(NullType/* TypeError */)
                 if (receiver !is ObjectType) return Completion.Throw(NullType/* TypeError */)
-                // TODO: clarify what `receiver` means and fix code if needed
                 val existingDesc = receiver._getOwnProperty(key)
                 if (existingDesc == null) createDataProperty(key, value)
                 else {
@@ -104,14 +103,14 @@ open class ObjectType(
                 TODO()
             }
         }
-        return Completion.Normal.empty
+        return empty
     }
     @EsSpec("[[Delete]]")
     fun _delete(key: PropertyKey): EmptyOrAbrupt {
-        val desc = _getOwnProperty(key) ?: return Completion.Normal.empty
+        val desc = _getOwnProperty(key) ?: return empty
         if (desc.not { configurable }) return Completion.Throw(NullType/* TypeError */)
         properties.remove(key)
-        return Completion.Normal.empty
+        return empty
     }
     @EsSpec("[[OwnPropertyKeys]]")
     fun _ownPropertyKeys() =
@@ -180,7 +179,7 @@ open class ObjectType(
                 }
             }
         }
-        return Completion.Normal.empty
+        return empty
     }
     @EsSpec("TestIntegrityLevel")
     fun satisfiesImmutabilityLevel(level: ObjectImmutabilityLevel): Boolean {

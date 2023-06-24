@@ -18,6 +18,7 @@ sealed class AbstractFunctionType(
         )
     }
     val realm = runningExecutionContext.realm
+    abstract val isArrow: Boolean
     @EsSpec("[[Call]]")
     abstract fun _call(thisArg: LanguageType, args: List<LanguageType>): NonEmptyNormalOrAbrupt
 }

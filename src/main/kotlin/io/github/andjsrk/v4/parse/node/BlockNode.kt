@@ -13,7 +13,7 @@ class BlockNode(
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
     override fun evaluate(): NormalOrAbrupt {
-        if (elements.isEmpty()) return Completion.Normal.empty
+        if (elements.isEmpty()) return empty
 
         val oldEnv = runningExecutionContext.lexicalEnvironment
         val blockEnv = DeclarativeEnvironment(oldEnv)

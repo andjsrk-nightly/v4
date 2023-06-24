@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.ThisMode
 import io.github.andjsrk.v4.evaluate.runningExecutionContext
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.FunctionType
+import io.github.andjsrk.v4.evaluate.type.lang.OrdinaryFunctionType
 import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
@@ -21,8 +21,8 @@ class ArrowFunctionNode(
         stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator, ::range)
     override fun evaluate() =
         Completion.Normal(instantiateArrowFunction(null))
-    internal fun instantiateArrowFunction(name: PropertyKey?): FunctionType {
+    internal fun instantiateArrowFunction(name: PropertyKey?): OrdinaryFunctionType {
         val env = runningExecutionContext.lexicalEnvironment
-        return FunctionType(parameters, body, env, ThisMode.ARROW, name)
+        return OrdinaryFunctionType(parameters, body, env, ThisMode.ARROW, name)
     }
 }

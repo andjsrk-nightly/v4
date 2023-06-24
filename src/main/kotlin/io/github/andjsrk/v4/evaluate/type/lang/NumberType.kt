@@ -201,7 +201,7 @@ value class NumberType(
     fun internallyStrictlyEqual(other: NumberType) =
         when {
             this.isNaN && other.isNaN -> TRUE
-            this.isZero && other.isZero -> BooleanType.from(this.isNegative xor other.isNegative)
+            this.isZero && other.isZero -> BooleanType.from(this.isNegative == other.isNegative)
             else -> BooleanType.from(this == other)
         }
     @EsSpec("Number::sameValueZero")

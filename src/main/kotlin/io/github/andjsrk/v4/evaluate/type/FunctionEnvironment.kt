@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 @EsSpec("Function Environment Record")
 class FunctionEnvironment(
     outer: Environment,
-    var function: AbstractFunctionType,
+    var function: FunctionType,
     var thisValue: LanguageType? = null,
 ): DeclarativeEnvironment(outer) {
     var initialized = false
@@ -19,7 +19,7 @@ class FunctionEnvironment(
     }
 
     companion object {
-        fun from(func: AbstractFunctionType, thisValue: LanguageType? = null) =
+        fun from(func: FunctionType, thisValue: LanguageType? = null) =
             FunctionEnvironment(func.env, func, thisValue)
     }
 }

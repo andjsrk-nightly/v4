@@ -8,4 +8,4 @@ import io.github.andjsrk.v4.evaluate.type.lang.StringType
 @EsSpec("InitializeBoundName")
 internal fun initializeBoundName(name: StringType, value: LanguageType, env: DeclarativeEnvironment?) =
     if (env != null) env.initializeBinding(name.value, value)
-    else neverAbrupt(resolveBinding(name)).putValue(value)
+    else resolveBinding(name).putValue(value)

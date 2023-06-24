@@ -7,9 +7,6 @@ import io.github.andjsrk.v4.not
 
 @EsSpec("Reference Record")
 data class Reference(
-    /**
-     * Note that `null` indicates `unresolvable`(spec).
-     */
     val base: AbstractType?,
     /**
      * Note that value of the property is nullable because key must not be evaluated if [base] is [NullType] in optional chain.

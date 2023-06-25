@@ -1,9 +1,14 @@
 package io.github.andjsrk.v4.evaluate
 
+import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.Environment
 import io.github.andjsrk.v4.evaluate.type.Reference
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
-internal fun Environment?.putOrInitializeBinding(ref: Reference, value: LanguageType) =
-    if (this == null) ref.putValue(value)
-    else ref.initializeBinding(value)
+/**
+ * Note that the function accepts a [Reference], not a [String].
+ */
+@EsSpec("InitializeBoundName")
+internal fun Reference.putOrInitializeBinding(value: LanguageType, env: Environment?) =
+    if (env == null) putValue(value)
+    else initializeBinding(value)

@@ -25,11 +25,11 @@ data class Reference(
     inline val isSuper get() =
         thisValue != null
     @EsSpec("InitializeReferencedBinding")
-    fun initializeBinding(value: LanguageType) {
+    fun initializeBinding(value: LanguageType): EmptyOrAbrupt {
         assert(this.not { isUnresolvable })
         require(base is Environment)
         require(referencedName is StringType)
-        base.initializeBinding(referencedName.value, value)
+        return base.initializeBinding(referencedName.value, value)
     }
     @EsSpec("PutValue")
     fun putValue(value: LanguageType): EmptyOrAbrupt {

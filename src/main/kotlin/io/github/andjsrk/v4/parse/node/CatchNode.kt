@@ -7,7 +7,7 @@ class CatchNode(
     val binding: BindingElementNode?,
     val body: BlockNode,
     startRange: Range,
-): NonAtomicNode {
+): NonAtomicNode, EvaluationDelegatedNode {
     override val childNodes get() = listOf(binding, body)
     override val range = startRange..body.range
     override fun toString() =

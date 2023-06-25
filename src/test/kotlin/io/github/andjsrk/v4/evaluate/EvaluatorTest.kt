@@ -712,16 +712,39 @@ internal class EvaluatorTest {
     @Test
     fun testArrowFunction() {
         evaluationOf("""
-            let a = () => 0
-            let b = a()
+            let getZero = () => 0
+            let zero = getZero()
         """).shouldBeNormalAnd {
-            variableNamed("b").shouldBeTypedAs<NumberType> {
+            variableNamed("zero").shouldBeTypedAs<NumberType> {
                 assert(value == 0.0)
+            }
+        }
+
+        evaluationOf("""
+            let addOne = (x) => x + 1
+            let two = addOne(1)
+        """).shouldBeNormalAnd {
+            variableNamed("two").shouldBeTypedAs<NumberType> {
+                assert(value == 2.0)
+            }
+        }
+
+        evaluationOf("""
+            let argsAsArr = (...args) => args
+            let args = argsAsArr(1, 2, 3)
+        """).shouldBeNormalAnd {
+            variableNamed("args").shouldBeTypedAs<ArrayType> {
+                for (i in 1..3) assert(at(i - 1) == NumberType(i.toDouble()))
             }
         }
     }
 }
 
+private fun ArrayType.at(index: Int): LanguageType? {
+    val desc = properties[index.toString().languageValue] ?: return null
+    assertIs<DataProperty>(desc)
+    return desc.value
+}
 private fun ObjectType.dataPropertyNamed(name: String) =
     properties[name.languageValue].assertType<DataProperty>()
 private fun SourceTextModule.variableNamed(name: String): Binding {

@@ -12,4 +12,7 @@ class SymbolType(val description: StringType? = null): PrimitiveLanguageType, Pr
         val iterator = SymbolType("Symbol.iterator".languageValue)
         val toString = SymbolType("Symbol.toString".languageValue)
     }
+    companion object {
+        val registry = mutableMapOf<String, SymbolType>()
+    }
 }

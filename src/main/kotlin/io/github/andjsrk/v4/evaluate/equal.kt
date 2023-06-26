@@ -13,6 +13,5 @@ fun equal(left: LanguageType, right: LanguageType): BooleanType =
         is NumericType<*> -> left.equal(right as NumericType<*>)
         is StringType -> BooleanType.from(left.value == (right as StringType).value)
         is BooleanType -> BooleanType.from(left.value == (right as BooleanType).value)
-        is ObjectType -> BooleanType.from(left === right)
-        is SymbolType -> TODO()
+        is ObjectType, is SymbolType -> BooleanType.from(left === right)
     }

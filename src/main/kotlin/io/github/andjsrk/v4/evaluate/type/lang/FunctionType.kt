@@ -10,7 +10,7 @@ sealed class FunctionType(
     val name: PropertyKey?,
     requiredParameterCount: UInt,
     val env: DeclarativeEnvironment,
-): ObjectType(Function.instancePrototype) {
+): ObjectType(lazy { Function.instancePrototype }) {
     init {
         definePropertyOrThrow(
             "length".languageValue,

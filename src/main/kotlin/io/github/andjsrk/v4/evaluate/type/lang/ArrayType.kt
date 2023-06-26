@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.EmptyOrAbrupt
 
 @EsSpec("Array Objects")
 @EsSpec("ArrayCreate")
-class ArrayType(var length: Long, origin: ArrayType? = null): ObjectType(Array.instancePrototype) {
+class ArrayType(var length: Long, origin: ArrayType? = null): ObjectType(lazy { Array.instancePrototype }) {
     init {
         if (origin != null) {
             TODO()

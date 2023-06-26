@@ -1558,7 +1558,6 @@ class Parser(sourceText: String) {
             LEFT_BRACE -> parseBlock()
             else -> parseExpressionStatement()
         }
-
     /**
      * Parses [Initializer](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Initializer).
      */

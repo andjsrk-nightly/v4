@@ -8,8 +8,8 @@ sealed class ClassType(
     staticProperties: MutableMap<PropertyKey, Property>,
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     val constructor: FunctionType,
-): ObjectType(null, staticProperties) {
+): ObjectType(lazy { null }, staticProperties) {
     val instancePrototype: PrototypeObject =
-        ObjectType(parent?.instancePrototype, instancePrototypeProperties)
+        ObjectType(lazy { parent?.instancePrototype }, instancePrototypeProperties)
     abstract fun construct(args: List<LanguageType>): MaybeAbrupt<ObjectType>
 }

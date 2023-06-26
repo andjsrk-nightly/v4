@@ -7,12 +7,14 @@ import io.github.andjsrk.v4.evaluate.type.*
 
 /**
  * Note that methods which its name start with underscore means it is an internal method in ES specification.
+ *
+ * @param lazyPrototype to avoid some recursions, its type is [Lazy].
  */
 open class ObjectType(
-    prototype: PrototypeObject? = null,
+    lazyPrototype: Lazy<PrototypeObject?> = lazy { null },
     val properties: MutableMap<PropertyKey, Property> = mutableMapOf(),
 ): LanguageType {
-    var prototype = prototype
+    var prototype by MutableLazy.from(lazyPrototype)
         protected set
     var extensible = true
         protected set
@@ -203,9 +205,9 @@ open class ObjectType(
          * Returns an Object that `[[Prototype]]` is set to `%Object.prototype%`.
          */
         fun createNormal(): ObjectType =
-            ObjectType(Object.instancePrototype)
+            ObjectType(lazy { Object.instancePrototype })
         @EsSpec("OrdinaryObjectCreate")
         fun create(prototype: PrototypeObject?) =
-            ObjectType(prototype)
+            ObjectType(lazy { prototype })
     }
 }

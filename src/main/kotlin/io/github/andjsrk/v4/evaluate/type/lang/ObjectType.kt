@@ -202,7 +202,7 @@ open class ObjectType(
         /**
          * Returns an Object that `[[Prototype]]` is set to `%Object.prototype%`.
          */
-        fun createNormal() =
+        fun createNormal(): ObjectType =
             ObjectType(Object.instancePrototype)
         @EsSpec("OrdinaryObjectCreate")
         fun create(prototype: PrototypeObject?) =

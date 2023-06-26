@@ -9,5 +9,8 @@ import io.github.andjsrk.v4.evaluate.type.lang.StringType
 internal inline val String.languageValue get() =
     StringType(this)
 
+/**
+ * Converts from [Double] to [NumberType] without parentheses.
+ */
 internal inline val Double.languageValue get() =
     NumberType(this)

@@ -74,8 +74,8 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             val leftAsString = lval as? StringType
             val rightAsString = rval as? StringType
             if (leftAsString != null || rightAsString != null) {
-                val left = leftAsString ?: returnIfAbrupt(toString(lval)) { return it }
-                val right = rightAsString ?: returnIfAbrupt(toString(rval)) { return it }
+                val left = leftAsString ?: returnIfAbrupt(stringify(lval)) { return it }
+                val right = rightAsString ?: returnIfAbrupt(stringify(rval)) { return it }
                 return Completion.Normal(left + right)
             }
             // numeric values will be handled on below

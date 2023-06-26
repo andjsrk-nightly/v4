@@ -436,22 +436,26 @@ internal class EvaluatorTest {
     @Test
     fun testLexicalDeclaration() {
         evaluationOf("""
-            let a = 0
-        """).shouldBeNormalAnd<NullType>(moduleBlock={
-            variableNamed("a").run {
-                assertFalse(isMutable)
-                assertIs<NumberType>(value)
-            }
-        })
+            var a
+        """).shouldBeNormalAnd<NullType> {}
 
         evaluationOf("""
             var a
-        """).shouldBeNormalAnd<NullType>(moduleBlock={
+        """).shouldBeNormalAnd {
             variableNamed("a").run {
                 assertTrue(isMutable)
                 assertIs<NullType>(value)
             }
-        })
+        }
+
+        evaluationOf("""
+            let a = 0
+        """).shouldBeNormalAnd {
+            variableNamed("a").run {
+                assertFalse(isMutable)
+                assertIs<NumberType>(value)
+            }
+        }
     }
     @Test
     fun testAssignment() {

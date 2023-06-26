@@ -1,6 +1,15 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
-import java.util.*
+import io.github.andjsrk.v4.evaluate.languageValue
 
-@JvmInline
-value class SymbolType(override val value: UUID = UUID.randomUUID()): PrimitiveLanguageType, PropertyKey
+class SymbolType(val description: StringType? = null): PrimitiveLanguageType, PropertyKey {
+    /**
+     * Note that symbols will be compared by its identity, not [value].
+     */
+    override val value = null
+
+    object WellKnown {
+        val iterator = SymbolType("Symbol.iterator".languageValue)
+        val toString = SymbolType("Symbol.toString".languageValue)
+    }
+}

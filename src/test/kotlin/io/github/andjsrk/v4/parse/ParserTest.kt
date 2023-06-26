@@ -266,6 +266,14 @@ internal class ParserTest {
         }
 
         """
+            `a
+            b`
+        """.shouldBeValidExpressionAnd<TemplateLiteralNode> {
+            // note that no space between `a` and `b` is because of `.trimIndent()` call in test helper function, not an actual behavior
+            assert(strings[0].value == "a\nb")
+        }
+
+        """
             `123${"\${"}
         """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_EOS)
     }

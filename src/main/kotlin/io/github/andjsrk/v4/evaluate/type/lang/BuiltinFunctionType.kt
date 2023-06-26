@@ -13,6 +13,11 @@ class BuiltinFunctionType(
     requiredParameterCount: UInt,
     val behavior: BuiltinFunctionBehavior,
 ): FunctionType(name, requiredParameterCount, runningExecutionContext.lexicalEnvironment) {
+    constructor(
+        name: String,
+        requiredParameterCount: UInt = 0u,
+        behavior: BuiltinFunctionBehavior,
+    ): this(name.languageValue, requiredParameterCount, behavior)
     override val isArrow = false
     override fun _call(thisArg: LanguageType, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
         val calleeContext = ExecutionContext(FunctionEnvironment.from(this, thisArg), realm, this)

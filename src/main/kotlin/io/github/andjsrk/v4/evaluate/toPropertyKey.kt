@@ -8,4 +8,4 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 @EsSpec("ToPropertyKey")
 internal fun LanguageType.toPropertyKey(): MaybeAbrupt<PropertyKey> =
     if (this is SymbolType) Completion.Normal(this)
-    else toString(this)
+    else stringify(this)

@@ -4,20 +4,26 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
-typealias NonEmpty = Completion<AbstractType>
 typealias MaybeAbrupt<NormalV> = Completion<NormalV>
+typealias NonEmpty = MaybeAbrupt<AbstractType>
 typealias Empty = Completion.Normal<Nothing?>
-typealias EmptyOrAbrupt = Completion<Nothing?>
-typealias NormalOrAbrupt = Completion<LanguageType?>
+typealias EmptyOrAbrupt = MaybeAbrupt<Nothing?>
+typealias NormalOrAbrupt = MaybeAbrupt<LanguageType?>
 typealias NonEmptyNormal = Completion.Normal<LanguageType>
-typealias NonEmptyNormalOrAbrupt = Completion<LanguageType>
+typealias NonEmptyNormalOrAbrupt = MaybeAbrupt<LanguageType>
 
 @EsSpec("Completion Record")
 sealed interface Completion<out V: AbstractType?>: Record {
     val value: AbstractType?
 
+    @EsSpec("normal completion")
     open class WideNormal<V: AbstractType?>(override val value: V): Completion<V>
-    class Normal<V: LanguageType?>(override val value: V): WideNormal<V>(value) {
+    /**
+     * A normal completion that only contains either a language value or `empty`.
+     *
+     * @see [WideNormal]
+     */
+    data class Normal<V: LanguageType?>(override val value: V): WideNormal<V>(value) {
         companion object {
             /**
              * Note that this covers `unused` as well.
@@ -26,13 +32,19 @@ sealed interface Completion<out V: AbstractType?>: Record {
             val `null` = Normal(NullType)
         }
     }
-    sealed class Abrupt(override val value: LanguageType?): Completion<Nothing>
-    sealed class NonEmptyAbrupt(override val value: LanguageType): Abrupt(value)
-    class Return(value: LanguageType): NonEmptyAbrupt(value)
-    class Throw(value: LanguageType): NonEmptyAbrupt(value)
-    sealed class IterationStop(value: LanguageType?, val target: String?): Abrupt(value)
-    class Continue(value: LanguageType?, target: String?): IterationStop(value, target)
-    class Break(value: LanguageType?, target: String?): IterationStop(value, target)
+    sealed interface Abrupt: Completion<Nothing> {
+        override val value: LanguageType?
+    }
+    sealed interface NonEmptyAbrupt: Abrupt {
+        override val value: LanguageType
+    }
+    data class Return(override val value: LanguageType): NonEmptyAbrupt
+    data class Throw(override val value: LanguageType): NonEmptyAbrupt
+    sealed interface IterationStop: Abrupt {
+        val target: String?
+    }
+    data class Continue(override val value: LanguageType?, override val target: String?): IterationStop
+    data class Break(override val value: LanguageType?, override val target: String?): IterationStop
 }
 
 internal inline val empty get() = Completion.Normal.empty

@@ -4,6 +4,9 @@ import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.returnIfAbrupt
 import io.github.andjsrk.v4.evaluate.type.*
 
+/**
+ * Note that static property named `instancePrototype` will be overwritten with its own [instancePrototype].
+ */
 class BuiltinClassType(
     parent: ClassType?,
     staticProperties: MutableMap<PropertyKey, Property>,

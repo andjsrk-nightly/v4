@@ -1,12 +1,11 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
-import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.FALSE
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.TRUE
-import io.github.andjsrk.v4.not
 import kotlin.math.*
 
 @JvmInline
@@ -257,14 +256,18 @@ value class NumberType(
         val POSITIVE_ZERO = NumberType(0.0)
         val NEGATIVE_ZERO = NumberType(-0.0)
         val NaN = NumberType(Double.NaN)
+
+        const val EPSILON = 2.220446049250313E-16
+        const val MAX_SAFE_INTEGER = 9007199254740991.0
+        const val MAX_VALUE = Double.MAX_VALUE
+        const val MIN_SAFE_INTEGER = -MAX_SAFE_INTEGER
+        const val MIN_VALUE = Double.MIN_VALUE
     }
 }
 
 private val Double.isNegative get() =
     1.0.withSign(this) < 0
 
-private inline val Double.isInteger get() =
-    this == truncate(this)
 private inline val Int.isOdd get() =
     this and 1 != 0
 private inline val Double.isOddInteger get() =

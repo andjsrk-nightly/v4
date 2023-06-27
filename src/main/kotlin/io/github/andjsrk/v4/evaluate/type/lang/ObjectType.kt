@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.builtin.Object
+import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.type.*
 
 /**
@@ -11,7 +11,7 @@ import io.github.andjsrk.v4.evaluate.type.*
  * @param lazyPrototype to avoid some recursions, its type is [Lazy].
  */
 open class ObjectType(
-    lazyPrototype: Lazy<PrototypeObject?> = lazy { null },
+    lazyPrototype: Lazy<PrototypeObjectType?> = lazy { null },
     val properties: MutableMap<PropertyKey, Property> = mutableMapOf(),
 ): LanguageType {
     var prototype by MutableLazy.from(lazyPrototype)
@@ -20,10 +20,10 @@ open class ObjectType(
         protected set
 
     @EsSpec("[[SetPrototypeOf]]")
-    fun _setPrototype(prototype: PrototypeObject?): WasSuccessful {
+    fun _setPrototype(prototype: PrototypeObjectType?): WasSuccessful {
         val curr = this.prototype
         if (!extensible) return false
-        var proto: PrototypeObject? = prototype
+        var proto: PrototypeObjectType? = prototype
         while (true) {
             if (proto == null) break
             else if (curr != null && sameValue(curr, proto).value) return false
@@ -207,7 +207,7 @@ open class ObjectType(
         fun createNormal(): ObjectType =
             ObjectType(lazy { Object.instancePrototype })
         @EsSpec("OrdinaryObjectCreate")
-        fun create(prototype: PrototypeObject?) =
+        fun create(prototype: PrototypeObjectType?) =
             ObjectType(lazy { prototype })
     }
 }

@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.parse.*
 fun parseModule(sourceText: String, realm: Realm): MaybeError<SourceTextModule, Error> {
     val parser = Parser(sourceText)
     val module = parser.parseModule()
-    if ((module == null) xor (parser.hasError)) neverHappens()
+    assert((module == null) == parser.hasError)
     if (module == null) return Invalid(parser.error!!)
     val requestedModules = module.moduleRequests()
     val importEntries = module.importEntries()

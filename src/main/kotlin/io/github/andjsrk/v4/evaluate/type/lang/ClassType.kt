@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
+import io.github.andjsrk.v4.evaluate.builtin.Object
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.Property
 
@@ -8,7 +9,7 @@ sealed class ClassType(
     staticProperties: MutableMap<PropertyKey, Property>,
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     val constructor: FunctionType,
-): ObjectType(lazy { null }, staticProperties) {
+): ObjectType(lazy { Object.instancePrototype }, staticProperties) {
     val instancePrototype: PrototypeObject =
         ObjectType(lazy { parent?.instancePrototype }, instancePrototypeProperties)
     abstract fun construct(args: List<LanguageType>): MaybeAbrupt<ObjectType>

@@ -7,6 +7,6 @@ import io.github.andjsrk.v4.evaluate.type.lang.FunctionType
 
 val run = BuiltinFunctionType("run".languageValue, 1u) fn@ { thisArg, args ->
     val func = args[0]
-    func.requireToBe<FunctionType> { return@fn it }
+        .requireToBe<FunctionType> { return@fn it }
     func._call(thisArg, listOf(thisArg))
 }

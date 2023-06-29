@@ -9,7 +9,7 @@ import java.text.ParseException
 
 val parseLeadingDecimal = BuiltinFunctionType("parseLeadingDecimal", 1u) fn@ { _, args ->
     val string = args[0]
-    string.requireToBe<StringType> { return@fn it }
+        .requireToBe<StringType> { return@fn it }
     // does not perform trim to input string
     val input = string.value
         .uppercase() // DecimalFormat does not recognize scientific notation with lowercase 'e', so making it uppercase

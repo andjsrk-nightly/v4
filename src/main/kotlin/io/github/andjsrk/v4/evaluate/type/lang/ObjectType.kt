@@ -23,7 +23,7 @@ open class ObjectType(
     fun _setPrototype(prototype: PrototypeObjectType?): WasSuccessful {
         val curr = this.prototype
         if (!extensible) return false
-        var proto: PrototypeObjectType? = prototype
+        var proto = prototype
         while (true) {
             if (proto == null) break
             else if (curr != null && sameValue(curr, proto).value) return false
@@ -116,8 +116,9 @@ open class ObjectType(
     }
     @EsSpec("[[OwnPropertyKeys]]")
     fun _ownPropertyKeys() =
-        // TODO: fix if needed
         properties.keys.toList()
+    fun ownPropertyEntries() =
+        properties.entries.map { it.toPair() }
 
     @EsSpec("Get")
     fun get(key: PropertyKey) =
@@ -194,6 +195,33 @@ open class ObjectType(
             }
         }
         return true
+    }
+    private inline fun <R> transformOwnEnumerableStringPropertyKeys(transform: (StringType) -> R) =
+        ListType(
+            ownPropertyEntries().flatMap { (key, desc) ->
+                if (key is StringType && desc.enumerable) listOf(transform(key))
+                else emptyList()
+            }
+        )
+    @EsSpec("EnumerableOwnProperties") // kind: key
+    fun ownEnumerableStringPropertyKeys() =
+        transformOwnEnumerableStringPropertyKeys { it }
+    @EsSpec("EnumerableOwnProperties") // kind: value
+    fun ownEnumerableStringPropertyKeyValues(): MaybeAbrupt<ListType<LanguageType>> {
+        return Completion.WideNormal(
+            transformOwnEnumerableStringPropertyKeys { key ->
+                returnIfAbrupt(get(key)) { return it }
+            }
+        )
+    }
+    @EsSpec("EnumerableOwnProperties") // kind: key+value
+    fun ownEnumerableStringPropertyKeyEntries(): MaybeAbrupt<ListType<ArrayType>> {
+        return Completion.WideNormal(
+            transformOwnEnumerableStringPropertyKeys { key ->
+                val value = returnIfAbrupt(get(key)) { return it }
+                ArrayType.from(listOf(key, value))
+            }
+        )
     }
 
     companion object {

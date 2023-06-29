@@ -4,10 +4,13 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.neverHappens
 
-internal typealias CompletionReturn = (Completion.Abrupt) -> Nothing
+/**
+ * Indicates a lambda that returns an abrupt completion, which will be used on inline functions.
+ */
+internal typealias AbruptReturnLambda = (Completion.Abrupt) -> Nothing
 
 @EsSpec("ReturnIfAbrupt")
-internal inline fun <V: AbstractType?> returnIfAbrupt(completion: MaybeAbrupt<V>, `return`: CompletionReturn) =
+internal inline fun <V: AbstractType?> returnIfAbrupt(completion: MaybeAbrupt<V>, `return`: AbruptReturnLambda) =
     when (completion) {
         is Completion.WideNormal<V> -> completion.value
         is Completion.Abrupt -> `return`(completion)

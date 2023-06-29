@@ -29,6 +29,8 @@ val Number = BuiltinClassType(
         // TODO
     ),
     mutableMapOf(
+        SymbolType.WellKnown.toString to DataProperty.sealed(toString),
+        "toRadix".languageValue to DataProperty.sealed(toRadix),
         // TODO
     ),
     constructor {

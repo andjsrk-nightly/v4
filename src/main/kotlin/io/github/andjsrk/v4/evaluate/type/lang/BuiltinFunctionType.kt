@@ -10,7 +10,7 @@ typealias BuiltinFunctionBehavior = (thisArg: LanguageType, args: List<LanguageT
 @EsSpec("CreateBuiltinFunction")
 class BuiltinFunctionType(
     name: PropertyKey? = null,
-    requiredParameterCount: UInt,
+    requiredParameterCount: UInt = 0u,
     val behavior: BuiltinFunctionBehavior,
 ): FunctionType(name, requiredParameterCount, runningExecutionContext.lexicalEnvironment) {
     constructor(

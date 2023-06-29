@@ -1,15 +1,28 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.evaluate.type.Property.Companion.CONFIGURABLE_DEFAULT
+import io.github.andjsrk.v4.evaluate.type.Property.Companion.ENUMERABLE_DEFAULT
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("accessor property")
 data class AccessorProperty(
-    var get: FunctionType? = null,
-    var set: FunctionType? = null,
-    override var enumerable: Boolean = true,
-    override var configurable: Boolean = true,
+    var get: FunctionType?,
+    var set: FunctionType?,
+    override var enumerable: Boolean,
+    override var configurable: Boolean,
 ): Property {
+    constructor(
+        get: FunctionType? = null,
+        set: FunctionType? = null,
+        enumerable: Boolean? = ENUMERABLE_DEFAULT,
+        configurable: Boolean? = CONFIGURABLE_DEFAULT,
+    ): this(
+        get,
+        set,
+        enumerable ?: ENUMERABLE_DEFAULT,
+        configurable ?: CONFIGURABLE_DEFAULT,
+    )
     override fun clone() = copy()
 
     companion object {

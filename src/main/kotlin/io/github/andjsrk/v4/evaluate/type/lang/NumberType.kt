@@ -54,10 +54,10 @@ value class NumberType(
                     else POSITIVE_ZERO
                 } else {
                     if (other.value > 0) {
-                        if (other.value.isOddInteger) NEGATIVE_INFINITY
+                        if (other.isOddInteger) NEGATIVE_INFINITY
                         else POSITIVE_INFINITY
                     } else {
-                        if (other.value.isOddInteger) NEGATIVE_ZERO
+                        if (other.isOddInteger) NEGATIVE_ZERO
                         else POSITIVE_ZERO
                     }
                 }
@@ -66,10 +66,10 @@ value class NumberType(
                 else POSITIVE_INFINITY
             this == NEGATIVE_ZERO ->
                 if (other.value > 0) {
-                    if (other.value.isOddInteger) NEGATIVE_ZERO
+                    if (other.isOddInteger) NEGATIVE_ZERO
                     else POSITIVE_ZERO
                 } else {
-                    if (other.value.isOddInteger) NEGATIVE_INFINITY
+                    if (other.isOddInteger) NEGATIVE_INFINITY
                     else POSITIVE_INFINITY
                 }
             other.isPositiveInfinity -> {
@@ -229,7 +229,7 @@ value class NumberType(
     override fun bitwiseOr(other: NumberType) =
         generalBitwiseOp(other, Int::or)
     /**
-     * Note that the function assumes that the number is an integer if [radix] is not `10`.
+     * Note that the function assumes that the number is either integer or not finite if [radix] is not `10`.
      */
     @EsSpec("Number::toString")
     override fun toString(radix: Int): StringType =
@@ -267,8 +267,14 @@ value class NumberType(
 
 private val Double.isNegative get() =
     1.0.withSign(this) < 0
-
 private inline val Int.isOdd get() =
     this and 1 != 0
-private inline val Double.isOddInteger get() =
-    this.isInteger && this.toInt().isOdd
+internal val NumberType.isInteger get() =
+    this.isFinite && value.isInteger
+private inline val NumberType.isOddInteger get() =
+    this.isInteger && value.toInt().isOdd
+internal val NumberType.isValidRadix get() =
+    this.isInteger && this.value in 2.0..36.0
+internal inline fun NumberType.requireToBeValidRadix(`return`: AbruptReturnLambda) =
+    if (this.isValidRadix) this
+    else `return`(Completion.Throw(NullType/* RangeError */))

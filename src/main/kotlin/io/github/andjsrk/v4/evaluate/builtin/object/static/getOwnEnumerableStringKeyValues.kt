@@ -6,12 +6,13 @@ import io.github.andjsrk.v4.evaluate.returnIfAbrupt
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
-@EsSpec("Object.entries")
-val entries = BuiltinFunctionType("entries", 1u) fn@ { _, args ->
+// TODO: rename the function
+@EsSpec("Object.values")
+val getOwnEnumerableStringKeyValues = BuiltinFunctionType("getOwnEnumerableStringKeyValues", 1u) fn@ { _, args ->
     val obj = args[0]
         .requireToBe<ObjectType> { return@fn it }
-    val entries = returnIfAbrupt(obj.ownEnumerableStringPropertyKeyEntries()) { return@fn it }
+    val values = returnIfAbrupt(obj.ownEnumerableStringPropertyKeyValues()) { return@fn it }
     Completion.Normal(
-        ArrayType.from(entries)
+        ArrayType.from(values)
     )
 }

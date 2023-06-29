@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.evaluate.builtin.number
 
+import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.builtin.number.static.*
 import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.languageValue
@@ -8,6 +9,7 @@ import io.github.andjsrk.v4.evaluate.type.DataProperty
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 
+@EsSpec("%Number%")
 val Number = BuiltinClassType(
     Object,
     mutableMapOf(

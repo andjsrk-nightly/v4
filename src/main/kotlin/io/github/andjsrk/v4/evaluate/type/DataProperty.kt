@@ -1,10 +1,8 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.Property.Companion.CONFIGURABLE_DEFAULT
-import io.github.andjsrk.v4.evaluate.type.Property.Companion.ENUMERABLE_DEFAULT
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
-import io.github.andjsrk.v4.evaluate.type.lang.NullType
+import io.github.andjsrk.v4.evaluate.languageValue
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("data property")
 data class DataProperty(
@@ -12,7 +10,7 @@ data class DataProperty(
     var writable: Boolean,
     override var enumerable: Boolean,
     override var configurable: Boolean,
-): Property {
+): Property() {
     constructor(
         value: LanguageType? = VALUE_DEFAULT,
         writable: Boolean? = WRITABLE_DEFAULT,
@@ -25,6 +23,13 @@ data class DataProperty(
         configurable ?: CONFIGURABLE_DEFAULT,
     )
     override fun clone() = copy()
+    override fun toDescriptorObject(): ObjectType {
+        val obj = ObjectType.createNormal().apply {
+            createDataProperty("value".languageValue, value)
+            createDataProperty("writable".languageValue, writable.languageValue)
+        }
+        return super.toDescriptorObject(obj)
+    }
 
     companion object {
         private val VALUE_DEFAULT = NullType

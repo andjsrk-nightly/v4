@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.evaluate.builtin.symbol
 
+import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.builtin.symbol.static.create
 import io.github.andjsrk.v4.evaluate.builtin.symbol.static.`for`
@@ -8,6 +9,7 @@ import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 
+@EsSpec("%Symbol%")
 val Symbol = BuiltinClassType(
     Object,
     mutableMapOf(

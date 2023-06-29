@@ -1,8 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.Property.Companion.CONFIGURABLE_DEFAULT
-import io.github.andjsrk.v4.evaluate.type.Property.Companion.ENUMERABLE_DEFAULT
+import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("accessor property")
@@ -11,7 +10,7 @@ data class AccessorProperty(
     var set: FunctionType?,
     override var enumerable: Boolean,
     override var configurable: Boolean,
-): Property {
+): Property() {
     constructor(
         get: FunctionType? = null,
         set: FunctionType? = null,
@@ -24,6 +23,12 @@ data class AccessorProperty(
         configurable ?: CONFIGURABLE_DEFAULT,
     )
     override fun clone() = copy()
+    override fun toDescriptorObject(): ObjectType {
+        val obj = ObjectType.createNormal()
+        obj.createDataProperty("get".languageValue, get ?: NullType)
+        obj.createDataProperty("set".languageValue, set ?: NullType)
+        return super.toDescriptorObject(obj)
+    }
 
     companion object {
         internal inline fun builtinGetter(name: String, crossinline block: (thisArg: LanguageType) -> NonEmptyNormalOrAbrupt) =

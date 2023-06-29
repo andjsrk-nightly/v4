@@ -11,13 +11,12 @@ import io.github.andjsrk.v4.evaluate.type.*
  * @param lazyPrototype to avoid some recursions, its type is [Lazy].
  */
 open class ObjectType(
-    lazyPrototype: Lazy<PrototypeObjectType?> = lazy { null },
+    lazyPrototype: Lazy<PrototypeObjectType?> = lazy { Object.instancePrototype },
     val properties: MutableMap<PropertyKey, Property> = mutableMapOf(),
 ): LanguageType {
     var prototype by MutableLazy.from(lazyPrototype)
         protected set
     var extensible = true
-        protected set
 
     @EsSpec("[[SetPrototypeOf]]")
     fun _setPrototype(prototype: PrototypeObjectType?): WasSuccessful {
@@ -127,23 +126,20 @@ open class ObjectType(
     @EsSpec("Set")
     fun set(key: PropertyKey, value: LanguageType) =
         _set(key, value, this)
-    /**
-     * Note that this function covers `CreateDataPropertyOrThrow` as well.
-     */
     @EsSpec("CreateDataProperty")
-    fun createDataProperty(key: PropertyKey, value: LanguageType) =
-        _defineOwnProperty(key, DataProperty(value))
+    fun createDataProperty(key: PropertyKey, value: LanguageType) {
+        neverAbrupt(createDataPropertyOrThrow(key, value))
+    }
     @EsSpec("CreateMethodProperty")
     fun createMethodProperty(key: PropertyKey, value: LanguageType) {
-        definePropertyOrThrow(key, DataProperty(value, writable=false, enumerable=false))
+        neverAbrupt(definePropertyOrThrow(key, DataProperty(value, writable=false, enumerable=false)))
     }
     @EsSpec("CreateDataPropertyOrThrow")
     inline fun createDataPropertyOrThrow(key: PropertyKey, value: LanguageType) =
-        createDataProperty(key, value)
+        _defineOwnProperty(key, DataProperty(value))
     @EsSpec("CreateNonEnumerableDataPropertyOrThrow")
-    fun createNonEnumerablePropertyOrThrow(key: PropertyKey, value: LanguageType) {
+    fun createNonEnumerablePropertyOrThrow(key: PropertyKey, value: LanguageType) =
         definePropertyOrThrow(key, DataProperty(value, enumerable=false))
-    }
     @EsSpec("DefinePropertyOrThrow")
     inline fun definePropertyOrThrow(key: PropertyKey, descriptor: Property) =
         _defineOwnProperty(key, descriptor)
@@ -228,12 +224,12 @@ open class ObjectType(
         @EsSpec("MakeBasicObject")
         fun createBasic() =
             // TODO: fix if needed
-            ObjectType()
+            ObjectType(lazy { null })
         /**
          * Returns an Object that `[[Prototype]]` is set to `%Object.prototype%`.
          */
         fun createNormal(): ObjectType =
-            ObjectType(lazy { Object.instancePrototype })
+            ObjectType()
         @EsSpec("OrdinaryObjectCreate")
         fun create(prototype: PrototypeObjectType?) =
             ObjectType(lazy { prototype })

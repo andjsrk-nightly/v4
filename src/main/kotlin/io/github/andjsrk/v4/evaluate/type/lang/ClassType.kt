@@ -5,6 +5,7 @@ import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.*
 
 sealed class ClassType(
+    val name: PropertyKey?,
     val parent: ClassType?,
     staticProperties: MutableMap<PropertyKey, Property>,
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),

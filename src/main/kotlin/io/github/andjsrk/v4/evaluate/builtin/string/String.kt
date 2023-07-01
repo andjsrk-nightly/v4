@@ -7,6 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constr
 
 @EsSpec("%String%")
 val String = BuiltinClassType(
+    "String",
     Object,
     mutableMapOf(
         // TODO

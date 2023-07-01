@@ -8,11 +8,19 @@ import io.github.andjsrk.v4.evaluate.type.*
  * Note that static property named `instancePrototype` will be overwritten with its own [instancePrototype].
  */
 class BuiltinClassType(
+    name: PropertyKey?,
     parent: ClassType?,
     staticProperties: MutableMap<PropertyKey, Property>,
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     constructor: BuiltinFunctionType,
-): ClassType(parent, staticProperties, instancePrototypeProperties, constructor) {
+): ClassType(name, parent, staticProperties, instancePrototypeProperties, constructor) {
+    constructor(
+        name: String,
+        parent: ClassType? = null,
+        staticProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
+        instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
+        constructor: BuiltinFunctionType,
+    ): this(name.languageValue, parent, staticProperties, instancePrototypeProperties, constructor)
     override fun construct(args: List<LanguageType>): MaybeAbrupt<ObjectType> {
         val res = returnIfAbrupt(constructor._call(NullType, args)) { return it }
         require(res is ObjectType)

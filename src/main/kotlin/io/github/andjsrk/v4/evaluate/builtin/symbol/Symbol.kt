@@ -11,6 +11,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constr
 
 @EsSpec("%Symbol%")
 val Symbol = BuiltinClassType(
+    "Symbol",
     Object,
     mutableMapOf(
         "iterator".languageValue to DataProperty.sealed(SymbolType.WellKnown.iterator),

@@ -12,7 +12,7 @@ val from = BuiltinFunctionType("from", 1u) fn@ { _, args ->
     Completion.Normal(
         when (value) {
             is ObjectType -> return@fn Completion.Throw(NullType/* TypeError */)
-            is StringType -> parseNumber(value.value)?.languageValue ?: NumberType.NaN
+            is StringType -> parseNumber(value.value)
             is NumberType -> value
             is BigIntType -> value.value.toDouble().languageValue
             is BooleanType -> (if (value.value) 1.0 else 0.0).languageValue

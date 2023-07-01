@@ -11,6 +11,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constr
 
 @EsSpec("%Number%")
 val Number = BuiltinClassType(
+    "Number",
     Object,
     mutableMapOf(
         "EPSILON".languageValue to DataProperty.sealed(NumberType.EPSILON.languageValue),

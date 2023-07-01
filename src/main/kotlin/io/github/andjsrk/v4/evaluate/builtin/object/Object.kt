@@ -11,6 +11,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
 @EsSpec("%Object%")
 val Object = BuiltinClassType(
+    "Object",
     null,
     mutableMapOf(
         "assignEnumerableProperties".languageValue to DataProperty.sealed(assignEnumerableProperties),

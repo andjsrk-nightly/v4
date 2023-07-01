@@ -5,6 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 
 val Function = BuiltinClassType(
+    "Function",
     Object,
     mutableMapOf(
         // TODO

@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.NumberType
 class NumberLiteralNode(rawContent: String, range: Range): DynamicPrimitiveLiteralNode<Double>(rawContent, range), ObjectLiteralKeyNode {
     @EsSpec("NumericValue")
     override val value by lazy {
-        parseNumber(raw)!!
+        parseNumber(raw).value
     }
     override fun evaluate() =
         Completion.Normal(NumberType(value))

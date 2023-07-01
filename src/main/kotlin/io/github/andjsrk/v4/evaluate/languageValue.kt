@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.evaluate.type.lang.*
+import java.math.BigInteger
 
 /**
  * Converts from [String] to [StringType] without parentheses.
@@ -13,6 +14,12 @@ internal inline val String.languageValue get() =
  */
 internal inline val Double.languageValue get() =
     NumberType(this)
+
+/**
+ * Converts from [BigInteger] to [BigIntType] without parentheses.
+ */
+internal inline val BigInteger.languageValue get() =
+    BigIntType(this)
 
 /**
  * Converts from [Boolean] to [BooleanType] without parentheses.

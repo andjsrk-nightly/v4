@@ -1,11 +1,13 @@
 package io.github.andjsrk.v4.evaluate.builtin.boolean.static
 
+import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
 import java.math.BigInteger
 
+@EsSpec("Boolean(value)") // (as a normal function)
 val from = BuiltinFunctionType("from", 1u) fn@ { _, args ->
     val value = args[0]
     Completion.Normal(

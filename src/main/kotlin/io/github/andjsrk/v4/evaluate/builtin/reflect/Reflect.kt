@@ -14,7 +14,9 @@ val Reflect = ObjectType(properties=mutableMapOf(
     "getOwnKeys".languageValue to DataProperty.sealed(getOwnKeys),
     "getOwnStringKeys".languageValue to DataProperty.sealed(getOwnStringKeys),
     "getOwnSymbolKeys".languageValue to DataProperty.sealed(getOwnSymbolKeys),
+    "getOwnerClass".languageValue to DataProperty.sealed(getOwnerClass),
     "getPrototype".languageValue to DataProperty.sealed(getPrototype),
+    "isEnumerableProperty".languageValue to DataProperty.sealed(isEnumerableProperty),
     "isExtensible".languageValue to DataProperty.sealed(isExtensible),
     "preventExtensions".languageValue to DataProperty.sealed(preventExtensions),
 ))

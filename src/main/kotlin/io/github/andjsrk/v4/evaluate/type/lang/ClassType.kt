@@ -9,7 +9,7 @@ sealed class ClassType(
     val parent: ClassType?,
     staticProperties: MutableMap<PropertyKey, Property>,
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
-    val constructor: FunctionType,
+    open val constructor: FunctionType,
 ): ObjectType(lazy { Object.instancePrototype }, staticProperties) {
     val instancePrototype: PrototypeObjectType =
         PrototypeObjectType(lazy { parent?.instancePrototype }, instancePrototypeProperties, this)

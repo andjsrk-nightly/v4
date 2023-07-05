@@ -1,7 +1,8 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.lang.FunctionType
+import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 @EsSpec("Function Environment Record")
 class FunctionEnvironment(
@@ -12,7 +13,7 @@ class FunctionEnvironment(
     var initialized = false
     @EsSpec("BindThisValue")
     fun bindThisValue(value: LanguageType): EmptyOrAbrupt {
-        if (initialized) return Completion.Throw(NullType/* ReferenceError */)
+        if (initialized) TODO() // what ReferenceError should I throw?
         thisValue = value
         initialized = true
         return empty

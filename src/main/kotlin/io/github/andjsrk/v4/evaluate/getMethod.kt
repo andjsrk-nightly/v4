@@ -8,6 +8,6 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 @EsSpec("GetMethod")
 internal fun LanguageType.getMethod(key: PropertyKey): MaybeAbrupt<FunctionType> {
     val func = returnIfAbrupt(getProperty(key)) { return it }
-    if (func !is FunctionType) return Completion.Throw(NullType/* TypeError */)
+        .requireToBe<FunctionType> { return it }
     return Completion.Normal(func)
 }

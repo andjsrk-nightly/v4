@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
@@ -41,12 +42,13 @@ value class NumberType(
     override fun bitwiseNot(): MaybeAbrupt<NumberType> {
         val value = returnIfAbrupt(this.toInt32()) { return it }
             .value.toInt()
-        return Completion.Normal(NumberType(value.inv().toDouble()))
+        val result = value.inv().toDouble()
+        return Completion.Normal(result.languageValue)
     }
     override fun pow(other: NumberType): NumberType =
         when {
             other.isNaN -> other
-            other.isZero -> NumberType(1.0)
+            other.isZero -> 1.0.languageValue
             this.isNaN -> this
             this.isInfinity ->
                 if (isNegative) {
@@ -89,18 +91,18 @@ value class NumberType(
                 }
             }
             value < 0 && other.value.not { isInteger } -> NaN
-            else -> NumberType(value.pow(other.value))
+            else -> value.pow(other.value).languageValue
         }
     override fun times(other: NumberType): NumberType =
         when {
             this.isNaN || other.isNaN -> this
             this.isInfinity -> when {
-                other.value == 0.0 -> NumberType(Double.NaN)
+                other.value == 0.0 -> NaN
                 other.value > 0 -> this
                 else -> -this
             }
             other.isInfinity -> when {
-                this.isZero -> NumberType(Double.NaN)
+                this.isZero -> NaN
                 value > 0 -> other
                 else -> -other
             }
@@ -172,7 +174,7 @@ value class NumberType(
             .value.toInt()
         val shiftCount = right % 32
         val result = operation(left, shiftCount)
-        return Completion.Normal(NumberType(result))
+        return Completion.Normal(result.languageValue)
     }
     override fun leftShift(other: NumberType) =
         generalShift(other, ::toInt32, Double::toInt) { a, b -> (a shl b).toDouble() }
@@ -217,7 +219,7 @@ value class NumberType(
         val right = returnIfAbrupt(other.toInt32()) { return it }
             .value.toInt()
         val result = operation(left, right)
-        return Completion.Normal(NumberType(result.toDouble()))
+        return Completion.Normal(result.toDouble().languageValue)
     }
     @EsSpec("::bitwiseAND")
     override fun bitwiseAnd(other: NumberType) =
@@ -277,4 +279,4 @@ internal val NumberType.isValidRadix get() =
     this.isInteger && this.value in 2.0..36.0
 internal inline fun NumberType.requireToBeValidRadix(`return`: AbruptReturnLambda) =
     if (this.isValidRadix) this
-    else `return`(Completion.Throw(NullType/* RangeError */))
+    else `return`(throwError(RangeErrorKind.RADIX_RANGE))

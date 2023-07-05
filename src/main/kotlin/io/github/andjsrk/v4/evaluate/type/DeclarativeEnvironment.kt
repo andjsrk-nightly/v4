@@ -1,8 +1,10 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.error.ReferenceErrorKind
+import io.github.andjsrk.v4.error.TypeErrorKind
+import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
-import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
 @EsSpec("Declarative Environment Record")
 open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
@@ -27,16 +29,16 @@ open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
         return empty
     }
     override fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt {
-        val binding = bindings[name] ?: return Completion.Throw(NullType/* ReferenceError */)
-        if (binding.not { isInitialized }) return Completion.Throw(NullType/* ReferenceError */)
-        if (binding.not { isMutable }) return Completion.Throw(NullType/* TypeError */)
+        val binding = bindings[name] ?: return throwError(ReferenceErrorKind.NOT_DEFINED, name)
+        if (binding.not { isInitialized }) return throwError(ReferenceErrorKind.ACCESSED_UNINITIALIZED_VARIABLE, name)
+        if (binding.not { isMutable }) return throwError(TypeErrorKind.CONST_ASSIGN)
         binding.value = value
         return empty
     }
     override fun getValue(name: String): NonEmptyNormalOrAbrupt {
         assert(name in bindings)
         val binding = bindings[name] ?: neverHappens()
-        if (binding.not { isInitialized }) return Completion.Throw(NullType/* ReferenceError */)
+        if (binding.not { isInitialized }) return throwError(ReferenceErrorKind.ACCESSED_UNINITIALIZED_VARIABLE, name)
         return Completion.Normal(binding.value!!)
     }
 }

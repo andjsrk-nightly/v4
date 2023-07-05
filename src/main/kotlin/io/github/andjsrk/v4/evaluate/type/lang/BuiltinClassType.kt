@@ -12,7 +12,7 @@ class BuiltinClassType(
     parent: ClassType?,
     staticProperties: MutableMap<PropertyKey, Property>,
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
-    constructor: BuiltinFunctionType,
+    override val constructor: BuiltinFunctionType,
 ): ClassType(name, parent, staticProperties, instancePrototypeProperties, constructor) {
     constructor(
         name: String,
@@ -22,15 +22,16 @@ class BuiltinClassType(
         constructor: BuiltinFunctionType,
     ): this(name.languageValue, parent, staticProperties, instancePrototypeProperties, constructor)
     override fun construct(args: List<LanguageType>): MaybeAbrupt<ObjectType> {
-        val res = returnIfAbrupt(constructor._call(NullType, args)) { return it }
+        val res = returnIfAbrupt(constructor._call(ObjectType.create(instancePrototype), args)) { return it }
         require(res is ObjectType)
         return Completion.Normal(res)
     }
 
     companion object {
-        internal inline fun constructor(requiredParameterCount: UInt = 0u, crossinline block: (args: List<LanguageType>) -> MaybeAbrupt<ObjectType>) =
-            BuiltinFunctionType("constructor".languageValue, requiredParameterCount) { _, args ->
-                block(args)
+        internal inline fun constructor(requiredParameterCount: UInt = 0u, crossinline block: (obj: ObjectType, args: List<LanguageType>) -> MaybeAbrupt<ObjectType>) =
+            BuiltinFunctionType("constructor".languageValue, requiredParameterCount) { obj, args ->
+                require(obj is ObjectType)
+                block(obj, args)
             }
     }
 }

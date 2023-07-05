@@ -7,7 +7,6 @@ import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.DataProperty
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
-import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
 @EsSpec("%Object%")
 val Object = BuiltinClassType(
@@ -26,7 +25,7 @@ val Object = BuiltinClassType(
     mutableMapOf(
         "run".languageValue to DataProperty.sealed(run),
     ),
-    constructor { _ ->
-        Completion.Normal(ObjectType.createNormal())
+    constructor { obj, _ ->
+        Completion.Normal(obj)
     },
 )

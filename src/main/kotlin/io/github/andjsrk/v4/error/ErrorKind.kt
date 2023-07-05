@@ -1,5 +1,5 @@
 package io.github.andjsrk.v4.error
 
-interface ErrorKind {
+sealed interface ErrorKind {
     val message: String
 }

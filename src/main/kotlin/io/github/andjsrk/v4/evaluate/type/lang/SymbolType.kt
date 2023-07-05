@@ -8,6 +8,8 @@ class SymbolType(val description: StringType? = null): PrimitiveLanguageType, Pr
      * Note that symbols will be compared by its identity, not [value].
      */
     override val value = null
+    override fun toString() =
+        "Symbol(${description?.value ?: ""})"
 
     object WellKnown {
         @EsSpec("Symbol.iterator")

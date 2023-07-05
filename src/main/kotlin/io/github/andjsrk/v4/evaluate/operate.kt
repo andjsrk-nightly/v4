@@ -2,6 +2,7 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.BinaryOperationType.*
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
@@ -17,7 +18,7 @@ import io.github.andjsrk.v4.parse.node.ExpressionNode
 internal fun LanguageType.operate(operation: BinaryOperationType, other: ExpressionNode): NonEmptyNormalOrAbrupt {
     assert(operation.not { isAssignLike })
 
-    val lval = this
+    val left = this
 
     when (operation) {
         AND -> {
@@ -28,8 +29,9 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             // else,
             //   evaluate right side
             //   return right side
-            if (lval !is BooleanType) return Completion.Throw(NullType/* TypeError */)
-            if (!lval.value) return Completion.Normal(FALSE)
+            val booleanLeft = left
+                .requireToBe<BooleanType> { return it }
+            if (!booleanLeft.value) return Completion.Normal(FALSE)
             return other.evaluateValue()
         }
         OR -> {
@@ -41,68 +43,76 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             //   evaluate right side
             //   coerce right side to be a Boolean
             //   return right side
-            if (lval !is BooleanType) return Completion.Throw(NullType/* TypeError */)
-            if (lval.value) return Completion.Normal(TRUE)
-            val rval = other.evaluateValueOrReturn { return it }
-            if (rval !is BooleanType) return Completion.Throw(NullType/* TypeError */)
-            return Completion.Normal(rval)
+            val booleanLeft = left
+                .requireToBe<BooleanType> { return it }
+            if (booleanLeft.value) return Completion.Normal(TRUE)
+            val right = other.evaluateValueOrReturn { return it }
+                .requireToBe<BooleanType> { return it }
+            return Completion.Normal(right)
         }
         COALESCE -> return (
-            if (lval == NullType) other.evaluateValue()
-            else Completion.Normal(lval)
+            if (left == NullType) other.evaluateValue()
+            else Completion.Normal(left)
         )
         else -> {}
     }
 
-    val rval = other.evaluateValueOrReturn { return it }
+    val right = other.evaluateValueOrReturn { return it }
 
     when (operation) {
-        LT, GT, LT_EQ, GT_EQ -> return when {
-            lval::class != rval::class -> Completion.Throw(NullType/* TypeError */)
-            lval is StringType || lval is NumericType<*> -> Completion.Normal(
-                when (operation) {
-                    LT -> lval.isLessThan(rval, FALSE)
-                    GT -> rval.isLessThan(lval, FALSE)
-                    LT_EQ -> !rval.isLessThan(lval, TRUE)
-                    GT_EQ -> !lval.isLessThan(rval, TRUE)
-                    else -> neverHappens()
-                }
+        LT, GT, LT_EQ, GT_EQ ->
+            return if (left is StringType || left is NumericType<*>) {
+                if (left::class != right::class) throwError(TypeErrorKind.LHS_RHS_NOT_SAME_TYPE)
+                else Completion.Normal(
+                    when (operation) {
+                        LT -> left.isLessThan(right, FALSE)
+                        GT -> right.isLessThan(left, FALSE)
+                        LT_EQ -> !right.isLessThan(left, TRUE)
+                        GT_EQ -> !left.isLessThan(right, TRUE)
+                        else -> neverHappens()
+                    }
+                )
+            }
+            else throwError(
+                TypeErrorKind.UNEXPECTED_TYPE,
+                "${generalizedDescriptionOf<StringType>()} or ${generalizedDescriptionOf<NumericType<*>>()}",
+                generalizedDescriptionOf(left)
             )
-            else -> Completion.Throw(NullType/* TypeError */)
-        }
         PLUS -> {
-            val leftAsString = lval as? StringType
-            val rightAsString = rval as? StringType
+            val leftAsString = left as? StringType
+            val rightAsString = right as? StringType
             if (leftAsString != null || rightAsString != null) {
-                val left = leftAsString ?: returnIfAbrupt(stringify(lval)) { return it }
-                val right = rightAsString ?: returnIfAbrupt(stringify(rval)) { return it }
-                return Completion.Normal(left + right)
+                val stringLeft = leftAsString ?: returnIfAbrupt(stringify(left)) { return it }
+                val stringRight = rightAsString ?: returnIfAbrupt(stringify(right)) { return it }
+                return Completion.Normal(stringLeft + stringRight)
             }
             // numeric values will be handled on below
         }
-        EQ -> return Completion.Normal(equal(lval, rval))
-        NOT_EQ -> return Completion.Normal(!equal(lval, rval))
+        EQ -> return Completion.Normal(equal(left, right))
+        NOT_EQ -> return Completion.Normal(!equal(left, right))
         else -> {}
     }
 
-    if (lval !is NumericType<*>) return Completion.Throw(NullType/* TypeError */)
-    if (rval !is NumericType<*>) return Completion.Throw(NullType/* TypeError */)
-    if (lval::class != rval::class) return Completion.Throw(NullType/* TypeError */)
+    val numericLeft = left
+        .requireToBe<NumericType<*>> { return it }
+    val numericRight = right
+        .requireToBe<NumericType<*>> { return it }
+    if (left::class != right::class) return throwError(TypeErrorKind.LHS_RHS_NOT_SAME_TYPE)
 
     return Completion.Normal(
         when (operation) {
-            EXPONENTIAL -> lval.pow(rval)
-            MULTIPLY -> lval * rval
-            DIVIDE -> (lval / rval)
-            MOD -> (lval % rval)
-            PLUS -> lval + rval
-            MINUS -> lval - rval
-            SHL -> lval.leftShift(rval)
-            SAR -> lval.signedRightShift(rval)
-            SHR -> lval.unsignedRightShift(rval)
-            BITWISE_AND -> lval.bitwiseAnd(rval)
-            BITWISE_XOR -> lval.bitwiseXor(rval)
-            BITWISE_OR -> lval.bitwiseOr(rval)
+            EXPONENTIAL -> numericLeft.pow(numericRight)
+            MULTIPLY -> numericLeft * numericRight
+            DIVIDE -> (numericLeft / numericRight)
+            MOD -> (numericLeft % numericRight)
+            PLUS -> numericLeft + numericRight
+            MINUS -> numericLeft - numericRight
+            SHL -> numericLeft.leftShift(numericRight)
+            SAR -> numericLeft.signedRightShift(numericRight)
+            SHR -> numericLeft.unsignedRightShift(numericRight)
+            BITWISE_AND -> numericLeft.bitwiseAnd(numericRight)
+            BITWISE_XOR -> numericLeft.bitwiseXor(numericRight)
+            BITWISE_OR -> numericLeft.bitwiseOr(numericRight)
             else -> missingBranch()
         }
             .extractFromCompletionOrReturn { return it }

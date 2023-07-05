@@ -5,11 +5,12 @@ import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("EvaluateCall")
-internal fun evaluateCall(func: LanguageType, ref: AbstractType, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
+internal fun evaluateCall(value: LanguageType, ref: AbstractType, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
     val thisValue =
         if (ref is Reference && ref.isProperty) ref.getThis()
         else NullType
-    if (func !is FunctionType) return Completion.Throw(NullType/* TypeError */)
+    val func = value
+        .requireToBe<FunctionType> { return it }
     // TODO: implement step 6
     return func._call(thisValue, args)
 }

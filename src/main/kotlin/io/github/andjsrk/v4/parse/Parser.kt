@@ -68,13 +68,9 @@ class Parser(sourceText: String) {
         if (!hasError) {
             this.error = error
             if (testing) {
-                try {
-                    throw KotlinError()
-                } catch (e: KotlinError) {
-                    stackTrace = e.stackTrace
-                        .drop(1) // drop first element because it is always this function
-                        .takeWhile { it.not { isNativeMethod } } // preserve meaningful elements only
-                }
+                stackTrace = KotlinError().stackTrace
+                    .drop(1) // drop first element because it is always this function
+                    .takeWhile { it.not { isNativeMethod } } // preserve meaningful elements only
             }
         }
         return null
@@ -484,7 +480,7 @@ class Parser(sourceText: String) {
     private fun parseCoverParenthesizedExpressionAndArrowParameterList(): ExpressionNode? {
         if (currToken.type != LEFT_PARENTHESIS) return null
 
-        val checkPoint = CheckPoint()
+        val startCheckPoint = CheckPoint()
         // does not store current error because we are sure of there is no error
 
         val leftParenTokenRange = expect(LEFT_PARENTHESIS)?.range ?: neverHappens()
@@ -493,21 +489,32 @@ class Parser(sourceText: String) {
         val parenCheckPoint = CheckPoint()
         val exprError = error
 
-        checkPoint.load()
+        startCheckPoint.load()
 
         val params = parseArrowFormalParameters(shouldBreakIfInvalid=false)
         val paramsError = error
+        val paramsCheckPoint = CheckPoint()
+
         error = null
 
-        return (
+        return when {
             // because parameters will be parsed without care about errors, we need to check it on here
-            if (currToken.type == ARROW) if (paramsError == null) params!! else reportError(paramsError)
-            else expr?.let {
+            run {
+                paramsCheckPoint.load()
+                params != null && paramsError == null && currToken.type == ARROW
+            } -> params
+            run {
                 parenCheckPoint.load()
-                ParenthesizedExpressionNode(it, leftParenTokenRange..rightParenTokenAfterExprRange!!)
+                expr != null && exprError == null && currToken.type != ARROW
+            } -> ParenthesizedExpressionNode(expr!!, leftParenTokenRange..rightParenTokenAfterExprRange!!)
+            else -> {
+                paramsCheckPoint.load()
+                reportError(
+                    if (currToken.type == ARROW) paramsError!!
+                    else exprError!!
+                )
             }
-                ?: reportError(exprError!!)
-        )
+        }
     }
     @Careful
     private fun parseMethodExpression(isAsync: Boolean, isGenerator: Boolean, startRange: Range?): MethodExpressionNode? {

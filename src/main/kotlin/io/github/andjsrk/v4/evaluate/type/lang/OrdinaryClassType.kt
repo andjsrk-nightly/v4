@@ -7,7 +7,7 @@ class OrdinaryClassType(
     parent: ClassType?,
     staticProperties: MutableMap<PropertyKey, Property>,
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
-    constructor: OrdinaryFunctionType,
+    override val constructor: OrdinaryFunctionType,
 ): ClassType(name, parent, staticProperties, instancePrototypeProperties, constructor) {
     override fun construct(args: List<LanguageType>): MaybeAbrupt<ObjectType> {
         val obj = ObjectType.create(instancePrototype)

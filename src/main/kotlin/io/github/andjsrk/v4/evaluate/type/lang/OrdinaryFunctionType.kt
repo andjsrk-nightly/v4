@@ -23,6 +23,7 @@ class OrdinaryFunctionType(
         executionContextStack.pop()
         if (res is Completion.Return) return Completion.Normal(res.value)
         returnIfAbrupt(res) { return it }
+        // if the function returned nothing, return `null`
         return Completion.Normal.`null`
     }
     @EsSpec("PrepareForOrdinaryCall")

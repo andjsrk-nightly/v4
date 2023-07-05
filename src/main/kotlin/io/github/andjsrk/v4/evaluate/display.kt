@@ -17,13 +17,14 @@ fun LanguageType.display(raw: Boolean = false): String =
         is NumberType -> this.toString(10).value
         is BigIntType -> value.toString(10)
         is BooleanType -> value.toString()
-        is SymbolType -> "Symbol(${description?.value ?: ""})"
+        is SymbolType -> toString()
         is ObjectType -> {
             val prefix =
                 if (prototype == Object.instancePrototype) ""
-                else "${
-                    prototype?.classOwnsPrototype?.name?.display() ?: "(anonymous)"
-                } "
+                else {
+                    val name = prototype?.ownerClass?.name?.display() ?: "(anonymous)"
+                    "$name "
+                }
             val props = properties.asSequence()
                 .filter { (_, desc) -> desc.enumerable }
                 .map { (k, desc) ->

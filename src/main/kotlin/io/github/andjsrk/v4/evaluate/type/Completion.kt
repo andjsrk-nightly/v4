@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.evaluate.ThrowTrace
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
@@ -39,7 +40,11 @@ sealed interface Completion<out V: AbstractType?>: Record {
         override val value: LanguageType
     }
     data class Return(override val value: LanguageType): NonEmptyAbrupt
-    data class Throw(override val value: LanguageType): NonEmptyAbrupt
+    data class Throw(override val value: LanguageType): NonEmptyAbrupt {
+        init {
+            ThrowTrace.instance = ThrowTrace(value)
+        }
+    }
     sealed interface IterationStop: Abrupt {
         val target: String?
     }

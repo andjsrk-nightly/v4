@@ -5,5 +5,5 @@ import io.github.andjsrk.v4.evaluate.type.Property
 class PrototypeObjectType(
     lazyPrototype: Lazy<PrototypeObjectType?> = lazy { null },
     properties: MutableMap<PropertyKey, Property>,
-    val classOwnsPrototype: ClassType,
+    val ownerClass: ClassType,
 ): ObjectType(lazyPrototype, properties)

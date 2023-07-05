@@ -2,6 +2,7 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.isAnonymous
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.stringValue
@@ -18,7 +19,7 @@ private fun List<MaybeRestNode>.initializeParameterBindings(argsIterator: Iterat
                         val defaultExpr = element.default
                         var value = when {
                             argsIterator.hasNext() -> argsIterator.next()
-                            defaultExpr == null -> return Completion.Throw(NullType/* TypeError */)
+                            defaultExpr == null -> neverHappens() // this case will be handled on `instantiateFunctionDeclaration`
                             else -> NullType
                         }
                         if (value == NullType && defaultExpr != null) {

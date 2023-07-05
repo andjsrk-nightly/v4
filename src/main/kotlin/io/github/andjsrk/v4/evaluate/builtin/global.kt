@@ -2,6 +2,8 @@ package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.builtin.bigint.BigInt
+import io.github.andjsrk.v4.evaluate.builtin.error.*
+import io.github.andjsrk.v4.evaluate.builtin.function.Function
 import io.github.andjsrk.v4.evaluate.builtin.number.Number
 import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.builtin.reflect.Reflect
@@ -14,7 +16,19 @@ import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 val global = ObjectType.createBasic().apply {
     set("global".languageValue, this)
     // TODO: function properties
-    arrayOf(BigInt, Number, Object, String, Symbol).forEach {
+    arrayOf(
+        BigInt,
+        Error,
+        Function,
+        Number,
+        Object,
+        RangeError,
+        ReferenceError,
+        String,
+        Symbol,
+        SyntaxError,
+        TypeError,
+    ).forEach {
         set(it.name!!, it)
     }
     set("Reflect".languageValue, Reflect)

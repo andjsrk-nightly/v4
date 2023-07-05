@@ -15,7 +15,7 @@ val Array = BuiltinClassType(
     mutableMapOf(
         // TODO
     ),
-    constructor {
+    constructor { arr, args ->
         TODO()
     },
 )

@@ -1,13 +1,17 @@
 package io.github.andjsrk.v4.evaluate.builtin.symbol
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.builtin.symbol.static.create
 import io.github.andjsrk.v4.evaluate.builtin.symbol.static.`for`
 import io.github.andjsrk.v4.evaluate.languageValue
-import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.throwError
+import io.github.andjsrk.v4.evaluate.type.AccessorProperty
+import io.github.andjsrk.v4.evaluate.type.DataProperty
+import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
+import io.github.andjsrk.v4.evaluate.type.lang.SymbolType
 
 @EsSpec("%Symbol%")
 val Symbol = BuiltinClassType(
@@ -24,7 +28,7 @@ val Symbol = BuiltinClassType(
         "description".languageValue to AccessorProperty(descriptionGetter),
         // TODO
     ),
-    constructor {
-        Completion.Throw(NullType/* TypeError */)
+    constructor { _, _ ->
+        throwError(TypeErrorKind.CANNOT_CONSTRUCT, "Symbol")
     },
 )

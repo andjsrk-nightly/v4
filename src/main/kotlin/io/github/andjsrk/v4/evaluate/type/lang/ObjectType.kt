@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.type.*
@@ -39,23 +40,17 @@ open class ObjectType(
         val current = _getOwnProperty(key)
         return _applyPropertyDescriptor(key, descriptor, current)
     }
-    /**
-     * Returns a normal completion containing empty or a throw completion.
-     */
-    fun _throwIfNotCompatiblePropertyDescriptor(current: Property?): EmptyOrAbrupt {
+    fun _throwIfNotCompatiblePropertyDescriptor(current: Property?, key: PropertyKey): EmptyOrAbrupt {
         when {
-            current == null -> if (!extensible) return Completion.Throw(NullType/* TypeError */)
-            current.not { configurable } -> return Completion.Throw(NullType/* TypeError */)
+            current == null ->
+                if (!extensible) return throwError(TypeErrorKind.OBJECT_NOT_EXTENSIBLE, key.string())
+            current.not { configurable } ->
+                return throwError(TypeErrorKind.CANNOT_REDEFINE, key.string())
         }
         return empty
     }
-    @EsSpec("IsCompatiblePropertyDescriptor")
-    fun _isCompatiblePropertyDescriptor(current: Property?): Boolean {
-        if (current == null) return extensible
-        return current.configurable
-    }
     fun _applyPropertyDescriptor(key: PropertyKey, descriptor: Property, current: Property?): EmptyOrAbrupt {
-        returnIfAbrupt(_throwIfNotCompatiblePropertyDescriptor(current)) { return it }
+        returnIfAbrupt(_throwIfNotCompatiblePropertyDescriptor(current, key)) { return it }
 
         properties[key] = when (descriptor) {
             is AccessorProperty -> descriptor.copy()
@@ -88,19 +83,19 @@ open class ObjectType(
                 else properties[key] = DataProperty(value)
             }
             is DataProperty -> {
-                if (ownDesc.not { writable }) return Completion.Throw(NullType/* TypeError */)
-                if (receiver !is ObjectType) return Completion.Throw(NullType/* TypeError */)
+                if (ownDesc.not { writable }) return throwError(TypeErrorKind.CANNOT_ASSIGN_TO_READ_ONLY_PROPERTY, key.string())
+                require(receiver is ObjectType)
                 val existingDesc = receiver._getOwnProperty(key)
                 if (existingDesc == null) createDataProperty(key, value)
                 else {
                     if (existingDesc is AccessorProperty) return Completion.Normal(BooleanType.FALSE)
                     require(existingDesc is DataProperty)
-                    if (existingDesc.not { writable }) return Completion.Throw(NullType/* TypeError */)
+                    if (existingDesc.not { writable }) return throwError(TypeErrorKind.CANNOT_ASSIGN_TO_READ_ONLY_PROPERTY, key.string())
                     receiver._defineOwnProperty(key, existingDesc.copy(value=value))
                 }
             }
             is AccessorProperty -> {
-                val setter = ownDesc.set ?: return Completion.Throw(NullType/*  */)
+                val setter = ownDesc.set ?: return throwError(TypeErrorKind.NO_SETTER)
                 TODO()
             }
         }
@@ -109,7 +104,7 @@ open class ObjectType(
     @EsSpec("[[Delete]]")
     fun _delete(key: PropertyKey): EmptyOrAbrupt {
         val desc = _getOwnProperty(key) ?: return empty
-        if (desc.not { configurable }) return Completion.Throw(NullType/* TypeError */)
+        if (desc.not { configurable }) return throwError(TypeErrorKind.CANNOT_DELETE_PROPERTY)
         properties.remove(key)
         return empty
     }

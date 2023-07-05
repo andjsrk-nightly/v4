@@ -44,7 +44,7 @@ class NormalForNode(
         while (true) {
             if (test != null) {
                 val testValue = test.evaluateValueOrReturn { return it }
-                if (testValue !is BooleanType) return Completion.Throw(NullType/* TypeError */)
+                    .requireToBe<BooleanType> { return it }
                 if (!testValue.value) return Completion.Normal(res)
             }
             res = body.evaluate().returnIfShouldNotContinue(res) { return it }

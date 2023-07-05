@@ -1,10 +1,11 @@
 package io.github.andjsrk.v4.evaluate.builtin.number
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.builtin.number.static.*
 import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.languageValue
-import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.DataProperty
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
@@ -36,7 +37,7 @@ val Number = BuiltinClassType(
         "toRadix".languageValue to DataProperty.sealed(toRadix),
         // TODO
     ),
-    constructor {
-        Completion.Throw(NullType/* TypeError */)
+    constructor { _, _ ->
+        throwError(TypeErrorKind.CANNOT_CONSTRUCT, "Number")
     },
 )

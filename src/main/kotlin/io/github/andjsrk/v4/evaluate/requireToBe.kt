@@ -1,10 +1,21 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
-import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
-internal inline fun <reified T: LanguageType?> LanguageType?.requireToBe(`return`: AbruptReturnLambda): T {
-    if (this !is T) `return`(Completion.Throw(NullType/* TypeError */))
+internal inline fun <reified T: LanguageType> LanguageType?.requireToBe(`return`: AbruptReturnLambda): T {
+    if (this !is T) `return`(createThrow<T>(this))
     return this
 }
+
+internal inline fun <reified T: LanguageType> LanguageType?.requireToBeNullable(`return`: AbruptReturnLambda): T? {
+    if (this !is T?) `return`(createThrow<T>(this))
+    return this
+}
+
+private inline fun <reified Expected: LanguageType> createThrow(actualValue: LanguageType?) =
+    throwError(
+        TypeErrorKind.UNEXPECTED_TYPE,
+        generalizedDescriptionOf<Expected>(),
+        actualValue?.let { generalizedDescriptionOf(it) } ?: "nothing"
+    )

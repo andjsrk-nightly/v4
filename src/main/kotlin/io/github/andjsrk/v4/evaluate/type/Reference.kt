@@ -1,7 +1,10 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.error.ReferenceErrorKind
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.returnIfAbrupt
+import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
 
@@ -34,10 +37,13 @@ data class Reference(
     @EsSpec("PutValue")
     fun putValue(value: LanguageType): EmptyOrAbrupt {
         when {
-            this.isUnresolvable -> return Completion.Throw(NullType/* ReferenceError */)
+            this.isUnresolvable -> {
+                require(referencedName is StringType)
+                return throwError(ReferenceErrorKind.NOT_DEFINED, referencedName.value)
+            }
             this.isProperty -> {
                 // primitives are immutable
-                if (base !is ObjectType) return Completion.Throw(NullType/* TypeError */)
+                if (base !is ObjectType) return throwError(TypeErrorKind.PRIMITIVE_IMMUTABLE)
                 returnIfAbrupt(base._set(referencedName!!, value, getThis())) { return it }
                 return empty
             }

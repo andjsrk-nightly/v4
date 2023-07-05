@@ -1,8 +1,7 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
-import io.github.andjsrk.v4.evaluate.returnIfShouldNotContinue
+import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
@@ -23,7 +22,7 @@ class WhileNode(
         if (atLeastOnce) res = body.evaluate().returnIfShouldNotContinue(res) { return it }
         while (true) {
             val testVal = test.evaluateValueOrReturn { return it }
-            if (testVal !is BooleanType) return Completion.Throw(NullType/* TypeError */)
+                .requireToBe<BooleanType> { return it }
             if (!testVal.value) return Completion.Normal(res)
             res = body.evaluate().returnIfShouldNotContinue(res) { return it }
         }

@@ -5,6 +5,7 @@ import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.EmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.empty
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
+import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.*
 
 class NormalLexicalDeclarationNode(
@@ -33,6 +34,7 @@ class NormalLexicalDeclarationNode(
                     lhs.initializeBinding(value)
                 }
                 is BindingPatternNode -> TODO()
+                else -> neverHappens() // because of false positive of compiler, need to put this branch
             }
         }
         return empty

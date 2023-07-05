@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.evaluate
 
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.neverHappens
@@ -14,7 +15,7 @@ internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
     val isAccessor = hasGetField || hasSetField
 
     // cannot determine which descriptor needs to be created
-    if (isData == isAccessor) return Completion.Throw(NullType/* TypeError */)
+    if (isData == isAccessor) return throwError(TypeErrorKind.AMBIGUOUS_PROPERTY_DESCRIPTOR)
 
     val enumerable = getOptionalBooleanPropertyValueOrReturn("enumerable".languageValue) { return it }
     val configurable = getOptionalBooleanPropertyValueOrReturn("configurable".languageValue) { return it }
@@ -28,9 +29,9 @@ internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
             }
             isAccessor -> {
                 val getter = returnIfAbrupt(getOwnPropertyValue("get".languageValue)) { return it }
-                    .requireToBe<FunctionType?> { return it }
+                    .requireToBeNullable<FunctionType> { return it }
                 val setter = returnIfAbrupt(getOwnPropertyValue("set".languageValue)) { return it }
-                    .requireToBe<FunctionType?> { return it }
+                    .requireToBeNullable<FunctionType> { return it }
                 AccessorProperty(getter, setter, enumerable, configurable)
             }
             else -> neverHappens()
@@ -40,5 +41,5 @@ internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
 
 private inline fun ObjectType.getOptionalBooleanPropertyValueOrReturn(key: PropertyKey, `return`: AbruptReturnLambda) =
     returnIfAbrupt(getOwnPropertyValue(key), `return`)
-        .requireToBe<BooleanType?>(`return`)
+        .requireToBeNullable<BooleanType>(`return`)
         ?.value

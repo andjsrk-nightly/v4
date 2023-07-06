@@ -374,7 +374,17 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             true && 0
+        """).shouldBeThrowAnd {}
+
+        evaluationOf("""
+            true &&> 0
         """).shouldBeNormalAnd<NumberType> {}
+
+        evaluationOf("""
+            false &&> 0
+        """).shouldBeNormalAnd<BooleanType> {
+            assertFalse(value)
+        }
 
         evaluationOf("""
             true || false

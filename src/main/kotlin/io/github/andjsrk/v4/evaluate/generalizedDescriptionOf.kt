@@ -8,24 +8,27 @@ internal inline fun <reified V: LanguageType> generalizedDescriptionOf(_value: V
     generalizedDescriptionOf(V::class)
 internal fun generalizedDescriptionOf(clazz: KClass<*>) =
     when {
-        clazz.isSubClassOf<NullType>() -> "null"
-        clazz.isSubClassOf<StringType>() -> "a string"
-        clazz.isSubClassOf<NumberType>() -> "a number"
-        clazz.isSubClassOf<BooleanType>() -> "a boolean"
-        clazz.isSubClassOf<BigIntType>() -> "a BigInt"
-        clazz.isSubClassOf<SymbolType>() -> "a symbol"
-        clazz.isSubClassOf<ArrayType>() -> "an array"
-        clazz.isSubClassOf<FunctionType>() -> "a function"
-        clazz.isSubClassOf<ObjectType>() -> "an object"
+        clazz.`is`<NullType>() -> "null"
+        clazz.`is`<StringType>() -> "a string"
+        clazz.`is`<NumberType>() -> "a number"
+        clazz.`is`<BooleanType>() -> "a boolean"
+        clazz.`is`<BigIntType>() -> "a BigInt"
+        clazz.`is`<SymbolType>() -> "a symbol"
+        clazz.`is`<ArrayType>() -> "an array"
+        clazz.`is`<FunctionType>() -> "a function"
+        clazz.`is`<ObjectType>() -> "an object"
         clazz == NumericType::class -> "either a number or a BigInt"
-        else -> missingBranch()
+        else -> {
+            println(clazz)
+            missingBranch()
+        }
     }
 
-private inline fun <reified P> KClass<out Any>.isSubClassOf() =
-    this.java.isSubClassOf(P::class.java)
-private fun <S, P> Class<S>.isSubClassOf(parent: Class<P>): Boolean =
-    when (superclass) {
+private inline fun <reified P> KClass<out Any>.`is`() =
+    this.java.`is`(P::class.java)
+private fun <S, P> Class<S>.`is`(other: Class<P>): Boolean =
+    this == other || when (superclass) {
         null -> false
-        parent -> true
-        else -> superclass.isSubClassOf(parent)
+        other -> true
+        else -> superclass.`is`(other)
     }

@@ -17,5 +17,5 @@ private inline fun <reified Expected: LanguageType> createThrow(actualValue: Lan
     throwError(
         TypeErrorKind.UNEXPECTED_TYPE,
         generalizedDescriptionOf<Expected>(),
-        actualValue?.let { generalizedDescriptionOf(it) } ?: "nothing"
+        actualValue?.let { generalizedDescriptionOf(it::class) } ?: "nothing"
     )

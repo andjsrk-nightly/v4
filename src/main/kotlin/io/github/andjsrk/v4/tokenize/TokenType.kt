@@ -39,6 +39,7 @@ enum class TokenType(val staticContent: String?) {
     COMMA(","),
     COALESCE("??"),
     OR("||"),
+    THEN("&&>"),
     AND("&&"),
     BITWISE_OR("|"),
     BITWISE_XOR("^"),

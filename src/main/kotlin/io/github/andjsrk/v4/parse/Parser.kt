@@ -1082,12 +1082,15 @@ class Parser(sourceText: String) {
     @Careful
     private fun parseLogicalAnd() =
         parseGeneralBinaryExpression(AND, ::parseBitwiseOrExpression)
+    @Careful
+    private fun parseLogicalThen() =
+        parseGeneralBinaryExpression(THEN, ::parseLogicalAnd)
     /**
      * Parses [LogicalORExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LogicalORExpression).
      */
     @Careful
     private fun parseLogicalOr() =
-        parseGeneralBinaryExpression(OR, ::parseLogicalAnd)
+        parseGeneralBinaryExpression(OR, ::parseLogicalThen)
     /**
      * Parses [CoalesceExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-CoalesceExpression).
      * Note that the function takes non-null parse result from [parseLogicalOr].

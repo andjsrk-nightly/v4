@@ -488,10 +488,23 @@ internal class Tokenizer(sourceText: String) {
                         }
                     }
                     BITWISE_AND -> {
-                        // & &= && &&=
+                        // & &= && &&> &&=
                         advance()
                         return when (curr) {
-                            '&' -> select('=', ASSIGN_AND, AND)
+                            '&' -> {
+                                advance()
+                                when (curr) {
+                                    '>' -> {
+                                        advance()
+                                        build(THEN)
+                                    }
+                                    '=' -> {
+                                        advance()
+                                        build(ASSIGN_AND)
+                                    }
+                                    else -> build(AND)
+                                }
+                            }
                             '=' -> {
                                 advance()
                                 build(ASSIGN_BITWISE_AND)

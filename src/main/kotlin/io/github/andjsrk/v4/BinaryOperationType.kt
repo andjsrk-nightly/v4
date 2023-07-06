@@ -21,6 +21,7 @@ enum class BinaryOperationType {
     ASSIGN_MINUS,
     COALESCE,
     OR,
+    THEN,
     AND,
     BITWISE_OR,
     BITWISE_XOR,

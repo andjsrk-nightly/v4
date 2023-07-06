@@ -28,7 +28,16 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             // if left side is `false`, return `false`
             // else,
             //   evaluate right side
+            //   coerce right side to be a Boolean
             //   return right side
+            val booleanLeft = left
+                .requireToBe<BooleanType> { return it }
+            if (!booleanLeft.value) return Completion.Normal(FALSE)
+            val right = returnIfAbrupt(other.evaluateValue()) { return it }
+                .requireToBe<BooleanType> { return it }
+            return Completion.Normal(right)
+        }
+        THEN -> {
             val booleanLeft = left
                 .requireToBe<BooleanType> { return it }
             if (!booleanLeft.value) return Completion.Normal(FALSE)

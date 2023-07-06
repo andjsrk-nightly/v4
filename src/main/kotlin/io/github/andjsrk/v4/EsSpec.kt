@@ -9,9 +9,6 @@ package io.github.andjsrk.v4
  * and KDoc that describes what the target indicating is in specification is needed.
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
+@Retention(AnnotationRetention.SOURCE)
 @Repeatable
-annotation class EsSpec(
-    /**
-     */
-    val specName: String,
-)
+annotation class EsSpec(val specName: String)

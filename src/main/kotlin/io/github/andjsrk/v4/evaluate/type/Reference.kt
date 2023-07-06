@@ -36,21 +36,20 @@ data class Reference(
     }
     @EsSpec("PutValue")
     fun putValue(value: LanguageType): EmptyOrAbrupt {
-        when {
+        return when {
             this.isUnresolvable -> {
                 require(referencedName is StringType)
-                return throwError(ReferenceErrorKind.NOT_DEFINED, referencedName.value)
+                throwError(ReferenceErrorKind.NOT_DEFINED, referencedName.value)
             }
             this.isProperty -> {
-                // primitives are immutable
                 if (base !is ObjectType) return throwError(TypeErrorKind.PRIMITIVE_IMMUTABLE)
                 returnIfAbrupt(base._set(referencedName!!, value, getThis())) { return it }
-                return empty
+                empty
             }
             else -> {
                 require(base is DeclarativeEnvironment)
                 require(referencedName is StringType)
-                return base.setMutableBinding(referencedName.value, value)
+                base.setMutableBinding(referencedName.value, value)
             }
         }
     }

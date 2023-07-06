@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4
 
+import io.github.andjsrk.v4.evaluate.getSignAndRest
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.lang.NumberType
 import io.github.andjsrk.v4.parse.foldElvis
@@ -7,9 +8,11 @@ import kotlin.math.withSign
 
 @EsSpec("StringToNumber")
 internal fun parseNumber(string: String): NumberType {
-    val (rest, sign) =
-        if (string.startsWith('-')) string.substring(1) to -1
-        else string to 1
+    val (sign, rest) = getSignAndRest(string)
+    if (rest == "Infinity") return (
+        if (sign == 1) NumberType.POSITIVE_INFINITY
+        else NumberType.NEGATIVE_INFINITY
+    )
     val parsedNonDecimal = arrayOf("0b" to 2, "0o" to 8, "0x" to 16)
         .asSequence()
         .map { (prefix, radix) ->

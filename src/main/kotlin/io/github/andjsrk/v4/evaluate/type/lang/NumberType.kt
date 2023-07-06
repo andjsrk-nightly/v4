@@ -275,8 +275,8 @@ internal val NumberType.isInteger get() =
     this.isFinite && value.isInteger
 private inline val NumberType.isOddInteger get() =
     this.isInteger && value.toInt().isOdd
-internal val NumberType.isValidRadix get() =
+internal val NumberType.isRadix get() =
     this.isInteger && this.value in 2.0..36.0
-internal inline fun NumberType.requireToBeValidRadix(`return`: AbruptReturnLambda) =
-    if (this.isValidRadix) this
+internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
+    if (this.isRadix) this
     else `return`(throwError(RangeErrorKind.RADIX_RANGE))

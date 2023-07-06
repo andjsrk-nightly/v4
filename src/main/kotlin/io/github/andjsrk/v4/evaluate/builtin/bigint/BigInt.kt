@@ -8,6 +8,7 @@ import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.DataProperty
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
+import io.github.andjsrk.v4.evaluate.type.lang.SymbolType
 
 val BigInt = BuiltinClassType(
     "BigInt",
@@ -17,6 +18,7 @@ val BigInt = BuiltinClassType(
         // TODO
     ),
     mutableMapOf(
+        SymbolType.WellKnown.toString to DataProperty.sealed(toString),
         // TODO
     ),
     constructor { _, _ ->

@@ -24,7 +24,7 @@ val Error = BuiltinClassType(
         val options = args.getOrNull(1)
             .normalizeNull()
             .requireToBeNullable<ObjectType> { return@ctor it }
-        if (message != null) error.createNonEnumerablePropertyOrThrow("message".languageValue, message)
+        if (message != null) error.createDataProperty("message".languageValue, message)
         returnIfAbrupt(error.initializeErrorCause(options)) { return@ctor it }
         Completion.Normal(error)
     },

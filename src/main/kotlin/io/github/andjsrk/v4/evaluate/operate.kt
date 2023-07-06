@@ -97,14 +97,16 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
         .requireToBe<NumericType<*>> { return it }
     val numericRight = right
         .requireToBe<NumericType<*>> { return it }
-    if (left::class != right::class) return throwError(TypeErrorKind.LHS_RHS_NOT_SAME_TYPE)
+    if (left::class != right::class) return throwError(TypeErrorKind.BIGINT_MIXED_TYPES)
 
     return Completion.Normal(
+        @CompilerFalsePositive
+        @Suppress("TYPE_MISMATCH")
         when (operation) {
             EXPONENTIAL -> numericLeft.pow(numericRight)
             MULTIPLY -> numericLeft * numericRight
-            DIVIDE -> (numericLeft / numericRight)
-            MOD -> (numericLeft % numericRight)
+            DIVIDE -> numericLeft / numericRight
+            MOD -> numericLeft % numericRight
             PLUS -> numericLeft + numericRight
             MINUS -> numericLeft - numericRight
             SHL -> numericLeft.leftShift(numericRight)

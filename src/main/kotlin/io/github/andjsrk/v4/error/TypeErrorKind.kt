@@ -87,6 +87,7 @@ enum class TypeErrorKind(override val message: String): ErrorKind {
     NON_COERCIBLE("Cannot destructure '%' as it is %."),
     NON_COERCIBLE_WITH_PROPERTY("Cannot destructure property '%' of '%' as it is %."),
     NON_EXTENSIBLE_PROTO("% is not extensible"),
+    NON_INTEGER_TO_NON_DECIMAL("Non-integer numbers cannot be converted to non-decimal formatted string"),
     NON_OBJECT_ASSERT_OPTION("The 'assert' option must be an object"),
     NON_OBJECT_IMPORT_ARGUMENT("The second argument to import() must be an object"),
     NON_OBJECT_PRIVATE_NAME_ACCESS("Cannot access private name % from %"),

@@ -15,7 +15,7 @@ val parseLeadingInteger = BuiltinFunctionType("parseLeadingInteger", 1u) fn@ { _
     val radixArg = args.getOrNull(1)
         .normalizeNull()
         .requireToBeNullable<NumberType> { return@fn it }
-        ?.requireToBeValidRadix { return@fn it }
+        ?.requireToBeRadix { return@fn it }
     val radix = radixArg?.value?.toInt() ?: 10
     val digitCharsForRadix = DIGITS.substring(0, radix)
     val validPart = string.value.takeWhile { digitCharsForRadix.contains(it, ignoreCase=true) }

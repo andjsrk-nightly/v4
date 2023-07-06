@@ -63,11 +63,11 @@ open class ObjectType(
     fun _hasProperty(key: PropertyKey): Boolean =
         hasOwnProperty(key) || prototype?._hasProperty(key) ?: false
     @EsSpec("[[Get]]")
-    fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyNormalOrAbrupt {
+    fun _get(key: PropertyKey): NonEmptyNormalOrAbrupt {
         val descriptor = _getOwnProperty(key)
         if (descriptor == null) {
             val proto = prototype ?: return Completion.Normal.`null`
-            return proto._get(key, receiver)
+            return proto._get(key)
         }
         if (descriptor is DataProperty) return Completion.Normal(descriptor.value)
         require(descriptor is AccessorProperty)
@@ -115,8 +115,8 @@ open class ObjectType(
         properties.entries.map { it.toPair() }
 
     @EsSpec("Get")
-    fun get(key: PropertyKey) =
-        _get(key, this)
+    inline fun get(key: PropertyKey) =
+        _get(key)
     // GetV is implemented as an extension for LanguageType
     @EsSpec("Set")
     fun set(key: PropertyKey, value: LanguageType) =

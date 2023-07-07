@@ -14,6 +14,11 @@ internal inline val String.languageValue get() =
  */
 internal inline val Double.languageValue get() =
     NumberType(this)
+/**
+ * Converts from [Number] to [NumberType] without parentheses.
+ */
+internal inline val Number.languageValue get() =
+    this.toDouble().languageValue
 
 /**
  * Converts from [BigInteger] to [BigIntType] without parentheses.

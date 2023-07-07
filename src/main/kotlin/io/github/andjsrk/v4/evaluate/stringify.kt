@@ -18,6 +18,7 @@ internal fun stringify(value: LanguageType): MaybeAbrupt<StringType> {
             is BooleanType -> value.value.toString().languageValue
             is StringType -> value
             is NumericType<*> -> value.toString(10)
+            // the function allows Symbols to be stringified
             is SymbolType -> value.toString().languageValue
             is ObjectType -> {
                 if (value.not { hasProperty(SymbolType.WellKnown.toString) }) return throwError(TypeErrorKind.CANNOT_CONVERT_TO_STRING)

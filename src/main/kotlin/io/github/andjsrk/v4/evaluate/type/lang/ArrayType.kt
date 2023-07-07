@@ -16,7 +16,7 @@ class ArrayType(var length: Long, origin: ArrayType? = null): ObjectType(lazy { 
         }
     }
     internal fun initializeAt(index: Long, value: LanguageType): EmptyOrAbrupt {
-        val indexKey = neverAbrupt(stringify(index.toDouble().languageValue))
+        val indexKey = neverAbrupt(stringify(index.languageValue))
         return createDataPropertyOrThrow(indexKey, value)
     }
 

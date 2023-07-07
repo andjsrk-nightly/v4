@@ -219,7 +219,7 @@ value class NumberType(
         val right = returnIfAbrupt(other.toInt32()) { return it }
             .value.toInt()
         val result = operation(left, right)
-        return Completion.Normal(result.toDouble().languageValue)
+        return Completion.Normal(result.languageValue)
     }
     @EsSpec("::bitwiseAND")
     override fun bitwiseAnd(other: NumberType) =
@@ -275,8 +275,29 @@ internal val NumberType.isInteger get() =
     this.isFinite && value.isInteger
 private inline val NumberType.isOddInteger get() =
     this.isInteger && value.toInt().isOdd
-internal val NumberType.isRadix get() =
-    this.isInteger && this.value in 2.0..36.0
+internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", `return`: AbruptReturnLambda) =
+    if (this.isInteger && this.value.toInt() in range) this
+    else `return`(
+        throwError(
+            RangeErrorKind.MUST_BE_INTEGER_IN_RANGE,
+            description,
+            range.first.toString(),
+            range.last.toString(),
+        )
+    )
 internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
-    if (this.isRadix) this
-    else `return`(throwError(RangeErrorKind.RADIX_RANGE))
+    requireToBeIntWithin(Ranges.radix, "radix argument", `return`)
+internal inline fun NumberType.requireToBeIndex(`return`: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.index, "An index", `return`)
+internal inline fun NumberType.requireToBeRelativeIndex(length: Int, `return`: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.relativeIndex(length), "A relative index", `return`)
+/**
+ * Returns `null` if the number is greater than [Int.MAX_VALUE].
+ * Note that the function assumes that the number is an index.
+ */
+internal fun NumberType.resolveRelativeIndex(length: Int): Int? {
+    val unsafeIndex = value
+    if (unsafeIndex > Int.MAX_VALUE) return null
+    val index = unsafeIndex.toInt() // now it is in safe range to convert to Int
+    return if (index < 0) length + index else index
+}

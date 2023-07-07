@@ -35,6 +35,7 @@ enum class RangeErrorKind(override val message: String): ErrorKind {
     LOCALE_MATCHER("Illegal value for localeMatcher:%"),
     MAXIMUM_FRACTION_DIGITS_NOT_EQUAL_MINIMUM_FRACTION_DIGITS("maximumFractionDigits not equal to minimumFractionDigits"),
     MUST_BE_FINITE("The number must be finite"),
+    MUST_BE_INTEGER_IN_RANGE("% must be an integer between % and %"),
     MUST_BE_POSITIVE("The number must be positive"),
     NORMALIZATION_FORM("The normalization form should be one of %"),
     NUMBER_FORMAT_RANGE("% argument must be between 0 and 100"),

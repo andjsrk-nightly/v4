@@ -9,10 +9,11 @@ val toString = BuiltinFunctionType(SymbolType.WellKnown.toString) fn@ { thisArg,
     val bigint = thisArg
         .requireToBe<BigIntType> { return@fn it }
     val radix = args.getOrNull(0)
-        .normalizeNull()
-        .requireToBe<NumberType> { return@fn it }
-        .requireToBeRadix { return@fn it }
+        ?.normalizeNull()
+        ?.requireToBe<NumberType> { return@fn it }
+        ?.requireToBeRadix { return@fn it }
+        ?: 10
     Completion.Normal(
-        bigint.toString(radix.value.toInt())
+        bigint.toString(radix)
     )
 }

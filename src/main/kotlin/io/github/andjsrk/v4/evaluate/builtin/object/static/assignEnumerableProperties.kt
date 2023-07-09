@@ -14,7 +14,7 @@ val assignEnumerableProperties = BuiltinFunctionType("assignEnumerableProperties
         .drop(1)
         .map {
             it.normalizeNull()
-                .requireToBeNullable<ObjectType> { return@fn it }
+                ?.requireToBe<ObjectType> { return@fn it }
         }
     for (source in sources) {
         if (source == null) continue

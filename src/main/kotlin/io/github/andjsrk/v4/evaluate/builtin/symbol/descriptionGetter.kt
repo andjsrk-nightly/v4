@@ -9,8 +9,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.SymbolType
 
 @EsSpec("get Symbol.prototype.description")
 val descriptionGetter = AccessorProperty.builtinGetter("description") fn@ { thisArg ->
-    val symbol = thisArg
-        .requireToBe<SymbolType> { return@fn it }
+    val symbol = thisArg.requireToBe<SymbolType> { return@fn it }
     Completion.Normal(
         symbol.description ?: NullType
     )

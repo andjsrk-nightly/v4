@@ -29,9 +29,9 @@ internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
             }
             isAccessor -> {
                 val getter = returnIfAbrupt(getOwnPropertyValue("get".languageValue)) { return it }
-                    .requireToBeNullable<FunctionType> { return it }
+                    ?.requireToBe<FunctionType> { return it }
                 val setter = returnIfAbrupt(getOwnPropertyValue("set".languageValue)) { return it }
-                    .requireToBeNullable<FunctionType> { return it }
+                    ?.requireToBe<FunctionType> { return it }
                 AccessorProperty(getter, setter, enumerable, configurable)
             }
             else -> neverHappens()
@@ -41,5 +41,5 @@ internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
 
 private inline fun ObjectType.getOptionalBooleanPropertyValueOrReturn(key: PropertyKey, `return`: AbruptReturnLambda) =
     returnIfAbrupt(getOwnPropertyValue(key), `return`)
-        .requireToBeNullable<BooleanType>(`return`)
+        ?.requireToBe<BooleanType>(`return`)
         ?.value

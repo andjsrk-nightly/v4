@@ -20,10 +20,10 @@ val Error = BuiltinClassType(
     constructor(1u) ctor@ { error, args ->
         val message = args[0]
             .normalizeNull()
-            .requireToBeNullable<StringType> { return@ctor it }
+            ?.requireToBe<StringType> { return@ctor it }
         val options = args.getOrNull(1)
-            .normalizeNull()
-            .requireToBeNullable<ObjectType> { return@ctor it }
+            ?.normalizeNull()
+            ?.requireToBe<ObjectType> { return@ctor it }
         if (message != null) error.createDataProperty("message".languageValue, message)
         returnIfAbrupt(error.initializeErrorCause(options)) { return@ctor it }
         Completion.Normal(error)

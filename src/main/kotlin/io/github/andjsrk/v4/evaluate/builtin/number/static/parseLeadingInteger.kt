@@ -12,11 +12,11 @@ private const val DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 val parseLeadingInteger = BuiltinFunctionType("parseLeadingInteger", 1u) fn@ { _, args ->
     val string = args[0]
         .requireToBe<StringType> { return@fn it }
-    val radixArg = args.getOrNull(1)
-        .normalizeNull()
-        .requireToBeNullable<NumberType> { return@fn it }
+    val radix = args.getOrNull(1)
+        ?.normalizeNull()
+        ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeRadix { return@fn it }
-    val radix = radixArg?.value?.toInt() ?: 10
+        ?: 10
     val digitCharsForRadix = DIGITS.substring(0, radix)
     val validPart = string.value.takeWhile { digitCharsForRadix.contains(it, ignoreCase=true) }
     Completion.Normal(

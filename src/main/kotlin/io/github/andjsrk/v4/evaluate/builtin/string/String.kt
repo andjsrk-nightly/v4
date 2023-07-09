@@ -24,6 +24,10 @@ val String = BuiltinClassType(
         "codePoint".sealedData(codePoint),
         "codeUnit".sealedData(codeUnit),
         "concat".sealedData(concat),
+        "endsWith".sealedData(endsWith),
+        "includes".sealedData(includes),
+        "indexOf".sealedData(indexOf),
+        "isWellFormed".sealedData(isWellFormed),
         // TODO
     ),
     constructor { _, _ ->

@@ -5,11 +5,9 @@ import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 val codeUnit = BuiltinFunctionType("codeUnit") fn@ { thisArg, args ->
-    val string = thisArg
-        .requireToBe<StringType> { return@fn it }
-        .value
+    val string = thisArg.requireToBeString { return@fn it }
     val index = args.getOptional(0)
-        .requireToBeNullable<NumberType> { return@fn it }
+        ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeRelativeIndex(string.length) { return@fn it }
         ?.run {
             resolveRelativeIndex(string.length) ?: return@fn Completion.Normal.`null`

@@ -15,8 +15,6 @@ val toRadix = BuiltinFunctionType("toRadix", 1u) fn@ { thisArg, args ->
     val radix = args[0]
         .requireToBe<NumberType> { return@fn it }
         .requireToBeRadix { return@fn it }
-        .value
-        .toInt()
     if (radix != 10 && number.isFinite && number.not { isInteger }) return@fn throwError(TypeErrorKind.NON_INTEGER_TO_NON_DECIMAL)
     Completion.Normal(
         number.toString(radix)

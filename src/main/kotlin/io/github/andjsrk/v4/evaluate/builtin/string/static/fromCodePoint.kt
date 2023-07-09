@@ -12,7 +12,6 @@ val fromCodePoint = BuiltinFunctionType("fromCodePoint") fn@ { _, args ->
         val codePoint = arg
             .requireToBe<NumberType> { return@fn it }
             .requireToBeIntWithin(0L..MAX_CODE_POINT, "The code point") { return@fn it }
-            .value
             .toInt()
         builder.appendCodePoint(codePoint)
     }

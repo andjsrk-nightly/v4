@@ -41,7 +41,7 @@ value class NumberType(
         }
     override fun bitwiseNot(): MaybeAbrupt<NumberType> {
         val value = returnIfAbrupt(this.toInt32()) { return it }
-            .value.toInt()
+            .toInt()
         val result = value.inv().toDouble()
         return Completion.Normal(result.languageValue)
     }
@@ -171,7 +171,7 @@ value class NumberType(
         val left = returnIfAbrupt(leftCoercion()) { return it }
             .value.leftTransform()
         val right = returnIfAbrupt(other.toUint32()) { return it }
-            .value.toInt()
+            .toInt()
         val shiftCount = right % 32
         val result = operation(left, shiftCount)
         return Completion.Normal(result.languageValue)
@@ -215,9 +215,9 @@ value class NumberType(
     @EsSpec("NumberBitwiseOp")
     private fun generalBitwiseOp(other: NumberType, operation: (Int, Int) -> Int): MaybeAbrupt<NumberType> {
         val left = returnIfAbrupt(this.toInt32()) { return it }
-            .value.toInt()
+            .toInt()
         val right = returnIfAbrupt(other.toInt32()) { return it }
-            .value.toInt()
+            .toInt()
         val result = operation(left, right)
         return Completion.Normal(result.languageValue)
     }
@@ -275,8 +275,13 @@ internal val NumberType.isInteger get() =
     this.isFinite && value.isInteger
 private inline val NumberType.isOddInteger get() =
     this.isInteger && value.toInt().isOdd
+/**
+ * Note that the function coerces the value to range of [Int].
+ */
+internal inline fun NumberType.toInt() =
+    value.toInt()
 internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", `return`: AbruptReturnLambda) =
-    if (this.isInteger && this.value.toInt() in range) this
+    if (this.isInteger && this.toInt() in range) this
     else `return`(
         throwError(
             RangeErrorKind.MUST_BE_INTEGER_IN_RANGE,
@@ -286,9 +291,11 @@ internal inline fun NumberType.requireToBeIntWithin(range: LongRange, descriptio
         )
     )
 internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.radix, "radix argument", `return`)
+    requireToBeIntWithin(Ranges.radix, "A radix", `return`)
+        .toInt()
 internal inline fun NumberType.requireToBeIndex(`return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.index, "An index", `return`)
+        .toInt()
 internal inline fun NumberType.requireToBeRelativeIndex(length: Int, `return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.relativeIndex(length), "A relative index", `return`)
 /**

@@ -10,7 +10,6 @@ val fromCodeUnit = BuiltinFunctionType("fromCodeUnit") fn@ { _, args ->
         val codeUnit = arg
             .requireToBe<NumberType> { return@fn it }
             .requireToBeIntWithin(Ranges.uint16, "A code unit") { return@fn it }
-            .value
             .toInt()
         builder.append(codeUnit.toChar())
     }

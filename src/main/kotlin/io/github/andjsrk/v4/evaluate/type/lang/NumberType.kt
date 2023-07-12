@@ -1,17 +1,13 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
-import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.FALSE
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.TRUE
-import io.github.andjsrk.v4.isInteger
-import io.github.andjsrk.v4.not
-import kotlin.math.abs
-import kotlin.math.pow
-import kotlin.math.withSign
+import kotlin.math.*
 
 @JvmInline
 value class NumberType(

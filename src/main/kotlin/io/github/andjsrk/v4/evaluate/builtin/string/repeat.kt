@@ -3,10 +3,7 @@ package io.github.andjsrk.v4.evaluate.builtin.string
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.requireToBe
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.NumberType
-import io.github.andjsrk.v4.evaluate.type.lang.StringType
-import io.github.andjsrk.v4.evaluate.type.lang.builtinMethod
-import io.github.andjsrk.v4.evaluate.type.lang.requireToBeUnsignedInt
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 val repeat = builtinMethod("repeat", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }

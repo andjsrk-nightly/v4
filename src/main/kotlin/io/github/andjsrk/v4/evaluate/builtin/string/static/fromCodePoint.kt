@@ -4,9 +4,7 @@ import io.github.andjsrk.v4.MAX_CODE_POINT
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.requireToBe
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinFunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.NumberType
-import io.github.andjsrk.v4.evaluate.type.lang.requireToBeIntegerWithin
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 val fromCodePoint = BuiltinFunctionType("fromCodePoint") fn@ { _, args ->
     val builder = StringBuilder()

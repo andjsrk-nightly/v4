@@ -3,9 +3,7 @@ package io.github.andjsrk.v4.evaluate.builtin.string
 import io.github.andjsrk.v4.evaluate.getOptional
 import io.github.andjsrk.v4.evaluate.requireToBe
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
-import io.github.andjsrk.v4.evaluate.type.lang.NumberType
-import io.github.andjsrk.v4.evaluate.type.lang.builtinMethod
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 val includes = builtinMethod("includes", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }

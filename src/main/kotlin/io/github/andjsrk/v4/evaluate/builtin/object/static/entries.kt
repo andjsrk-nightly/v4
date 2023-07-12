@@ -4,9 +4,7 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.requireToBe
 import io.github.andjsrk.v4.evaluate.returnIfAbrupt
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.ArrayType
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinFunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("Object.entries")
 val entries = BuiltinFunctionType("entries", 1u) fn@ { _, args ->

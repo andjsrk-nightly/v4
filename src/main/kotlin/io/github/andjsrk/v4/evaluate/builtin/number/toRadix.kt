@@ -5,10 +5,7 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.requireToBe
 import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.NumberType
-import io.github.andjsrk.v4.evaluate.type.lang.builtinMethod
-import io.github.andjsrk.v4.evaluate.type.lang.isInteger
-import io.github.andjsrk.v4.evaluate.type.lang.requireToBeRadix
+import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
 
 @EsSpec("Number.prototype.toString") // with radix

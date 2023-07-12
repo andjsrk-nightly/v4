@@ -1,20 +1,20 @@
 package io.github.andjsrk.v4.evaluate.builtin.string
 
-import io.github.andjsrk.v4.evaluate.getOptional
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.requireToBe
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.NumberType
+import io.github.andjsrk.v4.evaluate.type.lang.StringType
 import io.github.andjsrk.v4.evaluate.type.lang.builtinMethod
+import io.github.andjsrk.v4.evaluate.type.lang.requireToBeUnsignedInt
 
-val indexOf = builtinMethod("indexOf", 1u) fn@ { thisArg, args ->
+val repeat = builtinMethod("repeat", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
-    val search = args[0].requireToBeString { return@fn it }
-    val startIndex = args.getOptional(1)
-        ?.requireToBe<NumberType> { return@fn it }
-        ?.requireToBeIndexWithinString(string) { return@fn it }
-        ?: 0
+    val count = args[0]
+        .requireToBe<NumberType> { return@fn it }
+        .requireToBeUnsignedInt { return@fn it }
     Completion.Normal(
-        string.indexOf(search, startIndex).languageValue
+        if (count == 0) StringType.empty
+        else string.repeat(count).languageValue
     )
 }

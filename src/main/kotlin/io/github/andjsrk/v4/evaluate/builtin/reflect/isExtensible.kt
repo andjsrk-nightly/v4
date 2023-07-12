@@ -9,8 +9,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
 @EsSpec("Reflect.isExtensible")
 val isExtensible = BuiltinFunctionType("isExtensible", 1u) fn@ { _, args ->
-    val obj = args[0]
-        .requireToBe<ObjectType> { return@fn it }
+    val obj = args[0].requireToBe<ObjectType> { return@fn it }
     Completion.Normal(
         obj.extensible.languageValue
     )

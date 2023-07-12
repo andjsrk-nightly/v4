@@ -2,10 +2,10 @@ package io.github.andjsrk.v4.evaluate.builtin.string
 
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinFunctionType
+import io.github.andjsrk.v4.evaluate.type.lang.builtinMethod
 import io.github.andjsrk.v4.not
 
-val isWellFormed = BuiltinFunctionType("isWellFormed") fn@ { thisArg, args ->
+val isWellFormed = builtinMethod("isWellFormed") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     var index = 0
     while (index < string.length) {

@@ -30,16 +30,14 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             //   evaluate right side
             //   coerce right side to be a Boolean
             //   return right side
-            val booleanLeft = left
-                .requireToBe<BooleanType> { return it }
+            val booleanLeft = left.requireToBe<BooleanType> { return it }
             if (!booleanLeft.value) return Completion.Normal(FALSE)
             val right = returnIfAbrupt(other.evaluateValue()) { return it }
                 .requireToBe<BooleanType> { return it }
             return Completion.Normal(right)
         }
         THEN -> {
-            val booleanLeft = left
-                .requireToBe<BooleanType> { return it }
+            val booleanLeft = left.requireToBe<BooleanType> { return it }
             if (!booleanLeft.value) return Completion.Normal(FALSE)
             return other.evaluateValue()
         }
@@ -52,8 +50,7 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             //   evaluate right side
             //   coerce right side to be a Boolean
             //   return right side
-            val booleanLeft = left
-                .requireToBe<BooleanType> { return it }
+            val booleanLeft = left.requireToBe<BooleanType> { return it }
             if (booleanLeft.value) return Completion.Normal(TRUE)
             val right = other.evaluateValueOrReturn { return it }
                 .requireToBe<BooleanType> { return it }
@@ -82,11 +79,7 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
                     }
                 )
             }
-            else throwError(
-                TypeErrorKind.UNEXPECTED_TYPE,
-                "${generalizedDescriptionOf<StringType>()} or ${generalizedDescriptionOf<NumericType<*>>()}",
-                generalizedDescriptionOf(left)
-            )
+            else unexpectedType(left, StringType::class, NumericType::class)
         PLUS -> {
             val leftAsString = left as? StringType
             val rightAsString = right as? StringType
@@ -102,10 +95,8 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
         else -> {}
     }
 
-    val numericLeft = left
-        .requireToBe<NumericType<*>> { return it }
-    val numericRight = right
-        .requireToBe<NumericType<*>> { return it }
+    val numericLeft = left.requireToBe<NumericType<*>> { return it }
+    val numericRight = right.requireToBe<NumericType<*>> { return it }
     if (left::class != right::class) return throwError(TypeErrorKind.BIGINT_MIXED_TYPES)
 
     return Completion.Normal(

@@ -8,8 +8,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 // TODO: rename the function
 @EsSpec("Object.keys")
 val getOwnEnumerableStringKeys = BuiltinFunctionType("getOwnEnumerableStringKeys", 1u) fn@ { _, args ->
-    val obj = args[0]
-        .requireToBe<ObjectType> { return@fn it }
+    val obj = args[0].requireToBe<ObjectType> { return@fn it }
     Completion.Normal(
         ArrayType.from(
             obj.ownEnumerableStringPropertyKeys()

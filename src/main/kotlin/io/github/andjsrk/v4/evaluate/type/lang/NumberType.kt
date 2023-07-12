@@ -1,13 +1,17 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
-import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.FALSE
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.TRUE
-import kotlin.math.*
+import io.github.andjsrk.v4.isInteger
+import io.github.andjsrk.v4.not
+import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.withSign
 
 @JvmInline
 value class NumberType(
@@ -280,9 +284,12 @@ private inline val NumberType.isOddInteger get() =
  */
 internal inline fun NumberType.toInt() =
     value.toInt()
-internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", `return`: AbruptReturnLambda) =
-    if (this.isInteger && this.toInt() in range) this
-    else `return`(
+internal inline fun NumberType.requireToBeIntegerWithin(range: LongRange, description: String = "The number", `return`: AbruptReturnLambda): Long {
+    if (this.isInteger) {
+        val long = this.value.toLong()
+        if (long in range) return long
+    }
+    `return`(
         throwError(
             RangeErrorKind.MUST_BE_INTEGER_IN_RANGE,
             description,
@@ -290,21 +297,24 @@ internal inline fun NumberType.requireToBeIntWithin(range: LongRange, descriptio
             range.last.toString(),
         )
     )
+}
+internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", `return`: AbruptReturnLambda) =
+    requireToBeIntegerWithin(range, description, `return`)
+        .toInt()
+internal inline fun NumberType.requireToBeUnsignedInt(`return`: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.unsignedInteger, `return`=`return`)
 internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.radix, "A radix", `return`)
-        .toInt()
 internal inline fun NumberType.requireToBeIndex(`return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.index, "An index", `return`)
-        .toInt()
 internal inline fun NumberType.requireToBeRelativeIndex(length: Int, `return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.relativeIndex(length), "A relative index", `return`)
+    requireToBeIntegerWithin(Ranges.relativeIndex(length), "A relative index", `return`)
 /**
  * Returns `null` if the number is greater than [Int.MAX_VALUE].
  * Note that the function assumes that the number is an index.
  */
-internal fun NumberType.resolveRelativeIndex(length: Int): Int? {
-    val unsafeIndex = value
-    if (unsafeIndex > Int.MAX_VALUE) return null
-    val index = unsafeIndex.toInt() // now it is in safe range to convert to Int
+internal fun Long.resolveRelativeIndex(length: Int): Int? {
+    if (this > Int.MAX_VALUE) return null
+    val index = this.toInt() // now it is in safe range to convert to Int
     return if (index < 0) length + index else index
 }

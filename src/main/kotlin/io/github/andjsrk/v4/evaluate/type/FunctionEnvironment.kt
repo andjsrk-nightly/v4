@@ -12,7 +12,7 @@ class FunctionEnvironment(
 ): DeclarativeEnvironment(outer) {
     var initialized = false
     @EsSpec("BindThisValue")
-    fun bindThisValue(value: LanguageType): EmptyOrAbrupt {
+    fun bindThisValue(value: LanguageType?): EmptyOrAbrupt {
         if (initialized) TODO() // what ReferenceError should I throw?
         thisValue = value
         initialized = true

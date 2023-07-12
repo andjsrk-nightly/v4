@@ -8,8 +8,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
 @EsSpec("Reflect.preventExtensions")
 val preventExtensions = BuiltinFunctionType("preventExtensions", 1u) fn@ { _, args ->
-    val obj = args[0]
-        .requireToBe<ObjectType> { return@fn it }
+    val obj = args[0].requireToBe<ObjectType> { return@fn it }
     obj.extensible = false
     Completion.Normal.`null`
 }

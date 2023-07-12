@@ -9,8 +9,7 @@ import java.text.ParseException
 
 @EsSpec("Number.parseFloat")
 val parseLeadingDecimal = BuiltinFunctionType("parseLeadingDecimal", 1u) fn@ { _, args ->
-    val string = args[0]
-        .requireToBe<StringType> { return@fn it }
+    val string = args[0].requireToBe<StringType> { return@fn it }
     // does not perform trim to input string
     val input = string.value
     run {

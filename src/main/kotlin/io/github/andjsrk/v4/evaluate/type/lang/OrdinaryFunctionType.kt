@@ -16,7 +16,7 @@ class OrdinaryFunctionType(
     name: PropertyKey? = null,
 ): FunctionType(name, parameters.requiredParameterCount, env) {
     override val isArrow = thisMode == ThisMode.ARROW
-    override fun _call(thisArg: LanguageType, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
+    override fun _call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
         val calleeContext = prepareForOrdinaryCall()
         bindThisInCall(calleeContext, thisArg)
         val res = evaluateBody(args)
@@ -33,7 +33,7 @@ class OrdinaryFunctionType(
         return calleeContext
     }
     @EsSpec("OrdinaryCallBindThis")
-    fun bindThisInCall(calleeContext: ExecutionContext, thisArg: LanguageType) {
+    fun bindThisInCall(calleeContext: ExecutionContext, thisArg: LanguageType?) {
         if (thisMode == ThisMode.ARROW) return
         val localEnv = calleeContext.lexicalEnvironment
         require(localEnv is FunctionEnvironment)

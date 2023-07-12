@@ -12,8 +12,10 @@ class SymbolType(val description: StringType? = null): PrimitiveLanguageType, Pr
         "Symbol(${description?.value ?: ""})"
 
     object WellKnown {
-        @EsSpec("Symbol.iterator")
+        @EsSpec("@@iterator")
         val iterator = SymbolType("Symbol.iterator".languageValue)
+        @EsSpec("@@replace")
+        val replace = SymbolType("Symbol.replace".languageValue)
         val toString = SymbolType("Symbol.toString".languageValue)
     }
     companion object {

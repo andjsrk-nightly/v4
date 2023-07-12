@@ -6,7 +6,6 @@ import io.github.andjsrk.v4.evaluate.type.lang.BuiltinFunctionType
 import io.github.andjsrk.v4.evaluate.type.lang.PrototypeObjectType
 
 val getOwnerClass = BuiltinFunctionType("getOwnerClass", 1u) fn@ { _, args ->
-    val proto = args[0]
-        .requireToBe<PrototypeObjectType> { return@fn it }
+    val proto = args[0].requireToBe<PrototypeObjectType> { return@fn it }
     Completion.Normal(proto.ownerClass)
 }

@@ -1,7 +1,12 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.CompilerFalsePositive
+import io.github.andjsrk.v4.evaluate.type.EmptyOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.Environment
+import io.github.andjsrk.v4.evaluate.type.empty
+import io.github.andjsrk.v4.evaluate.type.lang.ArrayType
+import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.isAnonymous
 import io.github.andjsrk.v4.parse.node.*
@@ -31,6 +36,9 @@ private fun List<MaybeRestNode>.initializeParameterBindings(argsIterator: Iterat
                         ref.putOrInitializeBinding(value, env)
                     }
                     is BindingPatternNode -> TODO()
+                    else ->
+                        @CompilerFalsePositive
+                        neverHappens()
                 }
             }
             is RestNode -> {

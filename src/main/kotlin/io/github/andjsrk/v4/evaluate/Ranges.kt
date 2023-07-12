@@ -3,8 +3,9 @@ package io.github.andjsrk.v4.evaluate
 import io.github.andjsrk.v4.evaluate.type.lang.NumberType
 
 internal object Ranges {
+    val unsignedInteger = 0L..NumberType.MAX_SAFE_INTEGER.toLong()
     fun relativeIndex(length: Int) = -length..NumberType.MAX_SAFE_INTEGER.toLong()
-    val index = 0L..NumberType.MAX_SAFE_INTEGER.toLong()
+    val index = unsignedInteger
     val radix = 2L..36L
     val int8 = int(8)
     val int16 = int(16)

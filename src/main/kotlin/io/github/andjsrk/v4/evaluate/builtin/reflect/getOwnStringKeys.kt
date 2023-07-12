@@ -7,8 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("Object.getOwnPropertyNames")
 val getOwnStringKeys = BuiltinFunctionType("getOwnStringKeys", 1u) fn@ { _, args ->
-    val obj = args[0]
-        .requireToBe<ObjectType> { return@fn it }
+    val obj = args[0].requireToBe<ObjectType> { return@fn it }
     Completion.Normal(
         ArrayType.from(
             obj._ownPropertyKeys().filterIsInstance<StringType>()

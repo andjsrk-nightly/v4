@@ -26,7 +26,6 @@ val Symbol = BuiltinClassType(
     ),
     mutableMapOf(
         "description".languageValue to AccessorProperty(descriptionGetter),
-        // TODO
     ),
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "Symbol")

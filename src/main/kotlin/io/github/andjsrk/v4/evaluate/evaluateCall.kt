@@ -9,8 +9,7 @@ internal fun evaluateCall(value: LanguageType, ref: AbstractType, args: List<Lan
     val thisValue =
         if (ref is Reference && ref.isProperty) ref.getThis()
         else NullType
-    val func = value
-        .requireToBe<FunctionType> { return it }
+    val func = value.requireToBe<FunctionType> { return it }
     // TODO: implement step 6
     return func._call(thisValue, args)
 }

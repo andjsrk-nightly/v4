@@ -561,6 +561,7 @@ class Parser(sourceText: String) {
                             FieldNode(name, null, isStatic, startRange, takeOptionalSemicolonRange(false))
                         }
                     is ClassElementNode -> neverHappens()
+                    else -> missingBranch()
                 }
             }
         }

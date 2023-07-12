@@ -7,4 +7,8 @@ value class StringType(override val value: String): PrimitiveLanguageType, Prope
     fun lessThan(other: StringType) {
         TODO()
     }
+
+    companion object {
+        val empty = StringType("")
+    }
 }

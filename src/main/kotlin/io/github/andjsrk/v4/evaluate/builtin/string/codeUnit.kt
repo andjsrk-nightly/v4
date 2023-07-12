@@ -1,10 +1,15 @@
 package io.github.andjsrk.v4.evaluate.builtin.string
 
-import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.getOptional
+import io.github.andjsrk.v4.evaluate.languageValue
+import io.github.andjsrk.v4.evaluate.requireToBe
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.lang.NumberType
+import io.github.andjsrk.v4.evaluate.type.lang.builtinMethod
+import io.github.andjsrk.v4.evaluate.type.lang.requireToBeRelativeIndex
+import io.github.andjsrk.v4.evaluate.type.lang.resolveRelativeIndex
 
-val codeUnit = BuiltinFunctionType("codeUnit") fn@ { thisArg, args ->
+val codeUnit = builtinMethod("codeUnit") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val index = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }

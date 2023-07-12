@@ -5,9 +5,8 @@ import io.github.andjsrk.v4.evaluate.requireToBe
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
-val toString = BuiltinFunctionType(SymbolType.WellKnown.toString) fn@ { thisArg, args ->
-    val bigint = thisArg
-        .requireToBe<BigIntType> { return@fn it }
+val toString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, args ->
+    val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
     val radix = args.getOrNull(0)
         ?.normalizeNull()
         ?.requireToBe<NumberType> { return@fn it }

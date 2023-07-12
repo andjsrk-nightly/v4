@@ -7,8 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("Symbol.for")
 val `for` = BuiltinFunctionType("for",  1u) fn@ { _, args ->
-    val key = args[0]
-        .requireToBe<StringType> { return@fn it }
+    val key = args[0].requireToBe<StringType> { return@fn it }
     val symbol = SymbolType.registry.getOrPut(key.value) { SymbolType(key) }
     Completion.Normal(symbol)
 }

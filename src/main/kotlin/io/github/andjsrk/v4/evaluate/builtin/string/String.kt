@@ -4,7 +4,9 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.builtin.sealedData
-import io.github.andjsrk.v4.evaluate.builtin.string.static.*
+import io.github.andjsrk.v4.evaluate.builtin.string.static.from
+import io.github.andjsrk.v4.evaluate.builtin.string.static.fromCodePoint
+import io.github.andjsrk.v4.evaluate.builtin.string.static.fromCodeUnit
 import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
@@ -28,6 +30,15 @@ val String = BuiltinClassType(
         "includes".sealedData(includes),
         "indexOf".sealedData(indexOf),
         "isWellFormed".sealedData(isWellFormed),
+        "lastIndexOf".sealedData(lastIndexOf),
+        "localeCompare".sealedData(localeCompare),
+        "match".sealedData(match),
+        "matchAll".sealedData(matchAll),
+        "normalize".sealedData(normalize),
+        "padEnd".sealedData(padEnd),
+        "padStart".sealedData(padStart),
+        "repeat".sealedData(repeat),
+        "replaceFirst".sealedData(replaceFirst),
         // TODO
     ),
     constructor { _, _ ->

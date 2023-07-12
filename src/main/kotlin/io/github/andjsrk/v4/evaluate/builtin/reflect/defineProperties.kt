@@ -9,10 +9,8 @@ import io.github.andjsrk.v4.not
 
 @EsSpec("Object.defineProperties")
 val defineProperties = BuiltinFunctionType("defineProperties", 2u) fn@ { _, args ->
-    val obj = args[0]
-        .requireToBe<ObjectType> { return@fn it }
-    val props = args[1]
-        .requireToBe<ObjectType> { return@fn it }
+    val obj = args[0].requireToBe<ObjectType> { return@fn it }
+    val props = args[1].requireToBe<ObjectType> { return@fn it }
     // descriptors should not be a Map, because each descriptor can cause an error when define the property
     val descriptors = mutableListOf<Pair<PropertyKey, Property>>()
     for ((key, desc) in props.ownPropertyEntries()) {

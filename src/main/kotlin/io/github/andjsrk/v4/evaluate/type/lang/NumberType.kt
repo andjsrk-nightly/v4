@@ -44,7 +44,8 @@ value class NumberType(
             else -> NumberType(-value)
         }
     override fun bitwiseNot(): MaybeAbrupt<NumberType> {
-        val value = returnIfAbrupt(this.toInt32()) { return it }
+        val value = this.toInt32()
+            .returnIfAbrupt { return it }
             .toInt()
         val result = value.inv().toDouble()
         return Completion.Normal(result.languageValue)
@@ -172,9 +173,12 @@ value class NumberType(
         leftTransform: Double.() -> T,
         operation: (T, Int) -> Double,
     ): MaybeAbrupt<NumberType> {
-        val left = returnIfAbrupt(leftCoercion()) { return it }
-            .value.leftTransform()
-        val right = returnIfAbrupt(other.toUint32()) { return it }
+        val left = leftCoercion()
+            .returnIfAbrupt { return it }
+            .value
+            .leftTransform()
+        val right = other.toUint32()
+            .returnIfAbrupt { return it }
             .toInt()
         val shiftCount = right % 32
         val result = operation(left, shiftCount)
@@ -218,9 +222,11 @@ value class NumberType(
         }
     @EsSpec("NumberBitwiseOp")
     private fun generalBitwiseOp(other: NumberType, operation: (Int, Int) -> Int): MaybeAbrupt<NumberType> {
-        val left = returnIfAbrupt(this.toInt32()) { return it }
+        val left = this.toInt32()
+            .returnIfAbrupt { return it }
             .toInt()
-        val right = returnIfAbrupt(other.toInt32()) { return it }
+        val right = other.toInt32()
+            .returnIfAbrupt { return it }
             .toInt()
         val result = operation(left, right)
         return Completion.Normal(result.languageValue)

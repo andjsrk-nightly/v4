@@ -43,7 +43,8 @@ data class Reference(
             }
             this.isProperty -> {
                 if (base !is ObjectType) return throwError(TypeErrorKind.PRIMITIVE_IMMUTABLE)
-                returnIfAbrupt(base._set(referencedName!!, value, getThis())) { return it }
+                base._set(referencedName!!, value, getThis())
+                    .returnIfAbrupt { return it }
                 empty
             }
             else -> {

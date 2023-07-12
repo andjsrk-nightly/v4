@@ -15,7 +15,8 @@ class TaggedTemplateNode(
     override fun evaluate(): NonEmpty {
         val funcRef = callee.evaluateOrReturn { return it }
         val func = getValueOrReturn(funcRef) { return it }
-        val args = returnIfAbrupt(evaluateTaggedArguments(template)) { return it }
+        val args = evaluateTaggedArguments(template)
+            .returnIfAbrupt { return it }
         return evaluateCall(func, funcRef, args)
     }
 }

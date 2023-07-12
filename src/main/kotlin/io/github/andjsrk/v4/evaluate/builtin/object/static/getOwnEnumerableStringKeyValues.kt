@@ -10,7 +10,8 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 @EsSpec("Object.values")
 val getOwnEnumerableStringKeyValues = BuiltinFunctionType("getOwnEnumerableStringKeyValues", 1u) fn@ { _, args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
-    val values = returnIfAbrupt(obj.ownEnumerableStringPropertyKeyValues()) { return@fn it }
+    val values = obj.ownEnumerableStringPropertyKeyValues()
+        .returnIfAbrupt { return@fn it }
     Completion.Normal(
         ArrayType.from(values)
     )

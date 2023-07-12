@@ -21,7 +21,8 @@ internal fun instantiateFunctionDeclaration(func: OrdinaryFunctionType, args: Li
     val paramNames = func.parameters.boundStringNames()
     val env = calleeContext.lexicalEnvironment
     for (paramName in paramNames) env.createMutableBinding(paramName)
-    returnIfAbrupt(func.parameters.initializeParameterBindings(args.iterator(), env)) { return it }
+    func.parameters.initializeParameterBindings(args.iterator(), env)
+        .returnIfAbrupt { return it }
     if (func.body is BlockNode) instantiateBlockDeclaration(func.body, env)
     return empty
 }

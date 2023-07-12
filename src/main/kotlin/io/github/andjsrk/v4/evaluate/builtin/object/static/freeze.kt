@@ -9,6 +9,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 @EsSpec("Object.freeze")
 val freeze = BuiltinFunctionType("freeze", 1u) fn@ { _, args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
-    returnIfAbrupt(obj.setImmutabilityLevel(ObjectImmutabilityLevel.FROZEN)) { return@fn it }
+    obj.setImmutabilityLevel(ObjectImmutabilityLevel.FROZEN)
+        .returnIfAbrupt { return@fn it }
     Completion.Normal(obj)
 }

@@ -15,11 +15,16 @@ val defineProperties = BuiltinFunctionType("defineProperties", 2u) fn@ { _, args
     val descriptors = mutableListOf<Pair<PropertyKey, Property>>()
     for ((key, desc) in props.ownPropertyEntries()) {
         if (desc.not { enumerable }) continue
-        val propDescObj = returnIfAbrupt(props.get(key)) { return@fn it }
+        val propDescObj = props.get(key)
+            .returnIfAbrupt { return@fn it }
             .requireToBe<ObjectType> { return@fn it }
-        val propDesc = returnIfAbrupt(propDescObj.toPropertyDescriptor()) { return@fn it }
+        val propDesc = propDescObj.toPropertyDescriptor()
+            .returnIfAbrupt { return@fn it }
         descriptors += key to propDesc
     }
-    for ((key, desc) in descriptors) returnIfAbrupt(obj.definePropertyOrThrow(key, desc)) { return@fn it }
+    for ((key, desc) in descriptors) {
+        obj.definePropertyOrThrow(key, desc)
+            .returnIfAbrupt { return@fn it }
+    }
     Completion.Normal.`null`
 }

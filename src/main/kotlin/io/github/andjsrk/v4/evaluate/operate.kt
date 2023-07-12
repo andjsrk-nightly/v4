@@ -32,7 +32,7 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             //   return right side
             val booleanLeft = left.requireToBe<BooleanType> { return it }
             if (!booleanLeft.value) return Completion.Normal(FALSE)
-            val right = returnIfAbrupt(other.evaluateValue()) { return it }
+            val right = other.evaluateValueOrReturn { return it }
                 .requireToBe<BooleanType> { return it }
             return Completion.Normal(right)
         }
@@ -84,8 +84,8 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             val leftAsString = left as? StringType
             val rightAsString = right as? StringType
             if (leftAsString != null || rightAsString != null) {
-                val stringLeft = leftAsString ?: returnIfAbrupt(stringify(left)) { return it }
-                val stringRight = rightAsString ?: returnIfAbrupt(stringify(right)) { return it }
+                val stringLeft = leftAsString ?: stringify(left).returnIfAbrupt { return it }
+                val stringRight = rightAsString ?: stringify(right).returnIfAbrupt { return it }
                 return Completion.Normal(stringLeft + stringRight)
             }
             // numeric values will be handled on below

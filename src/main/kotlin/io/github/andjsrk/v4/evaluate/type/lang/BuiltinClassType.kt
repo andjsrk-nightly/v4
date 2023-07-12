@@ -22,7 +22,8 @@ class BuiltinClassType(
         constructor: BuiltinFunctionType,
     ): this(name.languageValue, parent, staticProperties, instancePrototypeProperties, constructor)
     override fun construct(args: List<LanguageType>): MaybeAbrupt<ObjectType> {
-        val res = returnIfAbrupt(constructor._call(ObjectType.create(instancePrototype), args)) { return it }
+        val res = constructor._call(ObjectType.create(instancePrototype), args)
+            .returnIfAbrupt { return it }
         require(res is ObjectType)
         return Completion.Normal(res)
     }

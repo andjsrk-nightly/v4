@@ -22,7 +22,7 @@ class OrdinaryFunctionType(
         val res = evaluateBody(args)
         executionContextStack.pop()
         if (res is Completion.Return) return Completion.Normal(res.value)
-        returnIfAbrupt(res) { return it }
+        res.returnIfAbrupt { return it }
         // if the function returned nothing, return `null`
         return Completion.Normal.`null`
     }
@@ -48,7 +48,8 @@ class OrdinaryFunctionType(
     @EsSpec("EvaluateFunctionBody")
     @EsSpec("EvaluateConciseBody")
     fun evaluateConciseBody(args: List<LanguageType>): NormalOrAbrupt {
-        returnIfAbrupt(instantiateFunctionDeclaration(this, args)) { return it }
+        instantiateFunctionDeclaration(this, args)
+            .returnIfAbrupt { return it }
         return body.evaluateAsConciseBody()
     }
 }

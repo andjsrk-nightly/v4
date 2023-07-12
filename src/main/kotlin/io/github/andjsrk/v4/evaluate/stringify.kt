@@ -23,11 +23,10 @@ internal fun stringify(value: LanguageType): MaybeAbrupt<StringType> {
             is ObjectType -> {
                 if (value.not { hasProperty(SymbolType.WellKnown.toString) }) return throwError(TypeErrorKind.CANNOT_CONVERT_TO_STRING)
                 val toStringMethod = value.getMethod(SymbolType.WellKnown.toString)
-                    ?.let {
-                        returnIfAbrupt(it) { return it }
-                    }
+                    ?.returnIfAbrupt { return it }
                     ?: return throwError(TypeErrorKind.CANNOT_CONVERT_TO_STRING)
-                val string = returnIfAbrupt(toStringMethod._call(value, emptyList())) { return it }
+                val string = toStringMethod._call(value, emptyList())
+                    .returnIfAbrupt { return it }
                     .requireToBe<StringType> { return it }
                 string
             }

@@ -16,7 +16,10 @@ class ObjectLiteralNode(
         stringifyLikeDataClass(::elements, ::range)
     override fun evaluate(): NonEmptyNormalOrAbrupt {
         val obj = ObjectType.createNormal()
-        for (element in elements) returnIfAbrupt(evaluatePropertyDefinition(obj, element)) { return it }
+        for (element in elements) {
+            evaluatePropertyDefinition(obj, element)
+                .returnIfAbrupt { return it }
+        }
         return Completion.Normal(obj)
     }
     private fun evaluatePropertyDefinition(obj: ObjectType, property: ObjectElementNode): EmptyOrAbrupt {
@@ -31,7 +34,8 @@ class ObjectLiteralNode(
                     when (this) {
                         is ComputedPropertyKeyNode -> {
                             val value = expression.evaluateValueOrReturn { return it }
-                            returnIfAbrupt(value.toPropertyKey()) { return it }
+                            value.toPropertyKey()
+                                .returnIfAbrupt { return it }
                         }
                         is IdentifierNode -> stringValue
                         is NumberLiteralNode -> value.languageValue.toString(10)

@@ -50,7 +50,8 @@ open class ObjectType(
         return empty
     }
     fun _applyPropertyDescriptor(key: PropertyKey, descriptor: Property, current: Property?): EmptyOrAbrupt {
-        returnIfAbrupt(_throwIfNotCompatiblePropertyDescriptor(current, key)) { return it }
+        _throwIfNotCompatiblePropertyDescriptor(current, key)
+            .returnIfAbrupt { return it }
 
         properties[key] = when (descriptor) {
             is AccessorProperty -> descriptor.copy()
@@ -159,7 +160,8 @@ open class ObjectType(
                         .apply {
                             configurable = false
                         }
-                    returnIfAbrupt(definePropertyOrThrow(key, desc)) { return it }
+                    definePropertyOrThrow(key, desc)
+                        .returnIfAbrupt { return it }
                 }
             }
             ObjectImmutabilityLevel.FROZEN -> {
@@ -169,7 +171,8 @@ open class ObjectType(
                             configurable = false
                             if (this is DataProperty) writable = false
                         }
-                    returnIfAbrupt(definePropertyOrThrow(key, desc)) { return it }
+                    definePropertyOrThrow(key, desc)
+                        .returnIfAbrupt { return it }
                 }
             }
         }
@@ -201,7 +204,8 @@ open class ObjectType(
     fun ownEnumerableStringPropertyKeyValues(): MaybeAbrupt<ListType<LanguageType>> {
         return Completion.WideNormal(
             transformOwnEnumerableStringPropertyKeys { key ->
-                returnIfAbrupt(get(key)) { return it }
+                get(key)
+                    .returnIfAbrupt { return it }
             }
         )
     }
@@ -209,7 +213,8 @@ open class ObjectType(
     fun ownEnumerableStringPropertyKeyEntries(): MaybeAbrupt<ListType<ArrayType>> {
         return Completion.WideNormal(
             transformOwnEnumerableStringPropertyKeys { key ->
-                val value = returnIfAbrupt(get(key)) { return it }
+                val value = get(key)
+                    .returnIfAbrupt { return it }
                 ArrayType.from(listOf(key, value))
             }
         )

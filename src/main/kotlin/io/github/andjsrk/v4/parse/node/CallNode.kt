@@ -15,7 +15,8 @@ sealed class CallNode(
     override fun evaluate(): NonEmptyNormalOrAbrupt {
         val ref = callee.evaluateOrReturn { return it }
         val func = getValueOrReturn(ref) { return it }
-        val args = returnIfAbrupt(evaluateArguments(arguments)) { return it }
+        val args = evaluateArguments(arguments)
+            .returnIfAbrupt { return it }
         return evaluateCall(func, ref, args)
     }
 }

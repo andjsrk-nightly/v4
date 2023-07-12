@@ -14,14 +14,16 @@ val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args ->
         is StringType -> value
         else ->
             value.getMethod(SymbolType.WellKnown.replace)
-                ?.let {
-                    val replaceMethod = returnIfAbrupt(it) { return@fn it }
-                    returnIfAbrupt(checkNewArg(new)) { return@fn it }
+                ?.returnIfAbrupt { return@fn it }
+                ?.let { replaceMethod ->
+                    checkNewArg(new)
+                        .returnIfAbrupt { return@fn it }
                     return@fn replaceMethod._call(value, listOf(stringArg, new))
                 }
                 ?: return@fn unexpectedType(value, "${generalizedDescriptionOf<StringType>()} or a value that has Symbol.replace method")
     }
-    returnIfAbrupt(checkNewArg(new)) { return@fn it }
+    checkNewArg(new)
+        .returnIfAbrupt { return@fn it }
 
     Completion.Normal(
         when (new) {
@@ -32,9 +34,8 @@ val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args ->
                 val pos = string.indexOf(old.value)
                 if (pos == -1) stringArg
                 else {
-                    val result = returnIfAbrupt(
-                        new._call(null, listOf(old, pos.languageValue, stringArg))
-                    ) { return@fn it }
+                    val result = new._call(null, listOf(old, pos.languageValue, stringArg))
+                        .returnIfAbrupt { return@fn it }
                         .requireToBeString { return@fn it }
                     string.replaceFirst(old.value, result).languageValue
                 }

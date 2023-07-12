@@ -26,9 +26,11 @@ class BinaryExpressionNode(
                     else right.evaluateValueOrReturn { return it }
                 } else {
                     val lval = getValueOrReturn(lref) { return it }
-                    returnIfAbrupt(lval.operate(operation.toNonAssign(), right)) { return it }
+                    lval.operate(operation.toNonAssign(), right)
+                        .returnIfAbrupt { return it }
                 }
-            returnIfAbrupt(lref.putValue(rval)) { return it }
+            lref.putValue(rval)
+                .returnIfAbrupt { return it }
             return Completion.Normal(rval)
         }
 

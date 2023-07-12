@@ -20,4 +20,4 @@ internal fun ExpressionNode.evaluateWithName(name: PropertyKey): NonEmptyNormal 
 }
 
 internal inline fun ExpressionNode.evaluateWithNameOrReturn(name: PropertyKey, `return`: AbruptReturnLambda): LanguageType =
-    returnIfAbrupt(evaluateWithName(name), `return`)
+    evaluateWithName(name).returnIfAbrupt(`return`)

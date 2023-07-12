@@ -23,14 +23,17 @@ internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
     return Completion.WideNormal(
         when {
             isData -> {
-                val value = returnIfAbrupt(getOwnPropertyValue("value".languageValue)) { return it }
+                val value = getOwnPropertyValue("value".languageValue)
+                    .returnIfAbrupt { return it }
                 val writable = getOptionalBooleanPropertyValueOrReturn("writable".languageValue) { return it }
                 DataProperty(value, writable, enumerable, configurable)
             }
             isAccessor -> {
-                val getter = returnIfAbrupt(getOwnPropertyValue("get".languageValue)) { return it }
+                val getter = getOwnPropertyValue("get".languageValue)
+                    .returnIfAbrupt { return it }
                     ?.requireToBe<FunctionType> { return it }
-                val setter = returnIfAbrupt(getOwnPropertyValue("set".languageValue)) { return it }
+                val setter = getOwnPropertyValue("set".languageValue)
+                    .returnIfAbrupt { return it }
                     ?.requireToBe<FunctionType> { return it }
                 AccessorProperty(getter, setter, enumerable, configurable)
             }
@@ -40,6 +43,7 @@ internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
 }
 
 private inline fun ObjectType.getOptionalBooleanPropertyValueOrReturn(key: PropertyKey, `return`: AbruptReturnLambda) =
-    returnIfAbrupt(getOwnPropertyValue(key), `return`)
+    getOwnPropertyValue(key)
+        .returnIfAbrupt (`return`)
         ?.requireToBe<BooleanType>(`return`)
         ?.value

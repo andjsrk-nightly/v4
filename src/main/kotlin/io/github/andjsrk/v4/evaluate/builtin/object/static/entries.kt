@@ -11,7 +11,8 @@ import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 @EsSpec("Object.entries")
 val entries = BuiltinFunctionType("entries", 1u) fn@ { _, args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
-    val entries = returnIfAbrupt(obj.ownEnumerableStringPropertyKeyEntries()) { return@fn it }
+    val entries = obj.ownEnumerableStringPropertyKeyEntries()
+        .returnIfAbrupt { return@fn it }
     Completion.Normal(
         ArrayType.from(entries)
     )

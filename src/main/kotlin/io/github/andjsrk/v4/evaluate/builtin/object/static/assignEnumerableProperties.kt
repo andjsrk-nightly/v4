@@ -21,8 +21,10 @@ val assignEnumerableProperties = BuiltinFunctionType("assignEnumerableProperties
         if (source == null) continue
         for ((key, desc) in source.ownPropertyEntries()) {
             if (desc.enumerable) {
-                val value = returnIfAbrupt(source.get(key)) { return@fn it }
-                returnIfAbrupt(target.set(key, value)) { return@fn it }
+                val value = source.get(key)
+                    .returnIfAbrupt { return@fn it }
+                target.set(key, value)
+                    .returnIfAbrupt { return@fn it }
             }
         }
     }

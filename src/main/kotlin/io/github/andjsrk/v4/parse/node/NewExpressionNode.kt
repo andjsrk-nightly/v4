@@ -14,7 +14,8 @@ class NewExpressionNode(
     override fun evaluate(): NonEmptyNormalOrAbrupt {
         val calleeRes = callee.evaluateOrReturn { return it }
         val calleeValue = getValueOrReturn(calleeRes) { return it }
-        val args = returnIfAbrupt(evaluateArguments(arguments)) { return it }
+        val args = evaluateArguments(arguments)
+            .returnIfAbrupt { return it }
         val clazz = calleeValue.requireToBe<ClassType> { return it }
         return clazz.construct(args)
     }

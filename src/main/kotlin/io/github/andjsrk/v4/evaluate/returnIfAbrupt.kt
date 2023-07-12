@@ -10,11 +10,11 @@ import io.github.andjsrk.v4.neverHappens
 internal typealias AbruptReturnLambda = (Completion.Abrupt) -> Nothing
 
 @EsSpec("ReturnIfAbrupt")
-internal inline fun <V: AbstractType?> returnIfAbrupt(completion: MaybeAbrupt<V>, `return`: AbruptReturnLambda) =
-    when (completion) {
-        is Completion.WideNormal<V> -> completion.value
-        is Completion.Abrupt -> `return`(completion)
+internal inline fun <V: AbstractType?> MaybeAbrupt<V>.returnIfAbrupt(`return`: AbruptReturnLambda) =
+    when (this) {
+        is Completion.WideNormal<V> -> value
+        is Completion.Abrupt -> `return`(this)
     }
 
 internal inline fun <V: AbstractType?> neverAbrupt(completion: MaybeAbrupt<V>) =
-    returnIfAbrupt(completion) { neverHappens() }
+    completion.returnIfAbrupt { neverHappens() }

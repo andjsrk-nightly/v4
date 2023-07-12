@@ -21,11 +21,11 @@ val Error = BuiltinClassType(
         val message = args[0]
             .normalizeNull()
             ?.requireToBe<StringType> { return@ctor it }
-        val options = args.getOrNull(1)
-            ?.normalizeNull()
+        val options = args.getOptional(1)
             ?.requireToBe<ObjectType> { return@ctor it }
         if (message != null) error.createDataProperty("message".languageValue, message)
-        returnIfAbrupt(error.initializeErrorCause(options)) { return@ctor it }
+        error.initializeErrorCause(options)
+            .returnIfAbrupt { return@ctor it }
         Completion.Normal(error)
     },
 )
@@ -34,7 +34,8 @@ val Error = BuiltinClassType(
 private fun ObjectType.initializeErrorCause(options: ObjectType?): EmptyOrAbrupt {
     if (options == null) return empty
     if (options.hasProperty("cause".languageValue)) {
-        val cause = returnIfAbrupt(options.get("cause".languageValue)) { return it }
+        val cause = options.get("cause".languageValue)
+            .returnIfAbrupt { return it }
         createNonEnumerablePropertyOrThrow("cause".languageValue, cause)
     }
     return empty

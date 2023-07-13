@@ -11,8 +11,7 @@ private const val DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 @EsSpec("Number.parseInt")
 val parseLeadingInteger = BuiltinFunctionType("parseLeadingInteger", 1u) fn@ { _, args ->
     val string = args[0].requireToBe<StringType> { return@fn it }
-    val radix = args.getOrNull(1)
-        ?.normalizeNull()
+    val radix = args.getOptional(1)
         ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeRadix { return@fn it }
         ?: 10

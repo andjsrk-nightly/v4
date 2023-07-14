@@ -4,6 +4,7 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.languageValue
 
 class SymbolType(val description: StringType? = null): PrimitiveLanguageType, PropertyKey {
+    internal constructor(description: String?): this(description?.languageValue)
     /**
      * Note that symbols will be compared by its identity, not [value].
      */
@@ -13,10 +14,14 @@ class SymbolType(val description: StringType? = null): PrimitiveLanguageType, Pr
 
     object WellKnown {
         @EsSpec("@@iterator")
-        val iterator = SymbolType("Symbol.iterator".languageValue)
+        val iterator = SymbolType("Symbol.iterator")
+        @EsSpec("@@match")
+        val match = SymbolType("Symbol.match")
         @EsSpec("@@replace")
-        val replace = SymbolType("Symbol.replace".languageValue)
-        val toString = SymbolType("Symbol.toString".languageValue)
+        val replace = SymbolType("Symbol.replace")
+        @EsSpec("@@search")
+        val findMatchedIndex = SymbolType("Symbol.findMatchedIndex")
+        val toString = SymbolType("Symbol.toString")
     }
     companion object {
         val registry = mutableMapOf<String, SymbolType>()

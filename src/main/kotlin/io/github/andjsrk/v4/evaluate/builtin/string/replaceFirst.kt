@@ -10,18 +10,20 @@ val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val string = stringArg.value
     val new = args[1]
-    val old = when (val value = args[0]) {
+    val oldArg = when (val value = args[0]) {
         is StringType -> value
-        else ->
+        else -> return@fn (
             value.getMethod(SymbolType.WellKnown.replace)
                 ?.returnIfAbrupt { return@fn it }
                 ?.let { replaceMethod ->
                     checkNewArg(new)
                         .returnIfAbrupt { return@fn it }
-                    return@fn replaceMethod._call(value, listOf(stringArg, new))
+                    replaceMethod._call(value, listOf(stringArg, new, BooleanType.FALSE))
                 }
-                ?: return@fn unexpectedType(value, "${generalizedDescriptionOf<StringType>()} or a value that has Symbol.replace method")
+                ?: unexpectedType(value, "${generalizedDescriptionOf<StringType>()} or a value that has Symbol.replace method")
+        )
     }
+    val old = oldArg.value
     checkNewArg(new)
         .returnIfAbrupt { return@fn it }
 
@@ -29,15 +31,15 @@ val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args ->
         when (new) {
             is StringType ->
                 // no special patterns supported since it can be replaced by passing a function as an argument
-                string.replaceFirst(old.value, new.value).languageValue
+                string.replaceFirst(old, new.value).languageValue
             is FunctionType -> {
-                val pos = string.indexOf(old.value)
+                val pos = string.indexOf(old)
                 if (pos == -1) stringArg
                 else {
-                    val result = new._call(null, listOf(old, pos.languageValue, stringArg))
+                    val result = new._call(null, listOf(oldArg, pos.languageValue, stringArg))
                         .returnIfAbrupt { return@fn it }
                         .requireToBeString { return@fn it }
-                    string.replaceFirst(old.value, result).languageValue
+                    string.replaceFirst(old, result).languageValue
                 }
             }
             else -> missingBranch()
@@ -45,7 +47,7 @@ val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args ->
     )
 }
 
-private fun checkNewArg(value: LanguageType) =
+internal fun checkNewArg(value: LanguageType) =
     when (value) {
         is StringType, is FunctionType -> empty
         else -> unexpectedType(value, StringType::class, FunctionType::class)

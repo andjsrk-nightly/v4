@@ -8,7 +8,7 @@ val codePoint = builtinMethod("codePoint") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val index = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
-        ?.requireToBeRelativeIndex(string.length) { return@fn it }
+        ?.requireToBeRelativeIndex { return@fn it }
         ?.run {
             resolveRelativeIndex(string.length) ?: return@fn Completion.Normal.`null`
         }

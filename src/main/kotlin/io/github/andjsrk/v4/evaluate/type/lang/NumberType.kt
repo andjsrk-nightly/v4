@@ -309,8 +309,8 @@ internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.radix, "A radix", `return`)
 internal inline fun NumberType.requireToBeIndex(`return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.index, "An index", `return`)
-internal inline fun NumberType.requireToBeRelativeIndex(length: Int, `return`: AbruptReturnLambda) =
-    requireToBeIntegerWithin(Ranges.relativeIndex(length), "A relative index", `return`)
+internal inline fun NumberType.requireToBeRelativeIndex(`return`: AbruptReturnLambda) =
+    requireToBeIntegerWithin(Ranges.relativeIndex, "A relative index", `return`)
 /**
  * Returns `null` if the number is greater than [Int.MAX_VALUE].
  * Note that the function assumes that the number is an index.

@@ -25,6 +25,7 @@ val String = BuiltinClassType(
         "codeUnit".sealedData(codeUnit),
         "concat".sealedData(concat),
         "endsWith".sealedData(endsWith),
+        "findMatchedIndex".sealedData(findMatchedIndex),
         "includes".sealedData(includes),
         "indexOf".sealedData(indexOf),
         "isWellFormed".sealedData(isWellFormed),
@@ -36,7 +37,9 @@ val String = BuiltinClassType(
         "padEnd".sealedData(padEnd),
         "padStart".sealedData(padStart),
         "repeat".sealedData(repeat),
+        "replaceAll".sealedData(replaceAll),
         "replaceFirst".sealedData(replaceFirst),
+        "slice".sealedData(slice),
         // TODO
     ),
     constructor { _, _ ->

@@ -23,18 +23,18 @@ val Number = BuiltinClassType(
         "NaN".sealedData(NumberType.NaN),
         "NEGATIVE_INFINITY".sealedData(NumberType.NEGATIVE_INFINITY),
         "POSITIVE_INFINITY".sealedData(NumberType.POSITIVE_INFINITY),
-        "from".sealedData(from),
-        "isFinite".sealedData(isFinite),
-        "isInteger".sealedData(isInteger),
-        "isNaN".sealedData(isNaN),
-        "isSafeInteger".sealedData(isSafeInteger),
-        "parseLeadingDecimal".sealedData(parseLeadingDecimal),
-        "parseLeadingInteger".sealedData(parseLeadingInteger),
+        sealedData(::from),
+        sealedData(::isFinite),
+        sealedData(::isInteger),
+        sealedData(::isNaN),
+        sealedData(::isSafeInteger),
+        sealedData(::parseLeadingDecimal),
+        sealedData(::parseLeadingInteger),
         // TODO
     ),
     mutableMapOf(
         SymbolType.WellKnown.toString.sealedData(toString),
-        "toRadix".sealedData(toRadix),
+        sealedData(::toRadix),
         // TODO
     ),
     constructor { _, _ ->

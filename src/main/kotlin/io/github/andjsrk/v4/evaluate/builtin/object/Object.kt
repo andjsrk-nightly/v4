@@ -12,17 +12,17 @@ val Object = BuiltinClassType(
     "Object",
     null,
     mutableMapOf(
-        "assignEnumerableProperties".sealedData(assignEnumerableProperties),
-        "create".sealedData(create),
-        "entries".sealedData(entries),
-        "freeze".sealedData(freeze),
-        "getOwnEnumerableStringKeys".sealedData(getOwnEnumerableStringKeys),
-        "getOwnEnumerableStringKeyValues".sealedData(getOwnEnumerableStringKeyValues),
-        "is".sealedData(`is`),
+        sealedData(::assignEnumerableProperties),
+        sealedData(::create),
+        sealedData(::entries),
+        sealedData(::freeze),
+        sealedData(::getOwnEnumerableStringKeys),
+        sealedData(::getOwnEnumerableStringKeyValues),
+        sealedData(::`is`),
         // TODO
     ),
     mutableMapOf(
-        "run".sealedData(run),
+        sealedData(::run),
     ),
     constructor { obj, _ ->
         Completion.Normal(obj)

@@ -13,7 +13,7 @@ val Boolean = BuiltinClassType(
     "Boolean",
     Object,
     mutableMapOf(
-        "from".sealedData(from),
+        sealedData(::from),
     ),
     mutableMapOf(
         SymbolType.WellKnown.toString.sealedData(toString)

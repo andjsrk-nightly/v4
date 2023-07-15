@@ -13,7 +13,7 @@ val BigInt = BuiltinClassType(
     "BigInt",
     Object,
     mutableMapOf(
-        "from".sealedData(from),
+        sealedData(::from),
         // TODO
     ),
     mutableMapOf(

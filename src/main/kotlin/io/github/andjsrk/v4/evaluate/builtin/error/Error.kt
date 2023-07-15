@@ -2,6 +2,7 @@ package io.github.andjsrk.v4.evaluate.builtin.error
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.builtin.accessor
 import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
@@ -15,7 +16,7 @@ val Error = BuiltinClassType(
         // TODO
     ),
     mutableMapOf(
-        "name".languageValue to AccessorProperty(nameGetter, configurable=false),
+        "name".accessor(getter=nameGetter, configurable=false),
     ),
     constructor(1u) ctor@ { error, args ->
         val message = args[0]

@@ -20,11 +20,8 @@ val slice = builtinMethod("slice", 1u) fn@ { thisArg, args ->
         ?: string.length
     if (unsafeStart > unsafeEnd) return@fn throwError(RangeErrorKind.SLICE_START_GREATER_THAN_END)
     val start = unsafeStart.coerceInString(string)
-    val end = unsafeStart.coerceInString(string)
+    val end = unsafeEnd.coerceInString(string)
     Completion.Normal(
         string.substring(start, end).languageValue
     )
 }
-
-private fun Int.coerceInString(string: String) =
-    coerceIn(0, string.length)

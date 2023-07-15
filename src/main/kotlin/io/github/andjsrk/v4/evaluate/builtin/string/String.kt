@@ -40,6 +40,13 @@ val String = BuiltinClassType(
         "replaceAll".sealedData(replaceAll),
         "replaceFirst".sealedData(replaceFirst),
         "slice".sealedData(slice),
+        "sliceAbsolute".sealedData(sliceAbsolute),
+        "split".sealedData(split),
+        "startsWith".sealedData(startsWith),
+        "toLocaleLowerCase".sealedData(toLocaleLowerCase),
+        "toLocaleUpperCase".sealedData(toLocaleUpperCase),
+        "toLowerCase".sealedData(toLowerCase),
+        "toUpperCase".sealedData(toUpperCase),
         // TODO
     ),
     constructor { _, _ ->

@@ -47,6 +47,9 @@ private fun List<MaybeRestNode>.initializeParameterBindings(argsIterator: Iterat
                         ref.putOrInitializeBinding(arr, env)
                     }
                     is BindingPatternNode -> TODO()
+                    else ->
+                        @CompilerFalsePositive
+                        neverHappens()
                 }
             }
         }

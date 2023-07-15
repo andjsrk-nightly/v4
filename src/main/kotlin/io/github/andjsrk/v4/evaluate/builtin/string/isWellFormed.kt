@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.evaluate.builtin.string
 
+import io.github.andjsrk.v4.evaluate.requireToBeString
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 import io.github.andjsrk.v4.evaluate.type.lang.builtinMethod

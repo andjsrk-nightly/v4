@@ -15,7 +15,7 @@ class TemplateLiteralNode(
     override fun toString() =
         stringifyLikeDataClass(::strings, ::expressions, ::range)
     override fun evaluate(): NonEmptyNormalOrAbrupt {
-        val acc = StringBuilder(strings[0].value)
+        val result = StringBuilder(strings[0].value)
         var i = 0
         for (string in strings) {
             if (i == 0) {
@@ -25,10 +25,10 @@ class TemplateLiteralNode(
             }
             val value = expressions[i].evaluateValueOrReturn { return it }
             val stringValue = stringify(value)
-            acc.append(stringValue)
-            acc.append(string)
+            result.append(stringValue)
+            result.append(string)
             i++
         }
-        return Completion.Normal(acc.toString().languageValue)
+        return Completion.Normal(result.toString().languageValue)
     }
 }

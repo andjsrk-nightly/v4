@@ -8,6 +8,7 @@ import io.github.andjsrk.v4.evaluate.builtin.string.static.*
 import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
+import io.github.andjsrk.v4.evaluate.type.lang.SymbolType
 
 @EsSpec("%String%")
 val String = BuiltinClassType(
@@ -46,7 +47,10 @@ val String = BuiltinClassType(
         sealedData(::toLocaleLowerCase),
         sealedData(::toLocaleUpperCase),
         sealedData(::toLowerCase),
+        SymbolType.WellKnown.toString.sealedData(toString),
         sealedData(::toUpperCase),
+        sealedData(::toUpperCase),
+        sealedData(::toWellFormed),
         // TODO
     ),
     constructor { _, _ ->

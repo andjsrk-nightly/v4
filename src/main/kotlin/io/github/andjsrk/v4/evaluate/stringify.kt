@@ -5,7 +5,6 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.not
 
 /**
  * Note that the function is not an extension exceptionally due to shadowing of extensions.
@@ -21,7 +20,6 @@ internal fun stringify(value: LanguageType): MaybeAbrupt<StringType> {
             // the function allows Symbols to be stringified
             is SymbolType -> value.toString().languageValue
             is ObjectType -> {
-                if (value.not { hasProperty(SymbolType.WellKnown.toString) }) return throwError(TypeErrorKind.CANNOT_CONVERT_TO_STRING)
                 val toStringMethod = value.getMethod(SymbolType.WellKnown.toString)
                     ?.returnIfAbrupt { return it }
                     ?: return throwError(TypeErrorKind.CANNOT_CONVERT_TO_STRING)

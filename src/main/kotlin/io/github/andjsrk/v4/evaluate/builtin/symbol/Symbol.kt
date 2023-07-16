@@ -17,8 +17,8 @@ val Symbol = BuiltinClassType(
     "Symbol",
     Object,
     mutableMapOf(
-        "iterator".sealedData(SymbolType.WellKnown.iterator),
-        "toString".sealedData(SymbolType.WellKnown.toString),
+        sealedData(SymbolType.WellKnown::iterator),
+        sealedData(SymbolType.WellKnown::toString),
         sealedData(::create),
         sealedData(::`for`),
         // TODO

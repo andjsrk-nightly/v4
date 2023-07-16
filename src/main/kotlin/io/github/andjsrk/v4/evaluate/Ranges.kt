@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.evaluate
 
+import io.github.andjsrk.v4.MAX_CODE_POINT
 import io.github.andjsrk.v4.evaluate.type.lang.NumberType
 
 internal object Ranges {
@@ -7,6 +8,8 @@ internal object Ranges {
     val relativeIndex = NumberType.MIN_SAFE_INTEGER.toLong()..NumberType.MAX_SAFE_INTEGER.toLong()
     val index = unsignedInteger
     val radix = 2L..36L
+    val codePoint = 0L..MAX_CODE_POINT
+
     val int8 = int(8)
     val int16 = int(16)
     val int32 = int(32)

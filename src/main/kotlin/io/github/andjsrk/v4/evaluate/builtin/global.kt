@@ -13,23 +13,25 @@ import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
 @EsSpec("global object")
-val global = ObjectType.createBasic().apply {
-    set("global".languageValue, this)
+val global = ObjectType(properties=mutableMapOf(
     // TODO: function properties
-    arrayOf(
-        BigInt,
-        Error,
-        Function,
-        Number,
-        Object,
-        RangeError,
-        ReferenceError,
-        String,
-        Symbol,
-        SyntaxError,
-        TypeError,
-    ).forEach {
-        set(it.name!!, it)
+
+    // 19.3 (Constructor Properties)
+    sealedData(::BigInt),
+    sealedData(::Error),
+    sealedData(::Function),
+    sealedData(::Number),
+    sealedData(::Object),
+    sealedData(::RangeError),
+    sealedData(::ReferenceError),
+    sealedData(::String),
+    sealedData(::Symbol),
+    sealedData(::SyntaxError),
+    sealedData(::TypeError),
+
+    // 19.4 (Other Properties)
+    sealedData(::Reflect),
+))
+    .apply {
+        set("global".languageValue, this)
     }
-    set("Reflect".languageValue, Reflect)
-}

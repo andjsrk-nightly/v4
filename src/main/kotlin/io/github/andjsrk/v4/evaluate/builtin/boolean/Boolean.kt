@@ -17,7 +17,6 @@ val Boolean = BuiltinClassType(
     ),
     mutableMapOf(
         SymbolType.WellKnown.toString.sealedData(toString)
-        // TODO
     ),
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "Boolean")

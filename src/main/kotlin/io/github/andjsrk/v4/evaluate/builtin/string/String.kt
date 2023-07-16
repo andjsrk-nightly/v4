@@ -2,6 +2,7 @@ package io.github.andjsrk.v4.evaluate.builtin.string
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
+import io.github.andjsrk.v4.evaluate.builtin.accessor
 import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
 import io.github.andjsrk.v4.evaluate.builtin.sealedData
 import io.github.andjsrk.v4.evaluate.builtin.string.static.*
@@ -54,6 +55,8 @@ val String = BuiltinClassType(
         sealedData(::trim),
         sealedData(::trimEnd),
         sealedData(::trimStart),
+        SymbolType.WellKnown.iterator.sealedData(iterator),
+        "length".accessor(lengthGetter),
         // TODO
     ),
     constructor { _, _ ->

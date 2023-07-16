@@ -51,6 +51,9 @@ val String = BuiltinClassType(
         sealedData(::toUpperCase),
         sealedData(::toUpperCase),
         sealedData(::toWellFormed),
+        sealedData(::trim),
+        sealedData(::trimEnd),
+        sealedData(::trimStart),
         // TODO
     ),
     constructor { _, _ ->

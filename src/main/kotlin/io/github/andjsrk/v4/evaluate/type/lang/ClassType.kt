@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
-import io.github.andjsrk.v4.evaluate.builtin.`object`.Object
+import io.github.andjsrk.v4.evaluate.builtin.Object
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.*
 

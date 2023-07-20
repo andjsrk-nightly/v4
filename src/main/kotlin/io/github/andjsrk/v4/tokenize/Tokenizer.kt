@@ -104,7 +104,7 @@ internal class Tokenizer(sourceText: String) {
     private fun Token.Builder.addUnescapedHex4DigitsUnicodeEscapeSequence(beginPos: Int): WasSuccessful {
         val (stringMv, successful) = readHexDigits(4)
         val digitCount = stringMv.length
-        val mv = stringMv.toHexIntOrNull()
+        val mv = stringMv.toIntOrNull(16)
         if (!successful || mv!! > MAX_CODE_POINT) return reportError(
             SyntaxErrorKind.INVALID_UNICODE_ESCAPE_SEQUENCE,
             Range.since(beginPos, digitCount + unicodeEscapeSequencePrefix.length),
@@ -120,7 +120,7 @@ internal class Tokenizer(sourceText: String) {
                 hexDigits += it
             }
         }
-        val mv = hexDigits.toHexIntOrNull()
+        val mv = hexDigits.toIntOrNull(16)
         if (mv == null || mv > MAX_CODE_POINT || curr != '}') return reportError(
             SyntaxErrorKind.INVALID_UNICODE_ESCAPE_SEQUENCE,
             Range(beginPos, source.pos),
@@ -148,7 +148,7 @@ internal class Tokenizer(sourceText: String) {
                 advance()
                 val charCode = readHexDigits(HEX_ESCAPE_DIGIT_COUNT)
                     .takeIf { (_, successful) -> successful }
-                    ?.let { (it) -> it.toHexInt() }
+                    ?.let { (it) -> it.toInt(16) }
                     ?: return reportError(
                         SyntaxErrorKind.INVALID_HEX_ESCAPE_SEQUENCE,
                         Range(begin, source.pos),

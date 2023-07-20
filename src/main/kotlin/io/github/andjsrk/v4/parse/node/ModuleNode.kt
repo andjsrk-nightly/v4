@@ -12,7 +12,7 @@ class ModuleNode(override val elements: List<StatementNode>): StatementListNode 
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
     override fun evaluate(): NormalOrAbrupt {
-        val res = evaluateStatements()
+        val res = evaluateStatements(this)
         if (res is Completion.WideNormal<*> && res.value == null) return Completion.Normal.`null`
         return res
     }

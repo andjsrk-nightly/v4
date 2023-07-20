@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.builtin.function.Function
+import io.github.andjsrk.v4.evaluate.builtin.Function
 import io.github.andjsrk.v4.evaluate.builtin.sealedData
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.runningExecutionContext

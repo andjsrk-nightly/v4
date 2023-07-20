@@ -1,6 +1,5 @@
 package io.github.andjsrk.v4.parse
 
-import io.github.andjsrk.v4.className
 import io.github.andjsrk.v4.parse.node.Node
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -42,3 +41,6 @@ private inline fun stringifyProperty(crossinline valueTransform: (Any?) -> Strin
 
 private fun String.indentEachLines() =
     lines().joinToString("\n") { "  $it" }
+
+private inline val Any.className get() =
+    this::class.simpleName!!

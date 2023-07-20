@@ -2,6 +2,8 @@ package io.github.andjsrk.v4.error
 
 enum class RangeErrorKind(override val message: String): ErrorKind {
     ARRAY_BUFFER_ALLOCATION_FAILED("Array buffer allocation failed"),
+    ASSERTION_FAILED("Assertion failed"),
+    ASSERTION_FAILED_WITH_REASON("Assertion failed: %"),
     BIGINT_DIV_ZERO("Division by zero"),
     BIGINT_TOO_BIG("Maximum BigInt size exceeded"),
     CANT_SET_OPTION_X_WHEN_Y_IS_USED("Can't set option % when % is used"),

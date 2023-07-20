@@ -50,6 +50,6 @@ class OrdinaryFunctionType(
     fun evaluateConciseBody(args: List<LanguageType>): NormalOrAbrupt {
         instantiateFunctionDeclaration(this, args)
             .returnIfAbrupt { return it }
-        return body.evaluateAsConciseBody()
+        return evaluateConciseBody(body)
     }
 }

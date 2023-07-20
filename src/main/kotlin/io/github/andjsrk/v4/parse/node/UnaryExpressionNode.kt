@@ -1,11 +1,12 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.*
-import io.github.andjsrk.v4.UnaryOperationType.*
+import io.github.andjsrk.v4.parse.UnaryOperationType.*
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.parse.UnaryOperationType
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 open class UnaryExpressionNode(

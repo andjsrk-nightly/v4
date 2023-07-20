@@ -68,7 +68,7 @@ class Parser(sourceText: String) {
         if (!hasError) {
             this.error = error
             if (testing) {
-                stackTrace = KotlinError().stackTrace
+                stackTrace = kotlin.Error().stackTrace
                     .drop(1) // drop first element because it is always this function
                     .takeWhile { it.not { isNativeMethod } } // preserve meaningful elements only
             }
@@ -1537,7 +1537,7 @@ class Parser(sourceText: String) {
             }
             val body = parseBlock() ?: return null
             val bodyNames = body.lexicallyDeclaredNames()
-            reportDuplicateName(binding?.boundNames().orEmpty() + bodyNames)
+            reportDuplicateName((binding?.boundNames() ?: emptyList()) + bodyNames)
 
             ifHasNoError { CatchNode(binding, body, startRange) }
         }

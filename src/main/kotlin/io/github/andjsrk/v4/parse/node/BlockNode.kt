@@ -19,7 +19,7 @@ class BlockNode(
         val blockEnv = DeclarativeEnvironment(oldEnv)
         instantiateBlockDeclaration(this, blockEnv)
         runningExecutionContext.lexicalEnvironment = blockEnv
-        val res = evaluateStatements()
+        val res = evaluateStatements(this)
         runningExecutionContext.lexicalEnvironment = oldEnv
         return res
     }

@@ -50,7 +50,7 @@ private val getOwnerClass = BuiltinFunctionType("getOwnerClass", 1u) fn@ { _, ar
 private val getOwnKeys = BuiltinFunctionType("getOwnKeys", 1u) fn@ { _, args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     Completion.Normal(
-        ArrayType.from(
+        ImmutableArrayType.from(
             obj._ownPropertyKeys()
         )
     )
@@ -78,7 +78,7 @@ private val getOwnPropertyDescriptors = BuiltinFunctionType("getOwnPropertyDescr
 private val getOwnStringKeys = BuiltinFunctionType("getOwnStringKeys", 1u) fn@ { _, args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     Completion.Normal(
-        ArrayType.from(
+        ImmutableArrayType.from(
             obj._ownPropertyKeys().filterIsInstance<StringType>()
         )
     )
@@ -88,7 +88,7 @@ private val getOwnStringKeys = BuiltinFunctionType("getOwnStringKeys", 1u) fn@ {
 private val getOwnSymbolKeys = BuiltinFunctionType("getOwnSymbolKeys", 1u) fn@ { _, args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     Completion.Normal(
-        ArrayType.from(
+        ImmutableArrayType.from(
             obj._ownPropertyKeys().filterIsInstance<SymbolType>()
         )
     )
@@ -127,16 +127,16 @@ private val preventExtensions = BuiltinFunctionType("preventExtensions", 1u) fn@
 
 @EsSpec("%Reflect%")
 val Reflect = ObjectType(properties=mutableMapOf(
-    sealedData(::defineProperty),
-    sealedData(::defineProperties),
-    sealedData(::getOwnPropertyDescriptor),
-    sealedData(::getOwnPropertyDescriptors),
-    sealedData(::getOwnKeys),
-    sealedData(::getOwnStringKeys),
-    sealedData(::getOwnSymbolKeys),
-    sealedData(::getOwnerClass),
-    sealedData(::getPrototype),
-    sealedData(::isEnumerableProperty),
-    sealedData(::isExtensible),
-    sealedData(::preventExtensions),
+    sealedMethod(defineProperty),
+    sealedMethod(defineProperties),
+    sealedMethod(getOwnPropertyDescriptor),
+    sealedMethod(getOwnPropertyDescriptors),
+    sealedMethod(getOwnKeys),
+    sealedMethod(getOwnStringKeys),
+    sealedMethod(getOwnSymbolKeys),
+    sealedMethod(getOwnerClass),
+    sealedMethod(getPrototype),
+    sealedMethod(isEnumerableProperty),
+    sealedMethod(isExtensible),
+    sealedMethod(preventExtensions),
 ))

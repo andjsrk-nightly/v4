@@ -32,19 +32,22 @@ class BuiltinFunctionType(
 private typealias BuiltinMethodBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyNormalOrAbrupt
 internal inline fun builtinMethod(
     name: PropertyKey,
-    requiredParameterCount: UInt = 0u,
+    requiredParamCount: UInt = 0u,
     crossinline behavior: BuiltinMethodBehavior,
 ) =
-    BuiltinFunctionType(name, requiredParameterCount) fn@ { thisArg, args ->
+    BuiltinFunctionType(name, requiredParamCount) fn@ { thisArg, args ->
         if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
         behavior(thisArg, args)
     }
 internal inline fun builtinMethod(
     name: String,
-    requiredParameterCount: UInt = 0u,
+    requiredParamCount: UInt = 0u,
     crossinline behavior: BuiltinMethodBehavior,
 ) =
-    BuiltinFunctionType(name, requiredParameterCount) fn@ { thisArg, args ->
+    BuiltinFunctionType(name, requiredParamCount) fn@ { thisArg, args ->
         if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
         behavior(thisArg, args)
     }
+
+internal fun List<LanguageType>.getOptional(index: Int) =
+    getOrNull(index)?.normalizeNull()

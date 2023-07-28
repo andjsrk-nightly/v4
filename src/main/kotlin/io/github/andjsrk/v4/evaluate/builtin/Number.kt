@@ -13,7 +13,7 @@ import kotlin.math.abs
 
 private const val DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-@EsSpec("Number(value)") // (as a normal function)
+@EsSpec("Number(value)")
 private val numberFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
     val value = args[0]
     Completion.Normal(
@@ -110,8 +110,8 @@ private val parseLeadingInteger = BuiltinFunctionType("parseLeadingInteger", 1u)
     )
 }
 
-@EsSpec("Number.prototype.toString") // with radix
-private val toRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
+@EsSpec("Number.prototype.toString") // with dynamic radix
+private val numberToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
     val number = thisArg.requireToBe<NumberType> { return@fn it }
     val radix = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -143,18 +143,18 @@ val Number = BuiltinClassType(
         "NaN".sealedData(NumberType.NaN),
         "NEGATIVE_INFINITY".sealedData(NumberType.NEGATIVE_INFINITY),
         "POSITIVE_INFINITY".sealedData(NumberType.POSITIVE_INFINITY),
-        "from".sealedData(numberFrom),
-        sealedData(::isFinite),
-        sealedData(::isInteger),
-        sealedData(::isNaN),
-        sealedData(::isSafeInteger),
-        sealedData(::parseLeadingDecimal),
-        sealedData(::parseLeadingInteger),
+        sealedMethod(numberFrom),
+        sealedMethod(isFinite),
+        sealedMethod(isInteger),
+        sealedMethod(isNaN),
+        sealedMethod(isSafeInteger),
+        sealedMethod(parseLeadingDecimal),
+        sealedMethod(parseLeadingInteger),
         // TODO
     ),
     mutableMapOf(
-        SymbolType.WellKnown.toString.sealedData(numberToString),
-        sealedData(::toRadix),
+        sealedMethod(numberToString),
+        sealedMethod(numberToRadix),
         // TODO
     ),
     constructor { _, _ ->

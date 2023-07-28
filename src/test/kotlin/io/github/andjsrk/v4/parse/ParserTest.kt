@@ -434,6 +434,15 @@ internal class ParserTest {
             }
             assert(arguments.elements.size == 2)
         }
+
+        """
+            new A().b
+        """.shouldBeValidExpressionAnd<MemberExpressionNode> {
+            `object`.assertTypeAnd<NewExpressionNode> {
+                callee.assertIdentifierNamed("A")
+            }
+            property.assertIdentifierNamed("b")
+        }
     }
     @Test
     fun testUpdate() {

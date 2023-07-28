@@ -9,19 +9,17 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 import java.math.BigInteger
 
-@EsSpec("BigInt(value)") // (as a normal function)
+@EsSpec("BigInt(value)")
 private val bigintFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
     Completion.Normal(
         when (val value = args[0]) {
             is NumberType -> return@fn value.toBigInt()
             is StringType -> {
-                val (rest, isNegative) =
-                    if (value.value.startsWith('-')) value.value.substring(1) to true
-                    else value.value to false
+                val (sign, rest) = getSignAndRest(value.value)
                 if (rest.any { it.not { isDecimalDigit } }) return@fn throwError(TypeErrorKind.BIGINT_FROM_INVALID_VALUE, value.value)
                 val bigint = BigInteger(rest)
                 BigIntType(
-                    if (isNegative) -bigint
+                    if (sign < 0) -bigint
                     else bigint
                 )
             }
@@ -37,7 +35,8 @@ private val bigintFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
     )
 }
 
-private val bigintToString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, args ->
+@EsSpec("BigInt.prototype.toString") // with dynamic radix
+private val bigintToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
     val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
     val radix = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -48,15 +47,25 @@ private val bigintToString = builtinMethod(SymbolType.WellKnown.toString) fn@ { 
     )
 }
 
+@EsSpec("BigInt.prototype.toString") // radix is fixed to 10
+private val bigintToString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, args ->
+    val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
+    Completion.Normal(
+        bigint.toString(10)
+    )
+}
+
+@EsSpec("%BigInt%")
 val BigInt = BuiltinClassType(
     "BigInt",
     Object,
     mutableMapOf(
-        "from".sealedData(bigintFrom),
+        sealedMethod(bigintFrom),
         // TODO
     ),
     mutableMapOf(
-        SymbolType.WellKnown.toString.sealedData(bigintToString),
+        sealedMethod(bigintToRadix),
+        sealedMethod(bigintToString),
         // TODO
     ),
     constructor { _, _ ->

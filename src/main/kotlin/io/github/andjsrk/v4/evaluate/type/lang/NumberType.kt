@@ -1,12 +1,13 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
-import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.FALSE
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.TRUE
+import io.github.andjsrk.v4.not
 import kotlin.math.*
 
 @JvmInline
@@ -198,23 +199,23 @@ value class NumberType(
         }
     override fun equal(other: NumberType) =
         when {
-            this.isNaN || other.isNaN -> FALSE
-            this.isZero && other.isZero -> TRUE
-            else -> BooleanType.from(this == other)
+            this.isNaN || other.isNaN -> false
+            this.isZero && other.isZero -> true
+            else -> this == other
         }
     @EsSpec("Number::sameValue")
     fun internallyStrictlyEqual(other: NumberType) =
         when {
-            this.isNaN && other.isNaN -> TRUE
-            this.isZero && other.isZero -> BooleanType.from(this.isNegative == other.isNegative)
-            else -> BooleanType.from(this == other)
+            this.isNaN && other.isNaN -> true
+            this.isZero && other.isZero -> this.isNegative == other.isNegative
+            else -> this == other
         }
     @EsSpec("Number::sameValueZero")
     fun internallyEqual(other: NumberType) =
         when {
-            this.isNaN && other.isNaN -> TRUE
-            this.isZero && other.isZero -> TRUE
-            else -> BooleanType.from(this == other)
+            this.isNaN && other.isNaN -> true
+            this.isZero && other.isZero -> true
+            else -> this == other
         }
     @EsSpec("NumberBitwiseOp")
     private fun generalBitwiseOp(other: NumberType, operation: (Int, Int) -> Int): MaybeAbrupt<NumberType> {
@@ -308,7 +309,9 @@ internal inline fun NumberType.requireToBeUnsignedInt(`return`: AbruptReturnLamb
 internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.radix, "A radix", `return`)
 internal inline fun NumberType.requireToBeIndex(`return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.index, "An index", `return`)
+    requireToBeIntWithin(Ranges.unsignedInteger, "An index", `return`)
+internal inline fun NumberType.requireToBeIndexWithin(size: Int, `return`: AbruptReturnLambda) =
+    requireToBeIntWithin(0 until size.toLong(), "An index", `return`)
 internal inline fun NumberType.requireToBeRelativeIndex(`return`: AbruptReturnLambda) =
     requireToBeIntegerWithin(Ranges.relativeIndex, "A relative index", `return`)
 /**
@@ -316,7 +319,9 @@ internal inline fun NumberType.requireToBeRelativeIndex(`return`: AbruptReturnLa
  * Note that the function assumes that the number is an index.
  */
 internal fun Long.resolveRelativeIndex(length: Int): Int? {
+    if (length <= 0) return null // the index can never be valid
     if (this > Int.MAX_VALUE) return null
     val index = this.toInt() // now it is in safe range to convert to Int
-    return if (index < 0) length + index else index
+    val mightBeOutOfRange = if (index < 0) length + index else index
+    return mightBeOutOfRange.takeIf { it in 0..length }
 }

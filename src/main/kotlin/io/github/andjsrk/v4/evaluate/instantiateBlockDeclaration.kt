@@ -7,5 +7,7 @@ import io.github.andjsrk.v4.parse.node.StatementListNode
 
 @EsSpec("BlockDeclarationInstantiation")
 internal fun instantiateBlockDeclaration(node: StatementListNode, env: DeclarativeEnvironment) {
-    for (decl in node.lexicallyScopedDeclarations()) decl.instantiateIn(env)
+    node.lexicallyScopedDeclarations().forEach {
+        it.instantiateIn(env)
+    }
 }

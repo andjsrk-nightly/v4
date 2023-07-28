@@ -6,8 +6,7 @@ import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 
-@EsSpec("Object.assign")
-private val assignEnumerableProperties = BuiltinFunctionType("assignEnumerableProperties", 2u) fn@ { _, args ->
+private val objectAssign = BuiltinFunctionType("assign", 2u) fn@ { _, args ->
     val target = args[0].requireToBe<ObjectType> { return@fn it }
     val sources = args
         .drop(1)
@@ -29,23 +28,13 @@ private val assignEnumerableProperties = BuiltinFunctionType("assignEnumerablePr
     Completion.Normal(target)
 }
 
-@EsSpec("Object.create")
-private val createObject = BuiltinFunctionType("create", 1u) fn@ { _, args ->
-    val prototype = args[0]
-        .normalizeNull()
-        ?.requireToBe<PrototypeObjectType> { return@fn it }
-    Completion.Normal(
-        ObjectType.create(prototype)
-    )
-}
-
-@EsSpec("Object.entries")
-private val entries = BuiltinFunctionType("entries", 1u) fn@ { _, args ->
+private val objectEntries = BuiltinFunctionType("entries", 1u) fn@ { _, args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
-    val entries = obj.ownEnumerableStringPropertyKeyEntries()
+    val entries = obj.ownEnumerableStringKeyEntries()
         .returnIfAbrupt { return@fn it }
+    // TODO: migrate to generator
     Completion.Normal(
-        ArrayType.from(entries)
+        ImmutableArrayType.from(entries.list)
     )
 }
 
@@ -65,10 +54,11 @@ private val fromEntries = BuiltinFunctionType("fromEntries", 1u) { _, args ->
 
 // TODO: rename the function
 @EsSpec("Object.keys")
-private val getOwnEnumerableStringKeys = BuiltinFunctionType("getOwnEnumerableStringKeys", 1u) fn@ { _, args ->
+private val getOwnStringKeys = BuiltinFunctionType("getOwnStringKeys", 1u) fn@ { _, args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
+    // TODO: migrate to generator
     Completion.Normal(
-        ArrayType.from(
+        ImmutableArrayType.from(
             obj.ownEnumerableStringPropertyKeys()
         )
     )
@@ -76,18 +66,22 @@ private val getOwnEnumerableStringKeys = BuiltinFunctionType("getOwnEnumerableSt
 
 // TODO: rename the function
 @EsSpec("Object.values")
-private val getOwnEnumerableStringKeyValues = BuiltinFunctionType("getOwnEnumerableStringKeyValues", 1u) fn@ { _, args ->
+private val getOwnStringKeyValues = BuiltinFunctionType("getOwnStringKeyValues", 1u) fn@ { _, args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val values = obj.ownEnumerableStringPropertyKeyValues()
         .returnIfAbrupt { return@fn it }
+    // TODO: migrate to generator
     Completion.Normal(
-        ArrayType.from(values)
+        ImmutableArrayType.from(values)
     )
 }
 
 @EsSpec("Object.is")
 private val objectIs = BuiltinFunctionType("is", 2u) { _, args ->
-    Completion.Normal(sameValue(args[0], args[1]))
+    Completion.Normal(
+        sameValue(args[0], args[1])
+            .languageValue
+    )
 }
 
 private val run = builtinMethod("run", 1u) fn@ { thisArg, args ->
@@ -100,20 +94,25 @@ val Object = BuiltinClassType(
     "Object",
     null,
     mutableMapOf(
-        sealedData(::assignEnumerableProperties),
-        "create".sealedData(createObject),
-        sealedData(::entries),
-        sealedData(::fromEntries),
-        sealedData(::freeze),
-        sealedData(::getOwnEnumerableStringKeys),
-        sealedData(::getOwnEnumerableStringKeyValues),
-        "is".sealedData(objectIs),
+        sealedMethod(objectAssign),
+        sealedMethod(objectEntries),
+        sealedMethod(fromEntries),
+        sealedMethod(freeze),
+        sealedMethod(getOwnStringKeys),
+        sealedMethod(getOwnStringKeyValues),
+        sealedMethod(objectIs),
         // TODO
     ),
     mutableMapOf(
-        sealedData(::run),
+        sealedMethod(run),
     ),
-    constructor { obj, _ ->
-        Completion.Normal(obj)
+    constructor ctor@ { _, args ->
+        val prototype = args.getOptional(0)
+            ?.normalizeNull()
+            ?.requireToBe<PrototypeObjectType> { return@ctor it }
+        val obj = ObjectType.create(prototype)
+        Completion.Normal(
+            ObjectType.create(prototype)
+        )
     },
 )

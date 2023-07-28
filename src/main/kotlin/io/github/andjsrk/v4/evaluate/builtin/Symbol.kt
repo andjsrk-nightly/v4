@@ -9,7 +9,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 
 @EsSpec("Symbol([description])")
-private val createSymbol = BuiltinFunctionType("create") fn@ { _, args ->
+private val symbolCreate = BuiltinFunctionType("create") fn@ { _, args ->
     val description = args.getOptional(0)
         ?.requireToBeString { return@fn it }
     Completion.Normal(
@@ -39,8 +39,8 @@ val Symbol = BuiltinClassType(
     mutableMapOf(
         sealedData(SymbolType.WellKnown::iterator),
         sealedData(SymbolType.WellKnown::toString),
-        "create".sealedData(createSymbol),
-        sealedData(::`for`),
+        sealedMethod(symbolCreate),
+        sealedMethod(`for`),
         // TODO
     ),
     mutableMapOf(

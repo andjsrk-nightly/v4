@@ -37,6 +37,7 @@ enum class TypeErrorKind(override val message: String): ErrorKind {
     CANNOT_SET_PROPERTIES("Cannot set properties of %"),
     CANNOT_WRAP("Cannot wrap target callable (%)"),
     CIRCULAR_STRUCTURE("Converting circular structure to JSON%"),
+    COLLECTION_MUTATED_WHILE_ITERATION("Collections cannot be mutated while iteration"),
     CONST_ASSIGN("Assignment to constant variable"),
     CONSTRUCTOR_CLASS_FIELD("Classes may not have a field named 'constructor'"),
     CONSTRUCTOR_NOT_FUNCTION("Constructor % requires 'new'"),

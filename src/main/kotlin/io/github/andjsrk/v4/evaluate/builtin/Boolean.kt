@@ -9,7 +9,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constr
 import io.github.andjsrk.v4.not
 import java.math.BigInteger
 
-@EsSpec("Boolean(value)") // (as a normal function)
+@EsSpec("Boolean(value)")
 private val booleanFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
     val value = args[0]
     Completion.Normal(
@@ -37,10 +37,10 @@ val Boolean = BuiltinClassType(
     "Boolean",
     Object,
     mutableMapOf(
-        "from".sealedData(booleanFrom),
+        sealedMethod(booleanFrom),
     ),
     mutableMapOf(
-        SymbolType.WellKnown.toString.sealedData(booleanToString),
+        sealedMethod(booleanToString),
     ),
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "Boolean")

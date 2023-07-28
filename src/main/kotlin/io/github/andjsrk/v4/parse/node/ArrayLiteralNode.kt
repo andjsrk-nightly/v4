@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
-import io.github.andjsrk.v4.evaluate.type.lang.ArrayType
+import io.github.andjsrk.v4.evaluate.type.lang.ImmutableArrayType
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
@@ -29,6 +29,6 @@ class ArrayLiteralNode(
                 }
             }
         }
-        return Completion.Normal(ArrayType.from(values))
+        return Completion.Normal(ImmutableArrayType.from(values))
     }
 }

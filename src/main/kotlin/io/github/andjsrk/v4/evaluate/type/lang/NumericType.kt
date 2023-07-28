@@ -43,7 +43,7 @@ sealed interface NumericType<out Self: NumericType<Self>>: PrimitiveLanguageType
     fun lessThan(other: @UnsafeVariance Self, undefinedReplacement: BooleanType): BooleanType
 
     @EsSpec("::equal")
-    fun equal(other: @UnsafeVariance Self): BooleanType
+    fun equal(other: @UnsafeVariance Self): Boolean
 
     @EsSpec("::bitwiseAND")
     fun bitwiseAnd(other: @UnsafeVariance Self): SelfOrCompletion

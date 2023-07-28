@@ -43,7 +43,7 @@ private fun List<MaybeRestNode>.initializeParameterBindings(argsIterator: Iterat
                         val ref = resolveBinding(binding.stringValue, env)
                         val values = mutableListOf<LanguageType>()
                         argsIterator.forEach { values += it }
-                        val arr = ArrayType.from(values)
+                        val arr = ImmutableArrayType.from(values)
                         ref.putOrInitializeBinding(arr, env)
                     }
                     is BindingPatternNode -> TODO()

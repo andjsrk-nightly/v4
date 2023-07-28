@@ -8,7 +8,7 @@ import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.stringValue
 
-fun BindingElementNode.initialize(value: LanguageType, env: DeclarativeEnvironment?): EmptyOrAbrupt {
+internal fun BindingElementNode.initialize(value: LanguageType, env: DeclarativeEnvironment?): EmptyOrAbrupt {
     return when (this) {
         is IdentifierNode -> initializeBoundName(stringValue, value, env)
         is BindingPatternNode -> TODO()

@@ -26,7 +26,7 @@ open class ObjectType(
         var proto = prototype
         while (true) {
             if (proto == null) break
-            else if (curr != null && sameValue(curr, proto).value) return false
+            else if (curr != null && sameValue(curr, proto)) return false
             else proto = proto.prototype
         }
         this.prototype = prototype
@@ -210,12 +210,12 @@ open class ObjectType(
         )
     }
     @EsSpec("EnumerableOwnProperties") // kind: key+value
-    fun ownEnumerableStringPropertyKeyEntries(): MaybeAbrupt<ListType<ArrayType>> {
+    fun ownEnumerableStringKeyEntries(): MaybeAbrupt<ListType<ArrayType>> {
         return Completion.WideNormal(
             transformOwnEnumerableStringPropertyKeys { key ->
                 val value = get(key)
                     .returnIfAbrupt { return it }
-                ArrayType.from(listOf(key, value))
+                ImmutableArrayType.from(listOf(key, value))
             }
         )
     }

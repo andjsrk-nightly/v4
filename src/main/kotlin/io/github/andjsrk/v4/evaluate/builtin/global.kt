@@ -24,9 +24,11 @@ val global = ObjectType(properties=mutableMapOf(
     sealedData(::assert),
 
     // 19.3 (Constructor Properties)
+    sealedData(::Array),
     sealedData(::BigInt),
     sealedData(::Error),
     sealedData(::Function),
+    sealedData(::MutableArray),
     sealedData(::Number),
     sealedData(::Object),
     sealedData(::RangeError),

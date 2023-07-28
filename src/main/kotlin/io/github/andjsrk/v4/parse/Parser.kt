@@ -875,7 +875,7 @@ class Parser(sourceText: String) {
         requireNotNull(newToken)
 
         val args = parseArguments() ?: return null
-        return NewExpressionNode(memberExpr, args, newToken.range)
+        return parseMemberExpression(NewExpressionNode(memberExpr, args, newToken.range))
     }
     /**
      * Parses [LeftHandSideExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-LeftHandSideExpression).

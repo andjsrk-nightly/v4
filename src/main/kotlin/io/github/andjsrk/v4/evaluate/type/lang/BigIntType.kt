@@ -42,7 +42,7 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
     override fun lessThan(other: BigIntType, undefinedReplacement: BooleanType): BooleanType =
         BooleanType.from(value < other.value)
     override fun equal(other: BigIntType) =
-        BooleanType.from(value == other.value)
+        value == other.value
     override fun bitwiseAnd(other: BigIntType) =
         BigIntType(value and other.value)
     override fun bitwiseXor(other: BigIntType) =

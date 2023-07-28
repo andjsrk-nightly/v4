@@ -6,7 +6,6 @@ import io.github.andjsrk.v4.evaluate.type.lang.NumberType
 internal object Ranges {
     val unsignedInteger = 0L..NumberType.MAX_SAFE_INTEGER.toLong()
     val relativeIndex = NumberType.MIN_SAFE_INTEGER.toLong()..NumberType.MAX_SAFE_INTEGER.toLong()
-    val index = unsignedInteger
     val radix = 2L..36L
     val codePoint = 0L..MAX_CODE_POINT
 

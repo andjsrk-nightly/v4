@@ -11,11 +11,13 @@ import java.text.Normalizer
 
 private const val REPLACEMENT_CHARACTER = '\uFFFD'
 
+@EsSpec("String(value)")
 private val stringFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
     val value = args[0]
     stringify(value)
 }
 
+@EsSpec("String.fromCodePoint")
 private val fromCodePoint = BuiltinFunctionType("fromCodePoint") fn@ { _, args ->
     val builder = StringBuilder()
     for (arg in args) {
@@ -29,6 +31,7 @@ private val fromCodePoint = BuiltinFunctionType("fromCodePoint") fn@ { _, args -
     )
 }
 
+@EsSpec("String.fromCharCode")
 private val fromCodeUnit = BuiltinFunctionType("fromCodeUnit") fn@ { _, args ->
     val builder = StringBuilder(args.size)
     for (arg in args) {
@@ -42,6 +45,7 @@ private val fromCodeUnit = BuiltinFunctionType("fromCodeUnit") fn@ { _, args ->
     )
 }
 
+@EsSpec("String.prototype.at")
 private val stringAt = builtinMethod("at", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val index = args[0]
@@ -50,10 +54,11 @@ private val stringAt = builtinMethod("at", 1u) fn@ { thisArg, args ->
         .resolveRelativeIndex(string.length)
         ?: return@fn Completion.Normal.`null`
     Completion.Normal(
-        string.getOrNull(index)?.toString()?.languageValue ?: NullType
+        string[index].toString().languageValue
     )
 }
 
+@EsSpec("String.prototype.codePointAt")
 private val codePoint = builtinMethod("codePoint") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val index = args.getOptional(0)
@@ -64,12 +69,12 @@ private val codePoint = builtinMethod("codePoint") fn@ { thisArg, args ->
         }
         ?: 0
     if (string.isEmpty()) return@fn Completion.Normal.`null`
-    assert(index <= string.length)
     Completion.Normal(
         string.codePointAt(index).languageValue
     )
 }
 
+@EsSpec("String.prototype.charCodeAt")
 private val codeUnit = builtinMethod("codeUnit") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val index = args.getOptional(0)
@@ -80,13 +85,13 @@ private val codeUnit = builtinMethod("codeUnit") fn@ { thisArg, args ->
         }
         ?: 0
     if (string.isEmpty()) return@fn Completion.Normal.`null`
-    assert(index <= string.length)
     Completion.Normal(
         string[index].code.languageValue
     )
 }
 
-private val concat = builtinMethod("concat") fn@ { thisArg, args ->
+@EsSpec("String.prototype.concat")
+private val concatenate = builtinMethod("concatenate") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val builder = StringBuilder(string)
     for (arg in args) {
@@ -98,6 +103,7 @@ private val concat = builtinMethod("concat") fn@ { thisArg, args ->
     )
 }
 
+@EsSpec("String.prototype.endsWith")
 private val endsWith = builtinMethod("endsWith", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
@@ -113,6 +119,7 @@ private val endsWith = builtinMethod("endsWith", 1u) fn@ { thisArg, args ->
     )
 }
 
+@EsSpec("String.prototype.search")
 private val findMatchedIndex = builtinMethod("findMatchedIndex", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0] // intentionally does not coerce to regular expressions
@@ -122,7 +129,8 @@ private val findMatchedIndex = builtinMethod("findMatchedIndex", 1u) fn@ { thisA
     findMatchedIndexMethod._call(generalArg, listOf(stringArg))
 }
 
-private val includes = builtinMethod("includes", 1u) fn@ { thisArg, args ->
+@EsSpec("String.prototype.includes")
+private val stringIncludes = builtinMethod("includes", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
     val startIndex = args.getOptional(1)
@@ -136,7 +144,8 @@ private val includes = builtinMethod("includes", 1u) fn@ { thisArg, args ->
     )
 }
 
-private val indexOf = builtinMethod("indexOf", 1u) fn@ { thisArg, args ->
+@EsSpec("String.prototype.indexOf")
+private val stringIndexOf = builtinMethod("indexOf", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
     val startIndex = args.getOptional(1)
@@ -148,6 +157,7 @@ private val indexOf = builtinMethod("indexOf", 1u) fn@ { thisArg, args ->
     )
 }
 
+@EsSpec("String.prototype.isWellFormed")
 private val isWellFormed = builtinMethod("isWellFormed") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     for (codePoint in string.codePoints()) {
@@ -156,12 +166,13 @@ private val isWellFormed = builtinMethod("isWellFormed") fn@ { thisArg, args ->
     Completion.Normal(BooleanType.TRUE)
 }
 
-private val iterator = builtinMethod(SymbolType.WellKnown.iterator) fn@ { thisArg, args ->
+@EsSpec("String.prototype[@@iterator]")
+private val stringIterator = builtinMethod(SymbolType.WellKnown.iterator) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     TODO()
 }
 
-private val lastIndexOf = builtinMethod("lastIndexOf", 1u) fn@ { thisArg, args ->
+private val stringLastIndexOf = builtinMethod("lastIndexOf", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
     val stringEnd = args.getOptional(1)
@@ -173,20 +184,26 @@ private val lastIndexOf = builtinMethod("lastIndexOf", 1u) fn@ { thisArg, args -
     )
 }
 
-private val lengthGetter = AccessorProperty.builtinGetter("length") fn@ {
+/**
+ * See [22.1.4.1 length](https://tc39.es/ecma262/multipage/text-processing.html#sec-properties-of-string-instances-length).
+ */
+@EsSpec("-")
+private val stringLengthGetter = AccessorProperty.builtinGetter("length") fn@ {
     val string = it.requireToBeString { return@fn it }
     Completion.Normal(
         string.length.languageValue
     )
 }
 
+@EsSpec("String.prototype.localeCompare")
 private val localeCompare = builtinMethod("localeCompare", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val that = args[0].requireToBeString { return@fn it }
     TODO()
 }
 
-private val match = builtinMethod("match", 1u) fn@ { thisArg, args ->
+@EsSpec("String.prototype.match")
+private val matchOne = builtinMethod("matchOne", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0]
     val matchMethod = generalArg.getMethod(SymbolType.WellKnown.match)
@@ -195,6 +212,7 @@ private val match = builtinMethod("match", 1u) fn@ { thisArg, args ->
     matchMethod._call(generalArg, listOf(stringArg, BooleanType.FALSE))
 }
 
+@EsSpec("String.prototype.matchAll")
 private val matchAll = builtinMethod("matchAll", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0]
@@ -204,6 +222,7 @@ private val matchAll = builtinMethod("matchAll", 1u) fn@ { thisArg, args ->
     matchMethod._call(generalArg, listOf(stringArg, BooleanType.TRUE))
 }
 
+@EsSpec("String.prototype.normalize")
 private val normalize = builtinMethod("normalize") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val form = args.getOptional(1)
@@ -215,11 +234,12 @@ private val normalize = builtinMethod("normalize") fn@ { thisArg, args ->
     )
 }
 
+@EsSpec("String.prototype.padEnd")
 private val padEnd = builtinMethod("padEnd", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val maxLength = args[0]
         .requireToBe<NumberType> { return@fn it }
-        .requireToBeIntegerWithin(Ranges.index, "maxLength") { return@fn it }
+        .requireToBeIntegerWithin(Ranges.unsignedInteger, "maxLength") { return@fn it }
         .toInt()
     val fillString = args.getOptional(1)
         ?.requireToBeString { return@fn it }
@@ -240,11 +260,12 @@ private val padEnd = builtinMethod("padEnd", 1u) fn@ { thisArg, args ->
     )
 }
 
+@EsSpec("String.prototype.padStart")
 private val padStart = builtinMethod("padStart", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val maxLength = args[0]
         .requireToBe<NumberType> { return@fn it }
-        .requireToBeIntegerWithin(Ranges.index, "maxLength") { return@fn it }
+        .requireToBeIntegerWithin(Ranges.unsignedInteger, "maxLength") { return@fn it }
         .toInt()
     val fillString = args.getOptional(1)
         ?.requireToBeString { return@fn it }
@@ -265,6 +286,7 @@ private val padStart = builtinMethod("padStart", 1u) fn@ { thisArg, args ->
     )
 }
 
+@EsSpec("String.prototype.repeat")
 private val repeat = builtinMethod("repeat", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val count = args[0]
@@ -276,6 +298,7 @@ private val repeat = builtinMethod("repeat", 1u) fn@ { thisArg, args ->
     )
 }
 
+@EsSpec("String.prototype.replaceAll")
 private val replaceAll = builtinMethod("replaceAll", 2u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val string = stringArg.value
@@ -328,6 +351,7 @@ private val replaceAll = builtinMethod("replaceAll", 2u) fn@ { thisArg, args ->
     )
 }
 
+@EsSpec("String.prototype.replace")
 private val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val string = stringArg.value
@@ -369,47 +393,51 @@ private val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args
     )
 }
 
-private val slice = builtinMethod("slice", 1u) fn@ { thisArg, args ->
+@EsSpec("String.prototype.slice")
+private val stringSlice = builtinMethod("slice", 1u) fn@{ thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
+    val length = string.length
     val unsafeStart = args[0]
         .normalizeNull()
         ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeRelativeIndex { return@fn it }
-        ?.resolveRelativeIndex(string.length)
+        ?.resolveRelativeIndex(length)
         ?: 0
     val unsafeEnd = args.getOptional(1)
         ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeRelativeIndex { return@fn it }
-        ?.resolveRelativeIndex(string.length)
-        ?: string.length
+        ?.resolveRelativeIndex(length)
+        ?: length
     if (unsafeStart > unsafeEnd) return@fn throwError(RangeErrorKind.SLICE_START_GREATER_THAN_END)
-    val start = unsafeStart.coerceInString(string)
-    val end = unsafeEnd.coerceInString(string)
+    val start = unsafeStart.coerceIn(0, length)
+    val end = unsafeEnd.coerceIn(0, length)
     Completion.Normal(
         string.substring(start, end).languageValue
     )
 }
 
-private val sliceAbsolute = builtinMethod("sliceAbsolute", 1u) fn@ { thisArg, args ->
-    val string = thisArg.requireToBeString { return@fn it }
-    val start = args[0]
-        .normalizeNull()
-        ?.requireToBe<NumberType> { return@fn it }
-        ?.requireToBeIndex { return@fn it }
-        ?.coerceInString(string)
-        ?: 0
-    val end = args.getOptional(1)
-        ?.requireToBe<NumberType> { return@fn it }
-        ?.requireToBeIndex { return@fn it }
-        ?.coerceInString(string)
-        ?: string.length
-    if (start > end) return@fn throwError(RangeErrorKind.SLICE_START_GREATER_THAN_END)
-    Completion.Normal(
-        string.substring(start, end)
-            .languageValue
-    )
-}
+// @EsSpec("String.prototype.substring")
+// private val sliceAbsolute = builtinMethod("sliceAbsolute", 1u) fn@ { thisArg, args ->
+//     val string = thisArg.requireToBeString { return@fn it }
+//     val start = args[0]
+//         .normalizeNull()
+//         ?.requireToBe<NumberType> { return@fn it }
+//         ?.requireToBeIndex { return@fn it }
+//         ?.coerceInString(string)
+//         ?: 0
+//     val end = args.getOptional(1)
+//         ?.requireToBe<NumberType> { return@fn it }
+//         ?.requireToBeIndex { return@fn it }
+//         ?.coerceInString(string)
+//         ?: string.length
+//     if (start > end) return@fn throwError(RangeErrorKind.SLICE_START_GREATER_THAN_END)
+//     Completion.Normal(
+//         string.substring(start, end)
+//             .languageValue
+//     )
+// }
 
+@EsSpec("String.prototype.split")
 private val split = builtinMethod("split") fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val string = stringArg.value
@@ -420,7 +448,7 @@ private val split = builtinMethod("split") fn@ { thisArg, args ->
             checkSplitLimitArg(limit)
                 .returnIfAbrupt { return@fn it }
             return@fn Completion.Normal(
-                ArrayType.from(
+                ImmutableArrayType.from(
                     listOf(stringArg)
                 )
             )
@@ -445,12 +473,13 @@ private val split = builtinMethod("split") fn@ { thisArg, args ->
             else it
         }
     Completion.Normal(
-        ArrayType.from(
+        ImmutableArrayType.from(
             res.map { it.languageValue }
         )
     )
 }
 
+@EsSpec("String.prototype.startsWith")
 private val startsWith = builtinMethod("startsWith", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
@@ -464,16 +493,19 @@ private val startsWith = builtinMethod("startsWith", 1u) fn@ { thisArg, args ->
     )
 }
 
+@EsSpec("String.prototype.toLocaleLowerCase")
 private val toLocaleLowerCase = builtinMethod("toLocaleLowerCase") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     TODO()
 }
 
+@EsSpec("String.prototype.toLocaleUpperCase")
 private val toLocaleUpperCase = builtinMethod("toLocaleUpperCase") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     TODO()
 }
 
+@EsSpec("String.prototype.toLowerCase")
 private val toLowerCase = builtinMethod("toLowerCase") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     Completion.Normal(
@@ -482,12 +514,14 @@ private val toLowerCase = builtinMethod("toLowerCase") fn@ { thisArg, args ->
     )
 }
 
-private val toString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
+@EsSpec("String.prototype.toString")
+private val stringToString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
     thisArg.requireToBe<StringType> { return@fn it }
     Completion.Normal(thisArg)
 }
 
-private val toUpperCase = builtinMethod("toUpperCase") fn@ { thisArg, args ->
+@EsSpec("String.prototype.toUpperCase")
+private val toUpperCase = builtinMethod("toUpperCase") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     Completion.Normal(
         string.uppercase()
@@ -495,7 +529,8 @@ private val toUpperCase = builtinMethod("toUpperCase") fn@ { thisArg, args ->
     )
 }
 
-private val toWellFormed = builtinMethod("toWellFormed") fn@ { thisArg, args ->
+@EsSpec("String.prototype.toWellFormed")
+private val toWellFormed = builtinMethod("toWellFormed") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     val builder = StringBuilder()
     for (codePoint in string.codePoints()) {
@@ -507,21 +542,24 @@ private val toWellFormed = builtinMethod("toWellFormed") fn@ { thisArg, args ->
     )
 }
 
-private val trim = builtinMethod("trim") fn@ { thisArg, args ->
+@EsSpec("String.prototype.trim")
+private val trim = builtinMethod("trim") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     Completion.Normal(
         string.trim().languageValue
     )
 }
 
-private val trimEnd = builtinMethod("trimEnd") fn@ { thisArg, args ->
+@EsSpec("String.prototype.trimEnd")
+private val trimEnd = builtinMethod("trimEnd") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     Completion.Normal(
         string.trimEnd().languageValue
     )
 }
 
-private val trimStart = builtinMethod("trimStart") fn@ { thisArg, args ->
+@EsSpec("String.prototype.trimStart")
+private val trimStart = builtinMethod("trimStart") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     Completion.Normal(
         string.trimStart().languageValue
@@ -533,56 +571,52 @@ val String = BuiltinClassType(
     "String",
     Object,
     mutableMapOf(
-        "from".sealedData(stringFrom),
-        sealedData(::fromCodePoint),
-        sealedData(::fromCodeUnit),
-        // TODO
+        sealedMethod(stringFrom),
+        sealedMethod(fromCodePoint),
+        sealedMethod(fromCodeUnit),
     ),
     mutableMapOf(
-        "at".sealedData(stringAt),
-        sealedData(::codePoint),
-        sealedData(::codeUnit),
-        sealedData(::concat),
-        sealedData(::endsWith),
-        sealedData(::findMatchedIndex),
-        sealedData(::includes),
-        sealedData(::indexOf),
-        sealedData(::isWellFormed),
-        sealedData(::lastIndexOf),
-        sealedData(::localeCompare),
-        sealedData(::match),
-        sealedData(::matchAll),
-        sealedData(::normalize),
-        sealedData(::padEnd),
-        sealedData(::padStart),
-        sealedData(::repeat),
-        sealedData(::replaceAll),
-        sealedData(::replaceFirst),
-        sealedData(::slice),
-        sealedData(::sliceAbsolute),
-        sealedData(::split),
-        sealedData(::startsWith),
-        sealedData(::toLocaleLowerCase),
-        sealedData(::toLocaleUpperCase),
-        sealedData(::toLowerCase),
-        SymbolType.WellKnown.toString.sealedData(toString),
-        sealedData(::toUpperCase),
-        sealedData(::toUpperCase),
-        sealedData(::toWellFormed),
-        sealedData(::trim),
-        sealedData(::trimEnd),
-        sealedData(::trimStart),
-        SymbolType.WellKnown.iterator.sealedData(iterator),
-        "length".accessor(lengthGetter),
+        sealedMethod(stringAt),
+        sealedMethod(codePoint),
+        sealedMethod(codeUnit),
+        sealedMethod(concatenate),
+        sealedMethod(endsWith),
+        sealedMethod(findMatchedIndex),
+        sealedMethod(stringIncludes),
+        sealedMethod(stringIndexOf),
+        sealedMethod(isWellFormed),
+        sealedMethod(stringLastIndexOf),
+        sealedMethod(localeCompare),
+        sealedMethod(matchOne),
+        sealedMethod(matchAll),
+        sealedMethod(normalize),
+        sealedMethod(padEnd),
+        sealedMethod(padStart),
+        sealedMethod(repeat),
+        sealedMethod(replaceAll),
+        sealedMethod(replaceFirst),
+        sealedMethod(stringSlice),
+        // sealedMethod(sliceAbsolute),
+        sealedMethod(split),
+        sealedMethod(startsWith),
+        sealedMethod(toLocaleLowerCase),
+        sealedMethod(toLocaleUpperCase),
+        sealedMethod(toLowerCase),
+        sealedMethod(stringToString),
+        sealedMethod(toUpperCase),
+        sealedMethod(toUpperCase),
+        sealedMethod(toWellFormed),
+        sealedMethod(trim),
+        sealedMethod(trimEnd),
+        sealedMethod(trimStart),
+        sealedMethod(stringIterator),
+        "length".accessor(stringLengthGetter),
         // TODO
     ),
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "String")
     },
 )
-
-private fun Int.coerceInString(string: String) =
-    coerceIn(0, string.length)
 
 private fun checkStringReplaceNewArg(value: LanguageType) =
     when (value) {

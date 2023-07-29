@@ -2,9 +2,9 @@ package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.RangeErrorKind
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.AccessorProperty
-import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 
@@ -381,6 +381,7 @@ private val immutableArrayRemoveLast = builtinMethod("removeLast") fn@ { thisArg
     Completion.Normal(new)
 }
 
+@EsSpec("Array.prototype.toReversed")
 private val immutableArrayReverse = builtinMethod("reverse") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val new = ImmutableArrayType.from(arr.array.reversed())
@@ -409,6 +410,71 @@ private val immutableArraySlice = builtinMethod("slice", 1u) fn@ { thisArg, args
         if (arr is ImmutableArrayType) arr.array.subList(start, end)
         else arr.array.slice(start..end)
     )
+    Completion.Normal(new)
+}
+
+@EsSpec("Array.prototype.toSorted")
+private val immutableArraySort = builtinMethod("sort") fn@ { thisArg, args ->
+    val arr = thisArg.requireToBe<ArrayType> { return@fn it }
+    val compareFn = args.getOptional(0)
+        ?.requireToBe<FunctionType> { return@fn it }
+        ?: sortDefaultCompareFn
+    generalSort(compareFn) { comp ->
+        ImmutableArrayType.from(arr.array.sortedWith(comp))
+    }
+}
+internal val sortDefaultCompareFn = BuiltinFunctionType("compareFn", 2u) { _, args ->
+    val a = args[0]
+    val b = args[1]
+    Completion.Normal(
+        when {
+            a.isLessThan(b, BooleanType.FALSE).value -> -1
+            b.isLessThan(a, BooleanType.FALSE).value -> 1
+            else -> 0
+        }
+            .languageValue
+    )
+}
+internal inline fun generalSort(
+    compareFn: FunctionType,
+    sort: (comparator: (LanguageType, LanguageType) -> Int) -> ArrayType,
+): MaybeAbrupt<ArrayType> {
+    val res: ArrayType
+    var abrupt: Completion.Abrupt? = null
+    try {
+        res = sort { a, b ->
+            val compareRes = compareFn.callAndRequireToBe<NumberType>(null, listOf(a, b)) {
+                abrupt = it
+                throw SortBreakException()
+            }
+            when {
+                compareRes.isNaN -> {
+                    abrupt = throwError(TypeErrorKind.COMPARATOR_RETURNED_NAN)
+                    throw SortBreakException()
+                }
+                compareRes.isNegative -> -1
+                compareRes.isZero -> 0
+                else -> 1
+            }
+        }
+    } catch (e: SortBreakException) {
+        return abrupt!!
+    }
+    return Completion.Normal(res)
+}
+internal class SortBreakException: Exception()
+
+@EsSpec("Array.prototype.with")
+private val immutableArrayWith = builtinMethod("with", 2u) fn@ { thisArg, args ->
+    val arr = thisArg.requireToBe<ArrayType> { return@fn it }
+    val index = args[0]
+        .requireToBe<NumberType> { return@fn it }
+        .requireToBeRelativeIndex { return@fn it }
+        .resolveRelativeIndexOrReturn(arr.array.size) { return@fn it }
+    val value = args[1]
+    val before = arr.array.subList(0, index)
+    val after = arr.array.subList(index + 1, arr.array.size)
+    val new = ImmutableArrayType.from(before + listOf(value) + after)
     Completion.Normal(new)
 }
 
@@ -459,6 +525,8 @@ val Array = BuiltinClassType(
         sealedMethod(immutableArrayRemoveLast),
         sealedMethod(immutableArrayReverse),
         sealedMethod(immutableArraySlice),
+        sealedMethod(immutableArraySort),
+        sealedMethod(immutableArrayWith),
         "length".accessor(getter=arrayLengthGetter),
     ),
     constructor ctor@ { _, args ->
@@ -478,15 +546,6 @@ val Array = BuiltinClassType(
         Completion.Normal(arr)
     },
 )
-
-internal inline fun FunctionType.callPredicate(
-    element: LanguageType,
-    index: Int,
-    array: ArrayType,
-    `return`: AbruptReturnLambda,
-) =
-    callAndRequireToBe<BooleanType>(null, listOf(element, index.languageValue, array), `return`)
-        .value
 
 internal fun flatCallback(value: LanguageType) =
     if (value is ArrayType) value.array

@@ -68,7 +68,7 @@ class Parser(sourceText: String) {
         if (!hasError) {
             this.error = error
             if (testing) {
-                stackTrace = kotlin.Error().stackTrace
+                stackTrace = Exception().stackTrace
                     .drop(1) // drop first element because it is always this function
                     .takeWhile { it.not { isNativeMethod } } // preserve meaningful elements only
             }

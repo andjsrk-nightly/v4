@@ -287,23 +287,26 @@ private inline val NumberType.isOddInteger get() =
  */
 internal inline fun NumberType.toInt() =
     value.toInt()
-internal inline fun NumberType.requireToBeIntegerWithin(range: LongRange, description: String = "The number", `return`: AbruptReturnLambda): Long {
+
+internal fun NumberType.requireToBeIntegerWithin(range: LongRange): Long? {
     if (this.isInteger) {
         val long = this.value.toLong()
-        if (long in range) return long
+        if (abs(long) <= Int.MAX_VALUE && long in range) return long
     }
-    `return`(
-        throwError(
-            RangeErrorKind.MUST_BE_INTEGER_IN_RANGE,
-            description,
-            range.first.toString(),
-            range.last.toString(),
-        )
-    )
+    return null
 }
+internal fun throwMustBeIntegerInRange(description: String, range: LongRange) =
+    throwError(
+        RangeErrorKind.MUST_BE_INTEGER_IN_RANGE,
+        description,
+        range.first.languageValue.display(),
+        range.last.languageValue.display(),
+    )
 internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", `return`: AbruptReturnLambda) =
-    requireToBeIntegerWithin(range, description, `return`)
-        .toInt()
+    requireToBeIntegerWithin(range)
+        ?.toInt()
+        ?: `return`(throwMustBeIntegerInRange(description, range))
+
 internal inline fun NumberType.requireToBeUnsignedInt(`return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.unsignedInteger, `return`=`return`)
 internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
@@ -311,17 +314,25 @@ internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
 internal inline fun NumberType.requireToBeIndex(`return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.unsignedInteger, "An index", `return`)
 internal inline fun NumberType.requireToBeIndexWithin(size: Int, `return`: AbruptReturnLambda) =
-    requireToBeIntWithin(0 until size.toLong(), "An index", `return`)
+    requireToBeIntWithin(Ranges.unsignedInteger, "An index", `return`)
+        .let {
+            it.takeIf { it < size } ?: `return`(invalidIndex(it))
+        }
 internal inline fun NumberType.requireToBeRelativeIndex(`return`: AbruptReturnLambda) =
-    requireToBeIntegerWithin(Ranges.relativeIndex, "A relative index", `return`)
+    requireToBeIntWithin(Ranges.relativeIndex, "A relative index", `return`)
 /**
  * Returns `null` if the number is greater than [Int.MAX_VALUE].
  * Note that the function assumes that the number is an index.
  */
-internal fun Long.resolveRelativeIndex(length: Int): Int? {
+internal fun Int.resolveRelativeIndex(length: Int): Int? {
     if (length <= 0) return null // the index can never be valid
-    if (this > Int.MAX_VALUE) return null
-    val index = this.toInt() // now it is in safe range to convert to Int
+    val index = this
     val mightBeOutOfRange = if (index < 0) length + index else index
-    return mightBeOutOfRange.takeIf { it in 0..length }
+    return mightBeOutOfRange.takeIf { it in 0 until length }
 }
+internal inline fun Int.resolveRelativeIndexOrReturn(length: Int, `return`: AbruptReturnLambda) =
+    resolveRelativeIndex(length) ?: `return`(invalidRelativeIndex(this))
+internal fun invalidIndex(index: Int) =
+    throwError(RangeErrorKind.INVALID_INDEX, index.languageValue.display())
+internal fun invalidRelativeIndex(index: Int) =
+    throwError(RangeErrorKind.INVALID_RELATIVE_INDEX, index.languageValue.display())

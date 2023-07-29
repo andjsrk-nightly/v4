@@ -23,7 +23,7 @@ private val fromCodePoint = BuiltinFunctionType("fromCodePoint") fn@ { _, args -
     for (arg in args) {
         val codePoint = arg
             .requireToBe<NumberType> { return@fn it }
-            .requireToBeCodePoint { return@fn it }
+            .requireToBeIntWithin(Ranges.codePoint, "A code point") { return@fn it }
         builder.appendCodePoint(codePoint)
     }
     Completion.Normal(
@@ -37,7 +37,7 @@ private val fromCodeUnit = BuiltinFunctionType("fromCodeUnit") fn@ { _, args ->
     for (arg in args) {
         val codeUnit = arg
             .requireToBe<NumberType> { return@fn it }
-            .requireToBeIntegerWithin(Ranges.uint16, "A code unit") { return@fn it }
+            .requireToBeIntWithin(Ranges.uint16, "A code unit") { return@fn it }
         builder.append(codeUnit.toChar())
     }
     Completion.Normal(
@@ -239,8 +239,7 @@ private val padEnd = builtinMethod("padEnd", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val maxLength = args[0]
         .requireToBe<NumberType> { return@fn it }
-        .requireToBeIntegerWithin(Ranges.unsignedInteger, "maxLength") { return@fn it }
-        .toInt()
+        .requireToBeIntWithin(Ranges.unsignedInteger, "maxLength") { return@fn it }
     val fillString = args.getOptional(1)
         ?.requireToBeString { return@fn it }
         ?: " "
@@ -265,8 +264,7 @@ private val padStart = builtinMethod("padStart", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val maxLength = args[0]
         .requireToBe<NumberType> { return@fn it }
-        .requireToBeIntegerWithin(Ranges.unsignedInteger, "maxLength") { return@fn it }
-        .toInt()
+        .requireToBeIntWithin(Ranges.unsignedInteger, "maxLength") { return@fn it }
     val fillString = args.getOptional(1)
         ?.requireToBeString { return@fn it }
         ?: " "
@@ -334,8 +332,7 @@ private val replaceAll = builtinMethod("replaceAll", 2u) fn@ { thisArg, args ->
                             // there is an additional string between matched strings
                             builder.append(string.substring(lastMatchEndIndex, i))
                         }
-                        val result = new._call(null, listOf(oldArg, i.languageValue, stringArg))
-                            .returnIfAbrupt { return@fn it }
+                        val result = new.callCollectionCallback(oldArg, i, stringArg) { return@fn it }
                             .requireToBeString { return@fn it }
                         builder.append(result)
                         i += step
@@ -382,8 +379,7 @@ private val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args
                 val pos = string.indexOf(old)
                 if (pos == -1) stringArg
                 else {
-                    val result = new._call(null, listOf(oldArg, pos.languageValue, stringArg))
-                        .returnIfAbrupt { return@fn it }
+                    val result = new.callCollectionCallback(oldArg, pos, stringArg) { return@fn it }
                         .requireToBeString { return@fn it }
                     string.replaceFirst(old, result).languageValue
                 }
@@ -633,9 +629,6 @@ private fun checkSplitLimitArg(limit: LanguageType?): MaybeAbrupt<GeneralSpecVal
     )
 }
 
-private inline fun NumberType.requireToBeCodePoint(`return`: AbruptReturnLambda): CodePoint =
-    requireToBeIntegerWithin(Ranges.codePoint, "A code point", `return`)
-        .toInt()
 private inline fun NumberType.requireToBeIndexWithinString(string: String, name: String = "startIndex", `return`: AbruptReturnLambda): Int {
     val index = this.requireToBeIndex(`return`)
     if (index >= string.length) `return`(

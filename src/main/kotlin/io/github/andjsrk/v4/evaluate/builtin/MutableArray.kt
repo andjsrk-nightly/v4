@@ -185,11 +185,34 @@ private val mutableArrayReverse = builtinMethod("reverse") fn@ { thisArg, _ ->
     Completion.Normal(arr)
 }
 
+private val mutableArraySet = builtinMethod("set", 2u) fn@ { thisArg, args ->
+    val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
+    val index = args[0]
+        .requireToBe<NumberType> { return@fn it }
+        .requireToBeRelativeIndex { return@fn it }
+        .resolveRelativeIndexOrReturn(arr.array.size) { return@fn it }
+    val value = args[1]
+    arr.array[index] = value
+    Completion.Normal(arr)
+}
+
 private val mutableArraySlice = builtinMethod("slice", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val start = args[0]
         .requireToBe<NumberType> { return@fn it }
     TODO()
+}
+
+@EsSpec("Array.prototype.sort")
+private val mutableArraySort = builtinMethod("sort") fn@ { thisArg, args ->
+    val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
+    val compareFn = args.getOptional(0)
+        ?.requireToBe<FunctionType> { return@fn it }
+        ?: sortDefaultCompareFn
+    generalSort(compareFn) { comp ->
+        arr.array.sortWith(comp)
+        arr
+    }
 }
 
 val MutableArray = BuiltinClassType(
@@ -225,7 +248,9 @@ val MutableArray = BuiltinClassType(
         sealedMethod(mutableArrayRemoveFirst),
         sealedMethod(mutableArrayRemoveLast),
         sealedMethod(mutableArrayReverse),
+        sealedMethod(mutableArraySet),
         sealedMethod(mutableArraySlice),
+        sealedMethod(mutableArraySort),
         "length".accessor(getter=arrayLengthGetter),
     ),
     constructor ctor@ { _, args ->

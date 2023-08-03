@@ -809,9 +809,9 @@ private fun evaluationOf(code: String): EvaluationResult {
  * @see SourceTextModule.executeModule
  */
 private fun SourceTextModule.executeModuleWithoutIgnoringValue(): NormalOrAbrupt {
-    executionContextStack.push(ExecutionContext(environment, realm))
+    executionContextStack.addTop(ExecutionContext(environment, realm))
     val res = node.evaluate()
-    executionContextStack.pop()
+    executionContextStack.removeTop()
     return res
 }
 private data class EvaluationResult(val completion: Completion<*>, val module: SourceTextModule)

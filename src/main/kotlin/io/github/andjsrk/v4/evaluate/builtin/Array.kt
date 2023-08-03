@@ -465,7 +465,7 @@ internal inline fun generalSort(
 internal class SortBreakException: Exception()
 
 @EsSpec("Array.prototype.with")
-private val immutableArrayWith = builtinMethod("with", 2u) fn@ { thisArg, args ->
+private val immutableArraySet = builtinMethod("set", 2u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -526,7 +526,7 @@ val Array = BuiltinClassType(
         sealedMethod(immutableArrayReverse),
         sealedMethod(immutableArraySlice),
         sealedMethod(immutableArraySort),
-        sealedMethod(immutableArrayWith),
+        sealedMethod(immutableArraySet),
         "length".accessor(getter=arrayLengthGetter),
     ),
     constructor ctor@ { _, args ->

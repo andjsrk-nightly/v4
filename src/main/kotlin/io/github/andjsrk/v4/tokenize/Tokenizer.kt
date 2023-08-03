@@ -135,6 +135,7 @@ internal class Tokenizer(sourceText: String) {
 
         when (curr) {
             in singleEscapeCharacterMap -> addLiteralAdvance(singleEscapeCharacterMap[curr]!!)
+            '\'', '"', '\\' -> curr
             'u' -> {
                 val begin = source.pos - unicodeEscapeSequencePrefix.length
                 advance()

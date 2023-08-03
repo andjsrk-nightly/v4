@@ -11,8 +11,9 @@ sealed class FunctionType(
     val name: PropertyKey?,
     requiredParameterCount: UInt,
     val env: DeclarativeEnvironment,
+    lazyPrototype: Lazy<PrototypeObjectType> = lazy { Function.instancePrototype },
 ): ObjectType(
-    lazy { Function.instancePrototype },
+    lazyPrototype,
     mutableMapOf(
         "requiredParameterCount".sealedData(requiredParameterCount.toDouble().languageValue),
     ),

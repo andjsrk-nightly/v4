@@ -28,15 +28,15 @@ class SourceTextModule(
         // TODO: implement step 7
         val moduleContext = ExecutionContext(environment, realm)
         context = moduleContext
-        executionContextStack.push(moduleContext)
+        executionContextStack.addTop(moduleContext)
         instantiateBlockDeclaration(node, environment)
-        executionContextStack.pop()
+        executionContextStack.removeTop()
     }
     @EsSpec("ExecuteModule")
     fun executeModule(): EmptyOrAbrupt {
-        executionContextStack.push(ExecutionContext(environment, realm))
+        executionContextStack.addTop(ExecutionContext(environment, realm))
         val res = node.evaluate()
-        executionContextStack.pop()
+        executionContextStack.removeTop()
         return if (res is Completion.Abrupt) res else empty
     }
 }

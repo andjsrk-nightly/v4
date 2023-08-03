@@ -14,25 +14,27 @@ val Char.isWhiteSpace get() =
 val Char.isLineTerminator get() =
     this.isOneOf('\n', '\r', '\u2028', '\u2029')
 
-@EsSpec("AsciiLetter")
-val Char.isAsciiLetter get() =
-    this in 'a'..'z' || this in 'A'..'Z'
-
 /**
  * modified to:
- *
+ * ```
  * IdentifierChar ::
- *   AsciiLetter
+ *   any code point in general categories
+ *       “Uppercase_Letter” (“Lu”),
+ *       “Lowercase_Letter” (“Ll”),
+ *       “Titlecase_Letter” (“Lt”),
+ *       “Modifier_Letter” (“Lm”),
+ *       “Other_Letter” (“Lo”)
  *   `_`
  *   `$`
  *
  * IdentifierName ::
  *   IdentifierChar
  *   IdentifierName IdentifierChar
+ * ```
  */
 @EsSpec("IdentifierName")
 val Char.isIdentifierChar get() =
-    this.isAsciiLetter || this == '_' || this == '$'
+    this.isLetter() || this == '_' || this == '$'
 
 @EsSpec("NumericLiteralSeparator")
 val Char.isNumericLiteralSeparator get() =
@@ -60,9 +62,6 @@ private typealias UnescapedChar = Char
 @EsSpec("-")
 val singleEscapeCharacterMap =
     mapOf<Char, UnescapedChar>(
-        '\'' to '\'',
-        '"' to '"',
-        '\\' to '\\',
         'b' to '\b',
         'f' to '\u000C',
         'n' to '\n',

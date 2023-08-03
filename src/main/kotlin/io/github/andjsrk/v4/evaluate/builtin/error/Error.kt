@@ -12,7 +12,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constr
  * Note that `Error.prototype.name` has been changed to a getter that returns the object's class' name.
  */
 @EsSpec("Error.prototype.name")
-val nameGetter = AccessorProperty.builtinGetter("name") fn@ {
+val errorNameGetter = AccessorProperty.builtinGetter("name") fn@ {
     val error = it.requireToBe<ObjectType> { return@fn it }
     Completion.Normal(
         error.findName() ?: NullType
@@ -27,7 +27,7 @@ val Error = BuiltinClassType(
         // TODO
     ),
     mutableMapOf(
-        "name".accessor(getter=nameGetter, configurable=false),
+        "name".accessor(getter=errorNameGetter, configurable=false),
     ),
     constructor(1u) ctor@ { error, args ->
         val message = args[0]

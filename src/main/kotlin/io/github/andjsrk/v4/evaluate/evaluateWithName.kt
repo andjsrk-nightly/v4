@@ -12,7 +12,7 @@ internal fun ExpressionNode.evaluateWithName(name: PropertyKey): NonEmptyNormal 
     return Completion.Normal(
         when (this) {
             is ArrowFunctionNode -> instantiateArrowFunction(name)
-            is MethodExpressionNode -> TODO()
+            is MethodExpressionNode -> instantiateMethod(name)
             is ClassExpressionNode -> TODO()
             else -> missingBranch()
         }

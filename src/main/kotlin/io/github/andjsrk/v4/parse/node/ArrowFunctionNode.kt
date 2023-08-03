@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.parse.node
 
+import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.ThisMode
 import io.github.andjsrk.v4.evaluate.runningExecutionContext
@@ -21,8 +22,16 @@ class ArrowFunctionNode(
         stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator, ::range)
     override fun evaluate() =
         Completion.Normal(instantiateArrowFunction(null))
-    internal fun instantiateArrowFunction(name: PropertyKey?): OrdinaryFunctionType {
-        val env = runningExecutionContext.lexicalEnvironment
-        return OrdinaryFunctionType(parameters, body, env, ThisMode.ARROW, name)
-    }
+    @EsSpec("InstantiateArrowFunctionExpression")
+    @EsSpec("InstantiateAsyncArrowFunctionExpression")
+    internal fun instantiateArrowFunction(name: PropertyKey?) =
+        OrdinaryFunctionType(
+            name,
+            parameters,
+            body,
+            runningExecutionContext.lexicalEnvironment,
+            ThisMode.ARROW,
+            isAsync,
+            isGenerator,
+        )
 }

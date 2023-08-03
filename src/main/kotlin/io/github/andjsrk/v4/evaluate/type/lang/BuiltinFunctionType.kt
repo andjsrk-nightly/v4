@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.FunctionEnvironment
 import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
 
-typealias BuiltinFunctionBehavior = (thisArg: LanguageType?, args: List<LanguageType>) -> NonEmptyNormalOrAbrupt
+private typealias BuiltinFunctionBehavior = (thisArg: LanguageType?, args: List<LanguageType>) -> NonEmptyNormalOrAbrupt
 
 @EsSpec("CreateBuiltinFunction")
 class BuiltinFunctionType(
@@ -22,9 +22,9 @@ class BuiltinFunctionType(
     override val isArrow = false
     override fun _call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
         val calleeContext = ExecutionContext(FunctionEnvironment.from(this, thisArg), realm, this)
-        executionContextStack.push(calleeContext)
+        executionContextStack.addTop(calleeContext)
         val res = behavior(thisArg, args)
-        executionContextStack.pop()
+        executionContextStack.removeTop()
         return res
     }
 }

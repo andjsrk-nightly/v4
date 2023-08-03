@@ -4,10 +4,10 @@ class Stack<E>(vararg elements: E) {
     private val queue = ArrayDeque(elements.asList())
     val top get() =
         queue.first()
-    fun push(element: E) {
+    fun addTop(element: E) {
         queue.addFirst(element)
     }
-    fun pop() =
+    fun removeTop() =
         queue.removeFirst()
     fun toList() =
         queue.toList()

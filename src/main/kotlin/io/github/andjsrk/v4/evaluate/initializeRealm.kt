@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.*
 fun initializeRealm() {
     val realm = Realm()
     val newContext = ExecutionContext(ModuleEnvironment(null), realm)
-    executionContextStack.push(newContext)
+    executionContextStack.addTop(newContext)
     realm.setGlobalObject(null)
     realm.setDefaultGlobalBindings()
     newContext.lexicalEnvironment = ModuleEnvironment(GlobalEnvironment(realm.globalObject))

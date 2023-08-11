@@ -10,4 +10,5 @@ class LexicalBindingNode(
     override val range = binding.range.extendCarefully(value?.range)
     override fun toString() =
         stringifyLikeDataClass(::binding, ::value, ::range)
+    override fun evaluate() = TODO()
 }

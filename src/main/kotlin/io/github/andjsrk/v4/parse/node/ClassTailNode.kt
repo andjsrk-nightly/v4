@@ -9,4 +9,5 @@ internal class ClassTailNode(
 ): NonAtomicNode {
     override val childNodes get() = listOf(parent) + elements
     override fun toString() = throw NotImplementedError()
+    override fun evaluate() = TODO()
 }

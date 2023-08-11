@@ -12,15 +12,17 @@ class BlockNode(
     override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
-    override fun evaluate(): NormalOrAbrupt {
-        if (elements.isEmpty()) return empty
+    override fun evaluate() =
+        EvalFlow {
+            if (elements.isEmpty()) `return`(empty)
 
-        val oldEnv = runningExecutionContext.lexicalEnvironment
-        val blockEnv = DeclarativeEnvironment(oldEnv)
-        instantiateBlockDeclaration(this, blockEnv)
-        runningExecutionContext.lexicalEnvironment = blockEnv
-        val res = evaluateStatements(this)
-        runningExecutionContext.lexicalEnvironment = oldEnv
-        return res
-    }
+            val oldEnv = runningExecutionContext.lexicalEnvironment
+            val blockEnv = DeclarativeEnvironment(oldEnv)
+            instantiateBlockDeclaration(this@BlockNode, blockEnv)
+            runningExecutionContext.lexicalEnvironment = blockEnv
+            val res = evaluateStatements(this@BlockNode)
+                .returnIfAbrupt(this) { return@EvalFlow }
+            runningExecutionContext.lexicalEnvironment = oldEnv
+            `return`(res?.toNormal())
+        }
 }

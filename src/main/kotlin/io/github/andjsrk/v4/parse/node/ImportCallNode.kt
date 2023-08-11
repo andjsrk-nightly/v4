@@ -12,4 +12,5 @@ class ImportCallNode(
     override val range = importNode.range..endRange
     override fun toString() =
         stringifyLikeDataClass(::callee, ::pathSpecifier, ::range)
+    override fun evaluate() = TODO()
 }

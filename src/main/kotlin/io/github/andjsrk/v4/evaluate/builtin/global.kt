@@ -4,9 +4,9 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.error.*
-import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.DataProperty
 import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.`null`
 
 private val assert = BuiltinFunctionType("assert", 1u) fn@ { _, args ->
     val value = args[0].requireToBe<BooleanType> { return@fn it }
@@ -16,7 +16,7 @@ private val assert = BuiltinFunctionType("assert", 1u) fn@ { _, args ->
         if (reason == null) return@fn throwError(RangeErrorKind.ASSERTION_FAILED)
         else return@fn throwError(RangeErrorKind.ASSERTION_FAILED_WITH_REASON, reason)
     }
-    Completion.Normal.`null`
+    `null`
 }
 
 @EsSpec("global object")

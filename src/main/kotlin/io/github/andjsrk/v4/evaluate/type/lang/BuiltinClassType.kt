@@ -25,12 +25,15 @@ class BuiltinClassType(
         val res = constructor._call(ObjectType.create(instancePrototype), args)
             .returnIfAbrupt { return it }
         require(res is ObjectType)
-        return Completion.Normal(res)
+        return res.toNormal()
     }
 
     companion object {
-        internal inline fun constructor(requiredParameterCount: UInt = 0u, crossinline block: (obj: ObjectType, args: List<LanguageType>) -> MaybeAbrupt<ObjectType>) =
-            BuiltinFunctionType("constructor".languageValue, requiredParameterCount) { obj, args ->
+        internal inline fun constructor(
+            requiredParamCount: UInt = 0u,
+            crossinline block: (obj: ObjectType, args: List<LanguageType>) -> MaybeAbrupt<ObjectType>,
+        ) =
+            BuiltinFunctionType("constructor", requiredParamCount) { obj, args ->
                 require(obj is ObjectType)
                 block(obj, args)
             }

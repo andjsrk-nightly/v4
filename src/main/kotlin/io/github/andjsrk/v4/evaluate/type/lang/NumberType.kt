@@ -302,21 +302,21 @@ internal fun throwMustBeIntegerInRange(description: String, range: LongRange) =
         range.first.languageValue.display(),
         range.last.languageValue.display(),
     )
-internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", `return`: AbruptReturnLambda) =
+internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", rtn: AbruptReturnLambda) =
     requireToBeIntegerWithin(range)
         ?.toInt()
-        ?: `return`(throwMustBeIntegerInRange(description, range))
+        ?: rtn(throwMustBeIntegerInRange(description, range))
 
-internal inline fun NumberType.requireToBeUnsignedInt(`return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.unsignedInteger, `return`=`return`)
-internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.radix, "A radix", `return`)
-internal inline fun NumberType.requireToBeIndex(`return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.unsignedInteger, "An index", `return`)
-internal inline fun NumberType.requireToBeIndexWithin(size: Int, `return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.unsignedInteger, "An index", `return`)
+internal inline fun NumberType.requireToBeUnsignedInt(rtn: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.unsignedInteger, rtn=rtn)
+internal inline fun NumberType.requireToBeRadix(rtn: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.radix, "A radix", rtn)
+internal inline fun NumberType.requireToBeIndex(rtn: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.unsignedInteger, "An index", rtn)
+internal inline fun NumberType.requireToBeIndexWithin(size: Int, rtn: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.unsignedInteger, "An index", rtn)
         .let {
-            it.takeIf { it < size } ?: `return`(invalidIndex(it))
+            it.takeIf { it < size } ?: rtn(invalidIndex(it))
         }
 internal inline fun NumberType.requireToBeRelativeIndex(`return`: AbruptReturnLambda) =
     requireToBeIntWithin(Ranges.relativeIndex, "A relative index", `return`)
@@ -330,8 +330,8 @@ internal fun Int.resolveRelativeIndex(length: Int): Int? {
     val mightBeOutOfRange = if (index < 0) length + index else index
     return mightBeOutOfRange.takeIf { it in 0 until length }
 }
-internal inline fun Int.resolveRelativeIndexOrReturn(length: Int, `return`: AbruptReturnLambda) =
-    resolveRelativeIndex(length) ?: `return`(invalidRelativeIndex(this))
+internal inline fun Int.resolveRelativeIndexOrReturn(length: Int, rtn: AbruptReturnLambda) =
+    resolveRelativeIndex(length) ?: rtn(invalidRelativeIndex(this))
 internal fun invalidIndex(index: Int) =
     throwError(RangeErrorKind.INVALID_INDEX, index.languageValue.display())
 internal fun invalidRelativeIndex(index: Int) =

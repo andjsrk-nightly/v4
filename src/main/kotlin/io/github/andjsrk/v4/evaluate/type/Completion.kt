@@ -4,9 +4,9 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.ThrowTrace
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
+import io.github.andjsrk.v4.evaluate.type.Completion.Normal.Companion.`null` as normalNull
 
 typealias MaybeAbrupt<NormalV> = Completion<NormalV>
-typealias NonEmpty = MaybeAbrupt<AbstractType>
 typealias Empty = Completion.Normal<Nothing?>
 typealias EmptyOrAbrupt = MaybeAbrupt<Nothing?>
 typealias NormalOrAbrupt = MaybeAbrupt<LanguageType?>
@@ -52,4 +52,15 @@ sealed interface Completion<out V: AbstractType?>: Record {
     data class Break(override val value: LanguageType?, override val target: String?): IterationStop
 }
 
+/**
+ * A shorthand for [Completion.Normal.empty].
+ */
 internal inline val empty get() = Completion.Normal.empty
+/**
+ * A shorthand for [normalNull] (note: created an alias to cover bug about 'show definition').
+ */
+internal inline val `null` get() = Completion.Normal.`null`
+internal inline fun <V: LanguageType> V.toNormal() =
+    Completion.Normal(this)
+internal inline fun <V: AbstractType> V.toWideNormal() =
+    Completion.WideNormal(this)

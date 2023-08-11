@@ -10,4 +10,5 @@ class ArgumentsNode(
     override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
+    override fun evaluate() = TODO()
 }

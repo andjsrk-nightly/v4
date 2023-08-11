@@ -11,4 +11,5 @@ class ConstructorNode(
     override val range = name.range..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::parameters, ::body, ::range)
+    override fun evaluate() = TODO()
 }

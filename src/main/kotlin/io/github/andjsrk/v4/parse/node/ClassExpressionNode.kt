@@ -7,4 +7,6 @@ class ClassExpressionNode(
     override val parent: ExpressionNode?,
     override val elements: List<ClassElementNode>,
     override val range: Range,
-): ClassNode(), ExpressionNode
+): ClassNode(), ExpressionNode {
+    override fun evaluate() = TODO()
+}

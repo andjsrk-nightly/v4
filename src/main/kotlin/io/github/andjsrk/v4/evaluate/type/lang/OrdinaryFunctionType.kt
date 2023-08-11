@@ -37,10 +37,10 @@ class OrdinaryFunctionType(
         bindThisInCall(calleeContext, thisArg)
         val res = evaluateBody(args)
         executionContextStack.removeTop()
-        if (res is Completion.Return) return Completion.Normal(res.value)
+        if (res is Completion.Return) return res.value.toNormal()
         res.returnIfAbrupt { return it }
         // if the function returned nothing, return `null`
-        return Completion.Normal.`null`
+        return `null`
     }
     @EsSpec("PrepareForOrdinaryCall")
     internal fun prepareForOrdinaryCall(): ExecutionContext {
@@ -63,19 +63,27 @@ class OrdinaryFunctionType(
     @EsSpec("EvaluateFunctionBody")
     @EsSpec("EvaluateGeneratorBody")
     fun evaluateConciseBody(args: List<LanguageType>): NormalOrAbrupt {
-        when {
-            this.isAsync && this.isGenerator -> TODO()
-            this.isAsync -> TODO()
-            this.isGenerator -> {
-                instantiateFunctionDeclaration(this, args)
-                val generator = SyncGeneratorType()
-                generator.start { evaluateConciseBody(body) }
-                return Completion.Return(generator)
-            }
+        return when {
+            isAsync && isGenerator -> TODO()
+            isAsync -> TODO()
+            isGenerator ->
+                EvalFlow {
+                    instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
+                        .returnIfAbrupt(this) { return@EvalFlow }
+                    val generator = SyncGeneratorType()
+                    generator.start { evaluateConciseBody(body) }
+                    `return`(Completion.Return(generator))
+                }
+                    .toSyncGenerator()
+                    .toNormal()
             else -> {
-                instantiateFunctionDeclaration(this, args)
-                    .returnIfAbrupt { return it }
+                instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
+                    .takeReturnValueNoYields()
+                    ?.returnIfAbrupt { return it }
+                    ?: empty
                 return evaluateConciseBody(body)
+                    .takeReturnValueNoYields()
+                    ?: empty
             }
         }
     }

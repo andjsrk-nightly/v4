@@ -1,9 +1,11 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.evaluate.evaluateOrReturn
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.NonEmpty
+import io.github.andjsrk.v4.evaluate.EvalFlow
+import io.github.andjsrk.v4.evaluate.evaluateValue
+import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.lang.NullType
+import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class SequenceExpressionNode(
@@ -13,11 +15,13 @@ class SequenceExpressionNode(
     override val childNodes = expressions
     override fun toString() =
         stringifyLikeDataClass(::expressions, ::range)
-    override fun evaluate(): NonEmpty {
-        return Completion.WideNormal(
-            expressions
-                .map { it.evaluateOrReturn { return it } }
-                .last()
-        )
-    }
+    override fun evaluate() =
+        EvalFlow {
+            var last: LanguageType = NullType
+            expressions.forEach {
+                last = it.evaluateValue()
+                    .returnIfAbrupt(this) { return@EvalFlow }
+            }
+            `return`(last.toNormal())
+        }
 }

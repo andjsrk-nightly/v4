@@ -16,4 +16,5 @@ class ClassMethodNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::parameters, ::body, ::isAsync, ::isGenerator, ::isStatic, ::range)
+    override fun evaluate() = TODO()
 }

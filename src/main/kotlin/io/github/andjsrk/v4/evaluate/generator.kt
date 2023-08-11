@@ -1,7 +1,6 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.neverHappens
 
@@ -26,17 +25,24 @@ internal val generatorKind: GeneratorKind get() {
 }
 
 @EsSpec("Yield")
-internal fun commonYield(value: LanguageType): NonEmptyNormalOrAbrupt {
-    val kind = generatorKind
-    if (kind == GeneratorKind.ASYNC) TODO()
-    return syncYield(createIteratorResult(value, false))
-}
+internal fun commonYield(value: LanguageType) =
+    EvalFlow {
+        val kind = generatorKind
+        if (kind == GeneratorKind.ASYNC) TODO()
+        `return`(
+            yieldAll(
+                syncYield(createIteratorResult(value, false))
+            )
+        )
+    }
 
 @EsSpec("GeneratorYield")
-internal fun syncYield(iteratorResult: ObjectType): NonEmptyNormalOrAbrupt {
-    val generator = runningExecutionContext.generator ?: neverHappens()
-    require(generator is SyncGeneratorType)
-    generator.state = SyncGeneratorState.SUSPENDED_YIELD
-    executionContextStack.removeTop()
-    TODO()
-}
+internal fun syncYield(iteratorResult: ObjectType) =
+    EvalFlow {
+        val generator = runningExecutionContext.generator ?: neverHappens()
+        require(generator is SyncGeneratorType)
+        generator.state = SyncGeneratorState.SUSPENDED_YIELD
+        executionContextStack.removeTop()
+        val resumptionValue = yield(iteratorResult)
+        `return`(resumptionValue)
+    }

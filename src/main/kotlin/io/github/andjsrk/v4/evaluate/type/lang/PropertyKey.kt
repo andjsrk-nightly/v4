@@ -8,5 +8,7 @@ sealed interface PropertyKey: PrimitiveLanguageType {
      * Returns string representation of the key.
      */
     fun string() =
-        neverAbrupt(stringify(this)).value
+        stringify(this)
+            .neverAbrupt()
+            .value
 }

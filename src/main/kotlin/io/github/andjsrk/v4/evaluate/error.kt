@@ -25,7 +25,8 @@ internal fun error(kind: ErrorKind, vararg args: String): ObjectType {
  */
 internal fun error(errorClass: BuiltinClassType, message: String): ObjectType {
     assert(errorClass.isNativeError)
-    return neverAbrupt(errorClass.construct(listOf(message.languageValue)))
+    return errorClass.construct(listOf(message.languageValue))
+        .neverAbrupt()
 }
 
 private val BuiltinClassType.isNativeError get() =

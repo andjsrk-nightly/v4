@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Function
 import io.github.andjsrk.v4.evaluate.builtin.sealedData
 import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 
 sealed class FunctionType(
     val name: PropertyKey?,
@@ -21,30 +21,34 @@ sealed class FunctionType(
     val realm = runningExecutionContext.realm
     abstract val isArrow: Boolean
     @EsSpec("[[Call]]")
-    abstract fun _call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt
+    abstract fun _call(thisArg: LanguageType?, args: List<LanguageType>): MaybeAbrupt<LanguageType>
     // TODO: throw an error if thisArg is not provided but the function depends on it
 }
 
-internal inline fun <reified R: LanguageType> FunctionType.callAndRequireToBe(thisArg: LanguageType?, args: List<LanguageType>, `return`: AbruptReturnLambda) =
+internal inline fun <reified R: LanguageType> FunctionType.callAndRequireToBe(
+    thisArg: LanguageType?,
+    args: List<LanguageType>,
+    rtn: AbruptReturnLambda,
+) =
     _call(thisArg, args)
-        .returnIfAbrupt(`return`)
-        .requireToBe<R>(`return`)
+        .returnIfAbrupt(rtn)
+        .requireToBe<R>(rtn)
 
 internal inline fun FunctionType.callCollectionCallback(
     element: LanguageType,
     index: Int,
     collection: LanguageType,
-    `return`: AbruptReturnLambda,
+    rtn: AbruptReturnLambda,
 ) =
     _call(null, listOf(element, index.languageValue, collection))
-        .returnIfAbrupt(`return`)
+        .returnIfAbrupt(rtn)
 
 internal inline fun FunctionType.callPredicate(
     element: LanguageType,
     index: Int,
     array: ArrayType,
-    `return`: AbruptReturnLambda,
+    rtn: AbruptReturnLambda,
 ) =
-    callCollectionCallback(element, index, array, `return`)
-        .requireToBe<BooleanType>(`return`)
+    callCollectionCallback(element, index, array, rtn)
+        .requireToBe<BooleanType>(rtn)
         .value

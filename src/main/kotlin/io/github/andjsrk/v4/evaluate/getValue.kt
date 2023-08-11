@@ -17,7 +17,7 @@ internal fun getValue(v: AbstractType?): NonEmptyNormalOrAbrupt {
     }
     if (v.isProperty) {
         require(v.base is LanguageType)
-        if (v.referencedName == null) return Completion.Normal.`null`
+        if (v.referencedName == null) return `null`
         return v.base.getProperty(v.referencedName)
     } else {
         val base = v.base

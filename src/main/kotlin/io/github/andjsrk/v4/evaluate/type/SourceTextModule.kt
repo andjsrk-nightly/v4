@@ -36,6 +36,7 @@ class SourceTextModule(
     fun executeModule(): EmptyOrAbrupt {
         executionContextStack.addTop(ExecutionContext(environment, realm))
         val res = node.evaluate()
+            .takeReturnValueNoYields()
         executionContextStack.removeTop()
         return if (res is Completion.Abrupt) res else empty
     }

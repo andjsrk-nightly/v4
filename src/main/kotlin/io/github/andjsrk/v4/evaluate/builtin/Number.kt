@@ -6,6 +6,7 @@ import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
+import io.github.andjsrk.v4.evaluate.type.toNormal
 import java.math.BigInteger
 import java.text.DecimalFormat
 import java.text.ParseException
@@ -16,58 +17,51 @@ private const val DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 @EsSpec("Number(value)")
 private val numberFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
     val value = args[0]
-    Completion.Normal(
-        when (value) {
-            is StringType -> parseNumber(value.value)
-            is BigIntType -> value.value.toDouble().languageValue
-            is BooleanType -> NumberType(if (value.value) 1.0 else 0.0)
-            NullType -> NumberType.POSITIVE_ZERO
-            is NumberType -> value
-            is ObjectType -> return@fn throwError(TypeErrorKind.OBJECT_TO_NUMBER)
-            is SymbolType -> return@fn throwError(TypeErrorKind.SYMBOL_TO_NUMBER)
-        }
-    )
+    when (value) {
+        is StringType -> parseNumber(value.value)
+        is BigIntType -> value.value.toDouble().languageValue
+        is BooleanType -> NumberType(if (value.value) 1.0 else 0.0)
+        NullType -> NumberType.POSITIVE_ZERO
+        is NumberType -> value
+        is ObjectType -> return@fn throwError(TypeErrorKind.OBJECT_TO_NUMBER)
+        is SymbolType -> return@fn throwError(TypeErrorKind.SYMBOL_TO_NUMBER)
+    }
+        .toNormal()
 }
 
 @EsSpec("Number.isFinite")
 private val isFinite = BuiltinFunctionType("isFinite", 1u) { _, args ->
     val number = args[0]
-    Completion.Normal(
-        BooleanType.from(
-            number is NumberType && number.isFinite
-        )
-    )
+    (number is NumberType && number.isFinite)
+        .languageValue
+        .toNormal()
 }
 
 @EsSpec("Number.isInteger")
 private val isInteger = BuiltinFunctionType("isInteger", 1u) { _, args ->
     val number = args[0]
-    Completion.Normal(
-        BooleanType.from(
-            number is NumberType && number.isFinite && number.value.isInteger
-        )
-    )
+    (number is NumberType && number.isFinite && number.value.isInteger)
+        .languageValue
+        .toNormal()
 }
 
 @EsSpec("Number.isNaN")
 private val isNaN = BuiltinFunctionType("isNaN", 1u) { _, args ->
-    Completion.Normal(
-        BooleanType.from(
-            args[0] == NumberType.NaN
-        )
-    )
+    (args[0] == NumberType.NaN)
+        .languageValue
+        .toNormal()
 }
 
 @EsSpec("Number.isSafeInteger")
 private val isSafeInteger = BuiltinFunctionType("isSafeInteger", 1u) { _, args ->
     val number = args[0]
-    Completion.Normal(
-        BooleanType.from(
-            number is NumberType
-                    && number.value.isInteger
-                    && abs(number.value) <= NumberType.MAX_SAFE_INTEGER
-        )
+    (
+        number is NumberType
+            && number.value.isInteger
+            && abs(number.value) <= NumberType.MAX_SAFE_INTEGER
     )
+        .languageValue
+        .toNormal()
 }
 
 @EsSpec("Number.parseFloat")
@@ -92,7 +86,7 @@ private val parseLeadingDecimal = BuiltinFunctionType("parseLeadingDecimal", 1u)
         } catch (e: ParseException) {
             NumberType.NaN
         }
-    Completion.Normal(parsed)
+    parsed.toNormal()
 }
 
 @EsSpec("Number.parseInt")
@@ -117,17 +111,15 @@ private val numberToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
         .requireToBe<NumberType> { return@fn it }
         .requireToBeRadix { return@fn it }
     if (radix != 10 && number.isFinite && number.not { isInteger }) return@fn throwError(TypeErrorKind.NON_INTEGER_TO_NON_DECIMAL)
-    Completion.Normal(
-        number.toString(radix)
-    )
+    number.toString(radix)
+        .toNormal()
 }
 
 @EsSpec("Number.prototype.toString") // radix is fixed to 10
 private val numberToString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
     val number = thisArg.requireToBe<NumberType> { return@fn it }
-    Completion.Normal(
-        number.toString(10)
-    )
+    number.toString(10)
+        .toNormal()
 }
 
 @EsSpec("%Number%")

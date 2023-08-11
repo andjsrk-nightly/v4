@@ -811,7 +811,8 @@ private fun evaluationOf(code: String): EvaluationResult {
 private fun SourceTextModule.executeModuleWithoutIgnoringValue(): NormalOrAbrupt {
     executionContextStack.addTop(ExecutionContext(environment, realm))
     val res = node.evaluate()
+    val returnValue = res.takeReturnValueNoYields() ?: empty
     executionContextStack.removeTop()
-    return res
+    return returnValue
 }
 private data class EvaluationResult(val completion: Completion<*>, val module: SourceTextModule)

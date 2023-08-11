@@ -67,12 +67,12 @@ open class ObjectType(
     fun _get(key: PropertyKey): NonEmptyNormalOrAbrupt {
         val descriptor = _getOwnProperty(key)
         if (descriptor == null) {
-            val proto = prototype ?: return Completion.Normal.`null`
+            val proto = prototype ?: return `null`
             return proto._get(key)
         }
-        if (descriptor is DataProperty) return Completion.Normal(descriptor.value)
+        if (descriptor is DataProperty) return descriptor.value.toNormal()
         require(descriptor is AccessorProperty)
-        val getter = descriptor.get ?: return Completion.Normal.`null`
+        val getter = descriptor.get ?: return `null`
         TODO()
     }
     @EsSpec("[[Set]]")
@@ -124,11 +124,11 @@ open class ObjectType(
         _set(key, value, this)
     @EsSpec("CreateDataProperty")
     fun createDataProperty(key: PropertyKey, value: LanguageType) {
-        neverAbrupt(createDataPropertyOrThrow(key, value))
+        createDataPropertyOrThrow(key, value).neverAbrupt()
     }
     @EsSpec("CreateMethodProperty")
     fun createMethodProperty(key: PropertyKey, value: LanguageType) {
-        neverAbrupt(definePropertyOrThrow(key, DataProperty(value, writable=false, enumerable=false)))
+        definePropertyOrThrow(key, DataProperty(value, writable = false, enumerable = false)).neverAbrupt()
     }
     @EsSpec("CreateDataPropertyOrThrow")
     inline fun createDataPropertyOrThrow(key: PropertyKey, value: LanguageType) =

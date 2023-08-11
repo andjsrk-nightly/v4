@@ -2,7 +2,6 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 
 class IfExpressionNode(
@@ -12,12 +11,16 @@ class IfExpressionNode(
     startRange: Range
 ): IfNode<ExpressionNode>(test, then, `else`), ExpressionNode {
     override val range = startRange..`else`.range
-    override fun evaluate(): NonEmptyNormalOrAbrupt {
-        val testVal = test.evaluateValueOrReturn { return it }
-            .requireToBe<BooleanType> { return it }
-        return (
-            if (testVal.value) then.evaluateValue()
-            else `else`.evaluateValue()
-        )
-    }
+    override fun evaluate() =
+        EvalFlow {
+            val testVal = test.evaluateValue()
+                .returnIfAbrupt(this) { return@EvalFlow }
+                .requireToBe<BooleanType> { `return`(it) }
+            `return`(
+                yieldAll(
+                    if (testVal.value) then.evaluateValue()
+                    else `else`.evaluateValue()
+                )
+            )
+        }
 }

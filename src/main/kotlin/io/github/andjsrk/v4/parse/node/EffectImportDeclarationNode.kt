@@ -12,4 +12,5 @@ class EffectImportDeclarationNode(
     override val range = startRange..moduleSpecifier.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::moduleSpecifier, ::range)
+    override fun evaluate() = TODO()
 }

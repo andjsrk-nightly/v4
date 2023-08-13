@@ -13,7 +13,7 @@ class IfExpressionNode(
 ): IfNode<ExpressionNode>(test, then, `else`), ExpressionNode {
     override val range = startRange..`else`.range
     override fun evaluate(): NonEmptyNormalOrAbrupt {
-        val testVal = test.evaluateValueOrReturn { return it }
+        val testVal = test.evaluateValue().orReturn { return it }
             .requireToBe<BooleanType> { return it }
         return (
             if (testVal.value) then.evaluateValue()

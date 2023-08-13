@@ -4,4 +4,4 @@ import io.github.andjsrk.v4.EsSpec
 
 @EsSpec("List")
 @JvmInline
-value class ListType<E>(val list: List<E>): AbstractType, List<E> by list
+value class ListType<out E>(val list: List<E>): AbstractType, List<E> by list

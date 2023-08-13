@@ -3,8 +3,7 @@ package io.github.andjsrk.v4.evaluate.builtin
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.AccessorProperty
-import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 
@@ -12,24 +11,21 @@ import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constr
 private val symbolCreate = BuiltinFunctionType("create") fn@ { _, args ->
     val description = args.getOptional(0)
         ?.requireToBeString { return@fn it }
-    Completion.Normal(
-        SymbolType(description)
-    )
+    SymbolType(description)
+        .toNormal()
 }
 
 @EsSpec("Symbol.for")
 private val `for` = BuiltinFunctionType("for",  1u) fn@ { _, args ->
     val key = args[0].requireToBeString { return@fn it }
     val symbol = SymbolType.registry.getOrPut(key) { SymbolType(key) }
-    Completion.Normal(symbol)
+    symbol.toNormal()
 }
 
 @EsSpec("get Symbol.prototype.description")
 private val descriptionGetter = AccessorProperty.builtinGetter("description") fn@ { thisArg ->
     val symbol = thisArg.requireToBe<SymbolType> { return@fn it }
-    Completion.Normal(
-        symbol.description?.languageValue ?: NullType
-    )
+    symbol.description?.languageValue.normalizeToNormal()
 }
 
 @EsSpec("%Symbol%")

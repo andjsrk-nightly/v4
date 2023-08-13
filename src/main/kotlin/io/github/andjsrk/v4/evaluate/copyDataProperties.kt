@@ -18,7 +18,7 @@ internal fun copyDataProperties(
         val desc = source.getOwnProperty(key)
         if (desc != null && desc.enumerable) {
             val value = source.getProperty(key)
-                .returnIfAbrupt { return it }
+                .orReturn { return it }
             target.createDataProperty(key, value)
         }
     }

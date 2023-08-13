@@ -3,7 +3,7 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
-import io.github.andjsrk.v4.evaluate.returnIfAbrupt
+import io.github.andjsrk.v4.evaluate.orReturn
 import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
@@ -44,7 +44,7 @@ data class Reference(
             this.isProperty -> {
                 if (base !is ObjectType) return throwError(TypeErrorKind.PRIMITIVE_IMMUTABLE)
                 base._set(referencedName!!, value, getThis())
-                    .returnIfAbrupt { return it }
+                    .orReturn { return it }
                 empty
             }
             else -> {

@@ -11,4 +11,5 @@ class SpreadNode(
     override val range = startRange..expression.range
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
+    override fun evaluate() = TODO()
 }

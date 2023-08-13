@@ -39,6 +39,6 @@ open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
         assert(name in bindings)
         val binding = bindings[name] ?: neverHappens()
         if (binding.not { isInitialized }) return throwError(ReferenceErrorKind.ACCESSED_UNINITIALIZED_VARIABLE, name)
-        return Completion.Normal(binding.value!!)
+        return binding.value!!.toNormal()
     }
 }

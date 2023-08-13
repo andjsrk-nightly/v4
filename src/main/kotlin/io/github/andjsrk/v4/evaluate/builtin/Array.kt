@@ -17,15 +17,14 @@ private val immutableArrayFrom = BuiltinFunctionType("from", 1u) fn@ { _, args -
 
 private val isArray = BuiltinFunctionType("isArray", 1u) fn@ { _, args ->
     val value = args[0]
-    Completion.Normal(
-        BooleanType.from(value is ArrayType)
-    )
+    (value is ArrayType)
+        .languageValue
+        .toNormal()
 }
 
 private val immutableArrayOf = BuiltinFunctionType("of") fn@ { _, args ->
-    Completion.Normal(
-        ImmutableArrayType(args)
-    )
+    ImmutableArrayType(args)
+        .toNormal()
 }
 
 private val immutableArrayAddAt = builtinMethod("addAt", 1u) fn@ { thisArg, args ->
@@ -38,33 +37,34 @@ private val immutableArrayAddAt = builtinMethod("addAt", 1u) fn@ { thisArg, args
     val new = ImmutableArrayType.from(
         arr.array.subList(0, index) + values + arr.array.subList(index + 1, size)
     )
-    Completion.Normal(new)
+    new.toNormal()
 }
 
 private val immutableArrayAddFirst = builtinMethod("addFirst") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val new = ImmutableArrayType.from(args + arr.array)
-    Completion.Normal(new)
+    new.toNormal()
 }
 
 private val immutableArrayAddLast = builtinMethod("addLast") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val new = ImmutableArrayType.from(arr.array + args)
-    Completion.Normal(new)
+    new.toNormal()
 }
 
 internal val any = builtinMethod("any") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
-        ?: return@fn Completion.Normal(
-            arr.array.any()
-                .languageValue
-        )
+        ?: return@fn arr.array.any()
+            .languageValue
+            .toNormal()
     val res = arr.array.anyIndexed { i, it ->
         callback.callPredicate(it, i, arr) { return@fn it }
     }
-    Completion.Normal(res.languageValue)
+    res
+        .languageValue
+        .toNormal()
 }
 private inline fun <T> List<T>.anyIndexed(predicate: (Int, T) -> Boolean): Boolean {
     if (this.isEmpty()) return false
@@ -81,10 +81,8 @@ internal val arrayAt = builtinMethod("at", 1u) fn@ { thisArg, args ->
         .requireToBe<NumberType> { return@fn it }
         .requireToBeRelativeIndex { return@fn it }
         .resolveRelativeIndex(arr.array.size)
-        ?: return@fn Completion.Normal.`null`
-    Completion.Normal(
-        arr.array.getOrNull(index) ?: NullType
-    )
+        ?: return@fn normalNull
+    arr.array.getOrNull(index).normalizeToNormal()
 }
 
 @EsSpec("Array.prototype.concat")
@@ -95,9 +93,8 @@ private val immutableArrayConcatenate = builtinMethod("concatenate") fn@ { thisA
         if (item is ArrayType) res.addAll(item.array)
         else res.add(item)
     }
-    Completion.Normal(
-        ImmutableArrayType.from(res)
-    )
+    ImmutableArrayType.from(res)
+        .toNormal()
 }
 
 @EsSpec("Array.prototype.copyWithin")
@@ -118,9 +115,10 @@ internal val arrayEvery = builtinMethod("every", 1u) fn@ { thisArg, args ->
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     arr.array.forEachIndexed { i, it ->
         val passed = callback.callPredicate(it, i, arr) { return@fn it }
-        if (!passed) return@fn Completion.Normal(BooleanType.FALSE)
+        if (!passed) return@fn BooleanType.FALSE.toNormal()
     }
-    Completion.Normal(BooleanType.TRUE)
+    BooleanType.TRUE
+        .toNormal()
 }
 
 @EsSpec("Array.prototype.filter")
@@ -130,9 +128,8 @@ private val immutableArrayFilter = builtinMethod("filter", 1u) fn@ { thisArg, ar
     val res = arr.array.filterIndexed { i, it ->
         callback.callPredicate(it, i, arr) { return@fn it }
     }
-    Completion.Normal(
-        ImmutableArrayType.from(res)
-    )
+    ImmutableArrayType.from(res)
+        .toNormal()
 }
 
 @EsSpec("Array.prototype.find")
@@ -140,11 +137,11 @@ internal val arrayFirst = builtinMethod("first") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
-        ?: return@fn Completion.Normal(arr.array.firstOrNull() ?: NullType)
+        ?: return@fn arr.array.firstOrNull().normalizeToNormal()
     val found = arr.array.firstIndexed { i, it ->
         callback.callPredicate(it, i, arr) { return@fn it }
     }
-    Completion.Normal(found ?: NullType)
+    found.normalizeToNormal()
 }
 /**
  * @see Iterable.find
@@ -161,16 +158,18 @@ internal val arrayFirstIndex = builtinMethod("firstIndex") fn@ { thisArg, args -
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
-        ?: return@fn Completion.Normal(
-            (
-                if (arr.array.isEmpty()) -1
-                else 0
-            ).languageValue
+        ?: return@fn (
+            if (arr.array.isEmpty()) -1
+            else 0
         )
+            .languageValue
+            .toNormal()
     val index = arr.array.indexOfFirstIndexed { i, it ->
         callback.callPredicate(it, i, arr) { return@fn it }
     }
-    Completion.Normal(index.languageValue)
+    index
+        .languageValue
+        .toNormal()
 }
 /**
  * @see Iterable.indexOfFirst
@@ -191,9 +190,8 @@ private val immutableArrayFlat = builtinMethod("flat") fn@ { thisArg, args ->
         ?: 1
     val res = mutableListOf<LanguageType>()
     arr.array.forEach { addFlattened(res, it, depth) }
-    Completion.Normal(
-        ImmutableArrayType.from(res)
-    )
+    ImmutableArrayType.from(res)
+        .toNormal()
 }
 private fun addFlattened(target: MutableList<LanguageType>, source: LanguageType, depth: Int) {
     if (source is ArrayType && depth > 0) source.array.forEach { addFlattened(target, it, depth - 1) }
@@ -207,12 +205,11 @@ private val immutableArrayFlatMap = builtinMethod("flatMap", 1u) fn@ { thisArg, 
     val new = ImmutableArrayType.from(
         arr.array.flatMapIndexed { i, it ->
             flatCallback(
-                callback._call(null, listOf(it, i.languageValue, arr))
-                    .returnIfAbrupt { return@fn it }
+                callback.callCollectionCallback(it, i, arr) { return@fn it }
             )
         }
     )
-    Completion.Normal(new)
+    new.toNormal()
 }
 
 @EsSpec("Array.prototype.forEach")
@@ -220,10 +217,9 @@ internal val arrayForEach = builtinMethod("forEach", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     arr.array.forEachIndexed { i, it ->
-        callback._call(null, listOf(it, i.languageValue, arr))
-            .returnIfAbrupt { return@fn it }
+        callback.callCollectionCallback(it, i, arr) { return@fn it }
     }
-    Completion.Normal(arr)
+    arr.toNormal()
 }
 
 @EsSpec("Array.prototype.includes")
@@ -237,7 +233,9 @@ internal val arrayIncludes = builtinMethod("includes", 1u) fn@ { thisArg, args -
     val res = arr.array.subList(startIndex, arr.array.size).any {
         sameValue(it, value, NumberType::internallyEqual)
     }
-    Completion.Normal(res.languageValue)
+    res
+        .languageValue
+        .toNormal()
 }
 
 @EsSpec("Array.prototype.indexOf")
@@ -250,7 +248,9 @@ internal val arrayIndexOf = builtinMethod("indexOf", 1u) fn@ { thisArg, args ->
         ?: 0
     val index = arr.array.subList(startIndex, arr.array.size)
         .indexOfFirst { sameValue(it, value, NumberType::internallyEqual) }
-    Completion.Normal(index.languageValue)
+    index
+        .languageValue
+        .toNormal()
 }
 
 @EsSpec("Array.prototype.join")
@@ -262,11 +262,13 @@ internal val arrayJoin = builtinMethod("join") fn@ { thisArg, args ->
     val res = arr.array
         .map {
             stringify(it)
-                .returnIfAbrupt { return@fn it }
+                .orReturn { return@fn it }
                 .value
         }
         .joinToString(separator)
-    Completion.Normal(res.languageValue)
+    res
+        .languageValue
+        .toNormal()
 }
 
 @EsSpec("Array.prototype.keys")
@@ -280,11 +282,11 @@ internal val arrayLast = builtinMethod("last") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
-        ?: return@fn Completion.Normal(arr.array.lastOrNull() ?: NullType)
+        ?: return@fn arr.array.lastOrNull().normalizeToNormal()
     val found = arr.array.asReversed().firstIndexed { i, it ->
         callback.callPredicate(it, i, arr) { return@fn it }
     }
-    Completion.Normal(found ?: NullType)
+    found.normalizeToNormal()
 }
 
 @EsSpec("Array.prototype.findLastIndex")
@@ -294,7 +296,9 @@ internal val arrayLastIndex = builtinMethod("lastIndex") fn@ { thisArg, args ->
     val index = arr.array.asReversed().indexOfFirstIndexed { i, it ->
         callback.callPredicate(it, i, arr) { return@fn it }
     }
-    Completion.Normal(index.languageValue)
+    index
+        .languageValue
+        .toNormal()
 }
 
 @EsSpec("Array.prototype.map")
@@ -302,28 +306,33 @@ private val immutableArrayMap = builtinMethod("map", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val res = arr.array.mapIndexed { i, it ->
-        callback._call(null, listOf(it, i.languageValue, arr))
-            .returnIfAbrupt { return@fn it }
+        callback.callCollectionCallback(it, i, arr) { return@fn it }
     }
-    Completion.Normal(
-        ImmutableArrayType.from(res)
-    )
+    ImmutableArrayType.from(res)
+        .toNormal()
 }
 
+private inline fun FunctionType.callReduceCallback(
+    accumulator: LanguageType,
+    element: LanguageType,
+    index: Int,
+    collection: LanguageType,
+    rtn: AbruptReturnLambda,
+) =
+    _call(null, listOf(accumulator, element, index.languageValue, collection))
+        .orReturn(rtn)
 internal val reduceFromLeft = builtinMethod("reduceFromLeft", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val initial = args.getOrNull(1) // must not use `.getOptional()` because it will normalize null
     val res =
         if (initial == null) arr.array.reduceIndexed { i, acc, it ->
-            callback._call(null, listOf(acc, it, i.languageValue, arr))
-                .returnIfAbrupt { return@fn it }
+            callback.callReduceCallback(acc, it, i, arr) { return@fn it }
         }
         else arr.array.foldIndexed(initial) { i, acc, it ->
-            callback._call(null, listOf(acc, it, i.languageValue, arr))
-                .returnIfAbrupt { return@fn it }
+            callback.callReduceCallback(acc, it, i, arr) { return@fn it }
         }
-    Completion.Normal(res)
+    res.toNormal()
 }
 
 internal val reduceFromRight = builtinMethod("reduceFromRight", 1u) fn@ { thisArg, args ->
@@ -332,14 +341,12 @@ internal val reduceFromRight = builtinMethod("reduceFromRight", 1u) fn@ { thisAr
     val initial = args.getOrNull(1) // must not use `.getOptional()` because it will normalize null
     val res =
         if (initial == null) arr.array.reduceRightIndexed { i, acc, it ->
-            callback._call(null, listOf(acc, it, i.languageValue, arr))
-                .returnIfAbrupt { return@fn it }
+            callback.callReduceCallback(acc, it, i, arr) { return@fn it }
         }
         else arr.array.foldRightIndexed(initial) { i, acc, it ->
-            callback._call(null, listOf(acc, it, i.languageValue, arr))
-                .returnIfAbrupt { return@fn it }
+            callback.callReduceCallback(acc, it, i, arr) { return@fn it }
         }
-    Completion.Normal(res)
+    res.toNormal()
 }
 
 private val immutableArrayRemoveAt = builtinMethod("removeAt", 1u) fn@ { thisArg, args ->
@@ -352,11 +359,9 @@ private val immutableArrayRemoveAt = builtinMethod("removeAt", 1u) fn@ { thisArg
         ?.requireToBeUnsignedInt { return@fn it }
         ?: 1
     val res =
-        if (count == 0) arr
-        else ImmutableArrayType.from(
-            arr.array.take(index) + arr.array.drop(index + count)
-        )
-    Completion.Normal(arr)
+        if (count == 0 && arr is ImmutableArrayType) arr
+        else ImmutableArrayType.from(arr.array.take(index) + arr.array.drop(index + count))
+    res.toNormal()
 }
 
 private val immutableArrayRemoveFirst = builtinMethod("removeFirst") fn@ { thisArg, args ->
@@ -365,9 +370,9 @@ private val immutableArrayRemoveFirst = builtinMethod("removeFirst") fn@ { thisA
         ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeUnsignedInt { return@fn it }
         ?: 1
-    if (count == 0) return@fn Completion.Normal(arr)
+    if (count == 0 && arr is ImmutableArrayType) return@fn arr.toNormal()
     val new = ImmutableArrayType.from(arr.array.drop(count))
-    Completion.Normal(new)
+    new.toNormal()
 }
 
 private val immutableArrayRemoveLast = builtinMethod("removeLast") fn@ { thisArg, args ->
@@ -376,16 +381,16 @@ private val immutableArrayRemoveLast = builtinMethod("removeLast") fn@ { thisArg
         ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeUnsignedInt { return@fn it }
         ?: 1
-    if (count == 0) return@fn Completion.Normal(arr)
+    if (count == 0 && arr is ImmutableArrayType) return@fn arr.toNormal()
     val new = ImmutableArrayType.from(arr.array.dropLast(count))
-    Completion.Normal(new)
+    new.toNormal()
 }
 
 @EsSpec("Array.prototype.toReversed")
 private val immutableArrayReverse = builtinMethod("reverse") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val new = ImmutableArrayType.from(arr.array.reversed())
-    Completion.Normal(new)
+    new.toNormal()
 }
 
 @EsSpec("Array.prototype.slice")
@@ -408,9 +413,9 @@ private val immutableArraySlice = builtinMethod("slice", 1u) fn@ { thisArg, args
     val end = unsafeEnd.coerceIn(0, size)
     val new = ImmutableArrayType.from(
         if (arr is ImmutableArrayType) arr.array.subList(start, end)
-        else arr.array.slice(start..end)
+        else arr.array.slice(start until end)
     )
-    Completion.Normal(new)
+    new.toNormal()
 }
 
 @EsSpec("Array.prototype.toSorted")
@@ -426,14 +431,13 @@ private val immutableArraySort = builtinMethod("sort") fn@ { thisArg, args ->
 internal val sortDefaultCompareFn = BuiltinFunctionType("compareFn", 2u) { _, args ->
     val a = args[0]
     val b = args[1]
-    Completion.Normal(
-        when {
-            a.isLessThan(b, BooleanType.FALSE).value -> -1
-            b.isLessThan(a, BooleanType.FALSE).value -> 1
-            else -> 0
-        }
-            .languageValue
-    )
+    when {
+        a.isLessThan(b, BooleanType.FALSE).value -> -1
+        b.isLessThan(a, BooleanType.FALSE).value -> 1
+        else -> 0
+    }
+        .languageValue
+        .toNormal()
 }
 internal inline fun generalSort(
     compareFn: FunctionType,
@@ -443,10 +447,15 @@ internal inline fun generalSort(
     var abrupt: Completion.Abrupt? = null
     try {
         res = sort { a, b ->
-            val compareRes = compareFn.callAndRequireToBe<NumberType>(null, listOf(a, b)) {
-                abrupt = it
-                throw SortBreakException()
-            }
+            val compareRes = compareFn._call(null, listOf(a, b))
+                .orReturn {
+                    abrupt = it
+                    throw SortBreakException()
+                }
+                .requireToBe<NumberType> {
+                    abrupt = it
+                    throw SortBreakException()
+                }
             when {
                 compareRes.isNaN -> {
                     abrupt = throwError(TypeErrorKind.COMPARATOR_RETURNED_NAN)
@@ -460,7 +469,7 @@ internal inline fun generalSort(
     } catch (e: SortBreakException) {
         return abrupt!!
     }
-    return Completion.Normal(res)
+    return res.toNormal()
 }
 internal class SortBreakException: Exception()
 
@@ -475,7 +484,7 @@ private val immutableArraySet = builtinMethod("set", 2u) fn@ { thisArg, args ->
     val before = arr.array.subList(0, index)
     val after = arr.array.subList(index + 1, arr.array.size)
     val new = ImmutableArrayType.from(before + listOf(value) + after)
-    Completion.Normal(new)
+    new.toNormal()
 }
 
 /**
@@ -484,9 +493,9 @@ private val immutableArraySet = builtinMethod("set", 2u) fn@ { thisArg, args ->
 @EsSpec("-")
 internal val arrayLengthGetter = AccessorProperty.builtinGetter("length") fn@ { thisArg ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
-    Completion.Normal(
-        arr.array.size.languageValue
-    )
+    arr.array.size
+        .languageValue
+        .toNormal()
 }
 
 @EsSpec("%Array%")
@@ -539,11 +548,11 @@ val Array = BuiltinClassType(
         val arr = ImmutableArrayType(
             List(size) { i ->
                 mapFn?._call(null, listOf(i.languageValue))
-                    ?.returnIfAbrupt { return@ctor it }
+                    ?.orReturn { return@ctor it }
                     ?: NullType
             }
         )
-        Completion.Normal(arr)
+        arr.toNormal()
     },
 )
 

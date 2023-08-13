@@ -25,26 +25,26 @@ sealed class FunctionType(
     // TODO: throw an error if thisArg is not provided but the function depends on it
 }
 
-internal inline fun <reified R: LanguageType> FunctionType.callAndRequireToBe(thisArg: LanguageType?, args: List<LanguageType>, `return`: AbruptReturnLambda) =
+internal inline fun <reified R: LanguageType> FunctionType.callAndRequireToBe(thisArg: LanguageType?, args: List<LanguageType>, rtn: AbruptReturnLambda) =
     _call(thisArg, args)
-        .returnIfAbrupt(`return`)
-        .requireToBe<R>(`return`)
+        .orReturn(rtn)
+        .requireToBe<R>(rtn)
 
 internal inline fun FunctionType.callCollectionCallback(
     element: LanguageType,
     index: Int,
     collection: LanguageType,
-    `return`: AbruptReturnLambda,
+    rtn: AbruptReturnLambda,
 ) =
     _call(null, listOf(element, index.languageValue, collection))
-        .returnIfAbrupt(`return`)
+        .orReturn(rtn)
 
 internal inline fun FunctionType.callPredicate(
     element: LanguageType,
     index: Int,
     array: ArrayType,
-    `return`: AbruptReturnLambda,
+    rtn: AbruptReturnLambda,
 ) =
-    callCollectionCallback(element, index, array, `return`)
-        .requireToBe<BooleanType>(`return`)
+    callCollectionCallback(element, index, array, rtn)
+        .requireToBe<BooleanType>(rtn)
         .value

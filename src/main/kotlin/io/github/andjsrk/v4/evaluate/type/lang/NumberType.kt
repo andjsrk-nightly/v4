@@ -3,8 +3,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.FALSE
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.TRUE
 import io.github.andjsrk.v4.not
@@ -42,10 +41,12 @@ value class NumberType(
         }
     override fun bitwiseNot(): MaybeAbrupt<NumberType> {
         val value = this.toInt32()
-            .returnIfAbrupt { return it }
+            .orReturn { return it }
             .toInt()
         val result = value.inv().toDouble()
-        return Completion.Normal(result.languageValue)
+        return result
+            .languageValue
+            .toNormal()
     }
     override fun pow(other: NumberType): NumberType =
         when {
@@ -115,7 +116,8 @@ value class NumberType(
                 if (this.isNegative) POSITIVE_ZERO
                 else other
             else ->
-                NumberType(value * other.value)
+                (value * other.value)
+                    .languageValue
         }
     override fun div(other: NumberType) =
         when {
@@ -143,7 +145,9 @@ value class NumberType(
             other == NEGATIVE_ZERO ->
                 if (this.isPositive) NEGATIVE_INFINITY
                 else POSITIVE_INFINITY
-            else -> NumberType(value / other.value)
+            else ->
+                (value / other.value)
+                    .languageValue
         }
     override fun rem(other: NumberType) =
         when {
@@ -152,7 +156,9 @@ value class NumberType(
             other.isInfinity -> this
             other.isZero -> NaN
             this.isZero -> this
-            else -> NumberType(value % other.value)
+            else ->
+                (value % other.value)
+                    .languageValue
         }
     override fun plus(other: NumberType) =
         when {
@@ -160,7 +166,9 @@ value class NumberType(
             this.isInfinity && other.isInfinity && (this.isNegative xor other.isNegative) -> NaN
             this.isInfinity -> this
             other.isInfinity -> other
-            else -> NumberType(value + other.value)
+            else ->
+                (value + other.value)
+                    .languageValue
         }
     override fun minus(other: NumberType) =
         this + -other
@@ -171,15 +179,17 @@ value class NumberType(
         operation: (T, Int) -> Double,
     ): MaybeAbrupt<NumberType> {
         val left = leftCoercion()
-            .returnIfAbrupt { return it }
+            .orReturn { return it }
             .value
             .leftTransform()
         val right = other.toUint32()
-            .returnIfAbrupt { return it }
+            .orReturn { return it }
             .toInt()
         val shiftCount = right % 32
         val result = operation(left, shiftCount)
-        return Completion.Normal(result.languageValue)
+        return result
+            .languageValue
+            .toNormal()
     }
     override fun leftShift(other: NumberType) =
         generalShift(other, ::toInt32, Double::toInt) { a, b -> (a shl b).toDouble() }
@@ -195,7 +205,9 @@ value class NumberType(
             other.isPositiveInfinity -> TRUE
             other.isNegativeInfinity -> FALSE
             this.isNegativeInfinity -> TRUE
-            else -> BooleanType.from(value < other.value)
+            else ->
+                (value < other.value)
+                    .languageValue
         }
     override fun equal(other: NumberType) =
         when {
@@ -220,13 +232,15 @@ value class NumberType(
     @EsSpec("NumberBitwiseOp")
     private fun generalBitwiseOp(other: NumberType, operation: (Int, Int) -> Int): MaybeAbrupt<NumberType> {
         val left = this.toInt32()
-            .returnIfAbrupt { return it }
+            .orReturn { return it }
             .toInt()
         val right = other.toInt32()
-            .returnIfAbrupt { return it }
+            .orReturn { return it }
             .toInt()
         val result = operation(left, right)
-        return Completion.Normal(result.languageValue)
+        return result
+            .languageValue
+            .toNormal()
     }
     @EsSpec("::bitwiseAND")
     override fun bitwiseAnd(other: NumberType) =
@@ -242,7 +256,7 @@ value class NumberType(
      */
     @EsSpec("Number::toString")
     override fun toString(radix: Int): StringType =
-        StringType(when {
+        when {
             this.isNaN -> "NaN"
             this.isZero -> "0"
             value < 0 -> "-${(-this).toString(radix).value}"
@@ -251,20 +265,25 @@ value class NumberType(
                 10 ->
                     value
                         .toBigDecimal().toPlainString() // prevent scientific notation
-                        .removeSuffix(".0") // remove trailing `.0` if possible because trailing `.0` means the number can be represented as an integer
+                        .removeSuffix(".0") // remove trailing `.0` if possible
+                        // because trailing `.0` means the number can be represented as an integer
                 else -> {
                     assert(value.isInteger)
-                    value.toBigDecimal().toBigIntegerExact().toString(radix)
+                    value
+                        .toBigDecimal()
+                        .toBigIntegerExact()
+                        .toString(radix)
                 }
             }
-        })
+        }
+            .languageValue
 
     companion object {
-        val POSITIVE_INFINITY = NumberType(Double.POSITIVE_INFINITY)
-        val NEGATIVE_INFINITY = NumberType(Double.NEGATIVE_INFINITY)
-        val POSITIVE_ZERO = NumberType(0.0)
-        val NEGATIVE_ZERO = NumberType(-0.0)
-        val NaN = NumberType(Double.NaN)
+        val POSITIVE_INFINITY = Double.POSITIVE_INFINITY.languageValue
+        val NEGATIVE_INFINITY = Double.NEGATIVE_INFINITY.languageValue
+        val POSITIVE_ZERO = 0.0.languageValue
+        val NEGATIVE_ZERO = (-0.0).languageValue
+        val NaN = Double.NaN.languageValue
 
         const val EPSILON = 2.220446049250313E-16
         const val MAX_SAFE_INTEGER = 9007199254740991.0
@@ -302,24 +321,24 @@ internal fun throwMustBeIntegerInRange(description: String, range: LongRange) =
         range.first.languageValue.display(),
         range.last.languageValue.display(),
     )
-internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", `return`: AbruptReturnLambda) =
+internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", rtn: AbruptReturnLambda) =
     requireToBeIntegerWithin(range)
         ?.toInt()
-        ?: `return`(throwMustBeIntegerInRange(description, range))
+        ?: rtn(throwMustBeIntegerInRange(description, range))
 
-internal inline fun NumberType.requireToBeUnsignedInt(`return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.unsignedInteger, `return`=`return`)
-internal inline fun NumberType.requireToBeRadix(`return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.radix, "A radix", `return`)
-internal inline fun NumberType.requireToBeIndex(`return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.unsignedInteger, "An index", `return`)
-internal inline fun NumberType.requireToBeIndexWithin(size: Int, `return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.unsignedInteger, "An index", `return`)
+internal inline fun NumberType.requireToBeUnsignedInt(rtn: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.unsignedInteger, rtn=rtn)
+internal inline fun NumberType.requireToBeRadix(rtn: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.radix, "A radix", rtn)
+internal inline fun NumberType.requireToBeIndex(rtn: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.unsignedInteger, "An index", rtn)
+internal inline fun NumberType.requireToBeIndexWithin(size: Int, rtn: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.unsignedInteger, "An index", rtn)
         .let {
-            it.takeIf { it < size } ?: `return`(invalidIndex(it))
+            it.takeIf { it < size } ?: rtn(invalidIndex(it))
         }
-internal inline fun NumberType.requireToBeRelativeIndex(`return`: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.relativeIndex, "A relative index", `return`)
+internal inline fun NumberType.requireToBeRelativeIndex(rtn: AbruptReturnLambda) =
+    requireToBeIntWithin(Ranges.relativeIndex, "A relative index", rtn)
 /**
  * Returns `null` if the number is greater than [Int.MAX_VALUE].
  * Note that the function assumes that the number is an index.
@@ -330,8 +349,8 @@ internal fun Int.resolveRelativeIndex(length: Int): Int? {
     val mightBeOutOfRange = if (index < 0) length + index else index
     return mightBeOutOfRange.takeIf { it in 0 until length }
 }
-internal inline fun Int.resolveRelativeIndexOrReturn(length: Int, `return`: AbruptReturnLambda) =
-    resolveRelativeIndex(length) ?: `return`(invalidRelativeIndex(this))
+internal inline fun Int.resolveRelativeIndexOrReturn(length: Int, rtn: AbruptReturnLambda) =
+    resolveRelativeIndex(length) ?: rtn(invalidRelativeIndex(this))
 internal fun invalidIndex(index: Int) =
     throwError(RangeErrorKind.INVALID_INDEX, index.languageValue.display())
 internal fun invalidRelativeIndex(index: Int) =

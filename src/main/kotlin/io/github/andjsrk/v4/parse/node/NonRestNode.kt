@@ -10,4 +10,5 @@ open class NonRestNode(
     override val range by lazy { binding.range..(default ?: binding).range }
     override fun toString() =
         stringifyLikeDataClass(::binding, ::default, ::range)
+    override fun evaluate() = TODO()
 }

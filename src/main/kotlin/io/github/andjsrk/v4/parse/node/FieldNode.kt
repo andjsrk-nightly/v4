@@ -14,4 +14,5 @@ class FieldNode(
     override val range = startRange..(value ?: name).range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::name, ::value, ::isStatic, ::range)
+    override fun evaluate() = TODO()
 }

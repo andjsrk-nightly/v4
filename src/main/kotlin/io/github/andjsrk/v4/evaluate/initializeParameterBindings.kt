@@ -25,8 +25,8 @@ private fun List<MaybeRestNode>.initializeParameterBindings(argsIterator: Iterat
                         }
                         if (value == NullType && defaultExpr != null) {
                             val defaultValue =
-                                if (defaultExpr.isAnonymous) defaultExpr.evaluateWithNameOrReturn(binding.stringValue) { return it }
-                                else defaultExpr.evaluateValueOrReturn { return it }
+                                if (defaultExpr.isAnonymous) defaultExpr.evaluateWithName(binding.stringValue)
+                                else defaultExpr.evaluateValue().orReturn { return it }
                             value = defaultValue
                         }
                         ref.putOrInitializeBinding(value, env)

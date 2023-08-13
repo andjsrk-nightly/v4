@@ -1,9 +1,9 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
-import io.github.andjsrk.v4.parse.node.Node
+import io.github.andjsrk.v4.parse.node.ExpressionNode
 
-internal fun Node.evaluateValue(): NonEmptyNormalOrAbrupt {
-    val res = evaluateOrReturn { return it }
+internal fun ExpressionNode.evaluateValue(): NonEmptyNormalOrAbrupt {
+    val res = evaluate().orReturn { return it }
     return getValue(res)
 }

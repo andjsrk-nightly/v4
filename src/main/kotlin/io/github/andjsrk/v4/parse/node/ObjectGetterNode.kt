@@ -12,4 +12,5 @@ class ObjectGetterNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::body, ::range)
+    override fun evaluate() = TODO()
 }

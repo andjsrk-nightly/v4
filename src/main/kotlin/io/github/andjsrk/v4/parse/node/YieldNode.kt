@@ -12,4 +12,5 @@ class YieldNode(
     override val range = startRange..expression.range
     override fun toString() =
         stringifyLikeDataClass(::expression, ::isSpread, ::range)
+    override fun evaluate() = TODO()
 }

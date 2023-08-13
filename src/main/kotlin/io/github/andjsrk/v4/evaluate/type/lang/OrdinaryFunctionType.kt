@@ -37,10 +37,10 @@ class OrdinaryFunctionType(
         bindThisInCall(calleeContext, thisArg)
         val res = evaluateBody(args)
         executionContextStack.removeTop()
-        if (res is Completion.Return) return Completion.Normal(res.value)
-        res.returnIfAbrupt { return it }
+        if (res is Completion.Return) return res.value.toNormal()
+        res.orReturn { return it }
         // if the function returned nothing, return `null`
-        return Completion.Normal.`null`
+        return normalNull
     }
     @EsSpec("PrepareForOrdinaryCall")
     internal fun prepareForOrdinaryCall(): ExecutionContext {
@@ -74,7 +74,7 @@ class OrdinaryFunctionType(
             }
             else -> {
                 instantiateFunctionDeclaration(this, args)
-                    .returnIfAbrupt { return it }
+                    .orReturn { return it }
                 return evaluateConciseBody(body)
             }
         }

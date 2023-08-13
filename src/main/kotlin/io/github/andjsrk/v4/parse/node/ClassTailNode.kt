@@ -6,7 +6,7 @@ internal class ClassTailNode(
     val parent: ExpressionNode?,
     val elements: List<ClassElementNode>,
     override val range: Range,
-): NonAtomicNode {
+): NonAtomicNode, EvaluationDelegatedNode {
     override val childNodes get() = listOf(parent) + elements
     override fun toString() = throw NotImplementedError()
 }

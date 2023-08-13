@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.evaluate.languageValue
-import io.github.andjsrk.v4.evaluate.returnIfAbrupt
+import io.github.andjsrk.v4.evaluate.orReturn
 import io.github.andjsrk.v4.evaluate.type.*
 
 /**
@@ -22,10 +22,10 @@ class BuiltinClassType(
         constructor: BuiltinFunctionType,
     ): this(name.languageValue, parent, staticProperties, instancePrototypeProperties, constructor)
     override fun construct(args: List<LanguageType>): MaybeAbrupt<ObjectType> {
-        val res = constructor._call(ObjectType.create(instancePrototype), args)
-            .returnIfAbrupt { return it }
+        val res = constructor._call(ObjectType(instancePrototype), args)
+            .orReturn { return it }
         require(res is ObjectType)
-        return Completion.Normal(res)
+        return res.toNormal()
     }
 
     companion object {

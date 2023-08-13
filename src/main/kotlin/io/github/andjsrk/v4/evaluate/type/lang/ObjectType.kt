@@ -15,6 +15,8 @@ open class ObjectType(
     lazyPrototype: Lazy<PrototypeObjectType?> = lazy { Object.instancePrototype },
     val properties: MutableMap<PropertyKey, Property> = mutableMapOf(),
 ): LanguageType {
+    @EsSpec("OrdinaryObjectCreate")
+    constructor(prototype: PrototypeObjectType?): this(lazy { prototype })
     var prototype by MutableLazy.from(lazyPrototype)
         protected set
     var extensible = true
@@ -51,7 +53,7 @@ open class ObjectType(
     }
     fun _applyPropertyDescriptor(key: PropertyKey, descriptor: Property, current: Property?): EmptyOrAbrupt {
         _throwIfNotCompatiblePropertyDescriptor(current, key)
-            .returnIfAbrupt { return it }
+            .orReturn { return it }
 
         properties[key] = when (descriptor) {
             is AccessorProperty -> descriptor.copy()
@@ -64,16 +66,16 @@ open class ObjectType(
     fun _hasProperty(key: PropertyKey): Boolean =
         hasOwnProperty(key) || prototype?._hasProperty(key) ?: false
     @EsSpec("[[Get]]")
-    fun _get(key: PropertyKey): NonEmptyNormalOrAbrupt {
+    fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyNormalOrAbrupt {
         val descriptor = _getOwnProperty(key)
         if (descriptor == null) {
-            val proto = prototype ?: return Completion.Normal.`null`
-            return proto._get(key)
+            val proto = prototype ?: return normalNull
+            return proto._get(key, receiver)
         }
-        if (descriptor is DataProperty) return Completion.Normal(descriptor.value)
+        if (descriptor is DataProperty) return descriptor.value.toNormal()
         require(descriptor is AccessorProperty)
-        val getter = descriptor.get ?: return Completion.Normal.`null`
-        TODO()
+        val getter = descriptor.get ?: return normalNull
+        return getter._call(receiver, emptyList())
     }
     @EsSpec("[[Set]]")
     fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): MaybeAbrupt<BooleanType?> {
@@ -89,7 +91,7 @@ open class ObjectType(
                 val existingDesc = receiver._getOwnProperty(key)
                 if (existingDesc == null) createDataProperty(key, value)
                 else {
-                    if (existingDesc is AccessorProperty) return Completion.Normal(BooleanType.FALSE)
+                    if (existingDesc is AccessorProperty) return BooleanType.FALSE.toNormal()
                     require(existingDesc is DataProperty)
                     if (existingDesc.not { writable }) return throwError(TypeErrorKind.CANNOT_ASSIGN_TO_READ_ONLY_PROPERTY, key.string())
                     receiver._defineOwnProperty(key, existingDesc.copy(value=value))
@@ -117,18 +119,20 @@ open class ObjectType(
 
     @EsSpec("Get")
     inline fun get(key: PropertyKey) =
-        _get(key)
+        _get(key, this)
     // GetV is implemented as an extension for LanguageType
     @EsSpec("Set")
     fun set(key: PropertyKey, value: LanguageType) =
         _set(key, value, this)
     @EsSpec("CreateDataProperty")
     fun createDataProperty(key: PropertyKey, value: LanguageType) {
-        neverAbrupt(createDataPropertyOrThrow(key, value))
+        createDataPropertyOrThrow(key, value)
+            .unwrap()
     }
     @EsSpec("CreateMethodProperty")
     fun createMethodProperty(key: PropertyKey, value: LanguageType) {
-        neverAbrupt(definePropertyOrThrow(key, DataProperty(value, writable=false, enumerable=false)))
+        definePropertyOrThrow(key, DataProperty(value, writable=false, enumerable=false))
+            .unwrap()
     }
     @EsSpec("CreateDataPropertyOrThrow")
     inline fun createDataPropertyOrThrow(key: PropertyKey, value: LanguageType) =
@@ -161,7 +165,7 @@ open class ObjectType(
                             configurable = false
                         }
                     definePropertyOrThrow(key, desc)
-                        .returnIfAbrupt { return it }
+                        .orReturn { return it }
                 }
             }
             ObjectImmutabilityLevel.FROZEN -> {
@@ -172,7 +176,7 @@ open class ObjectType(
                             if (this is DataProperty) writable = false
                         }
                     definePropertyOrThrow(key, desc)
-                        .returnIfAbrupt { return it }
+                        .orReturn { return it }
                 }
             }
         }
@@ -202,22 +206,20 @@ open class ObjectType(
         transformOwnEnumerableStringPropertyKeys { it }
     @EsSpec("EnumerableOwnProperties") // kind: value
     fun ownEnumerableStringPropertyKeyValues(): MaybeAbrupt<ListType<LanguageType>> {
-        return Completion.WideNormal(
-            transformOwnEnumerableStringPropertyKeys { key ->
-                get(key)
-                    .returnIfAbrupt { return it }
-            }
-        )
+        return transformOwnEnumerableStringPropertyKeys { key ->
+            get(key)
+                .orReturn { return it }
+        }
+            .toWideNormal()
     }
     @EsSpec("EnumerableOwnProperties") // kind: key+value
     fun ownEnumerableStringKeyEntries(): MaybeAbrupt<ListType<ArrayType>> {
-        return Completion.WideNormal(
-            transformOwnEnumerableStringPropertyKeys { key ->
-                val value = get(key)
-                    .returnIfAbrupt { return it }
-                ImmutableArrayType.from(listOf(key, value))
-            }
-        )
+        return transformOwnEnumerableStringPropertyKeys { key ->
+            val value = get(key)
+                .orReturn { return it }
+            ImmutableArrayType.from(listOf(key, value))
+        }
+            .toWideNormal()
     }
 
     companion object {
@@ -230,8 +232,5 @@ open class ObjectType(
          */
         fun createNormal(): ObjectType =
             ObjectType()
-        @EsSpec("OrdinaryObjectCreate")
-        fun create(prototype: PrototypeObjectType?) =
-            ObjectType(lazy { prototype })
     }
 }

@@ -5,6 +5,8 @@ import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.neverHappens
 
+internal const val GENERATOR_FUNCTION_NOT_SUPPORTED_YET = "Generator functions are not supported yet."
+
 enum class GeneratorKind {
     NON_GENERATOR,
     SYNC,

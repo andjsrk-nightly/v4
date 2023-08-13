@@ -1,7 +1,8 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.evaluate.evaluateValueOrReturn
+import io.github.andjsrk.v4.evaluate.evaluateValue
+import io.github.andjsrk.v4.evaluate.orReturn
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
@@ -15,7 +16,7 @@ class ThrowNode(
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
     override fun evaluate(): Completion.Abrupt {
-        val value = expression.evaluateValueOrReturn { return it }
+        val value = expression.evaluateValue().orReturn { return it }
         return Completion.Throw(value)
     }
 }

@@ -1,8 +1,8 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.*
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.NumberType
+import io.github.andjsrk.v4.evaluate.languageValue
+import io.github.andjsrk.v4.evaluate.type.toNormal
 
 class NumberLiteralNode(rawContent: String, range: Range): DynamicPrimitiveLiteralNode<Double>(rawContent, range), ObjectLiteralKeyNode {
     @EsSpec("NumericValue")
@@ -10,5 +10,7 @@ class NumberLiteralNode(rawContent: String, range: Range): DynamicPrimitiveLiter
         parseNumber(raw).value
     }
     override fun evaluate() =
-        Completion.Normal(NumberType(value))
+        value
+            .languageValue
+            .toNormal()
 }

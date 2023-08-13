@@ -13,4 +13,5 @@ class ClassGetterNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::body, ::isStatic, ::range)
+    override fun evaluate() = TODO()
 }

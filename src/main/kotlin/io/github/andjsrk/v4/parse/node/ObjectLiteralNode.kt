@@ -18,9 +18,9 @@ class ObjectLiteralNode(
         val obj = ObjectType.createNormal()
         for (element in elements) {
             evaluatePropertyDefinition(obj, element)
-                .returnIfAbrupt { return it }
+                .orReturn { return it }
         }
-        return Completion.Normal(obj)
+        return obj.toNormal()
     }
     private fun evaluatePropertyDefinition(obj: ObjectType, property: ObjectElementNode): EmptyOrAbrupt {
         when (property) {
@@ -33,9 +33,9 @@ class ObjectLiteralNode(
                 val key: PropertyKey = with (keyNode) {
                     when (this) {
                         is ComputedPropertyKeyNode -> {
-                            val value = expression.evaluateValueOrReturn { return it }
+                            val value = expression.evaluateValue().orReturn { return it }
                             value.toPropertyKey()
-                                .returnIfAbrupt { return it }
+                                .orReturn { return it }
                         }
                         is IdentifierNode -> stringValue
                         is NumberLiteralNode -> value.languageValue.toString(10)
@@ -44,14 +44,14 @@ class ObjectLiteralNode(
                 }
                 val value = when {
                     isShorthand && keyNode is ComputedPropertyKeyNode -> key // should be evaluated only once in this case
-                    property.value.isAnonymous -> property.value.evaluateWithNameOrReturn(key) { return it }
-                    else -> property.value.evaluateValueOrReturn { return it }
+                    property.value.isAnonymous -> property.value.evaluateWithName(key)
+                    else -> property.value.evaluateValue().orReturn { return it }
                 }
                 obj.createDataPropertyOrThrow(key, value)
                 return empty
             }
             is SpreadNode -> {
-                val value = property.expression.evaluateValueOrReturn { return it }
+                val value = property.expression.evaluateValue().orReturn { return it }
                 TODO()
             }
             else -> TODO()

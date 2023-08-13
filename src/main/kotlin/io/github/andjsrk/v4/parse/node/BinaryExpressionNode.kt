@@ -21,22 +21,22 @@ class BinaryExpressionNode(
         if (operation.isAssignLike) {
             // TODO: destructuring assignment
 
-            val lref = left.evaluateOrReturn { return it } as Reference
+            val lref = left.evaluate().orReturn { return it } as Reference
             val rval =
                 if (operation == ASSIGN) {
-                    if (left is IdentifierNode && right.isAnonymous) right.evaluateWithNameOrReturn(left.stringValue) { return it }
-                    else right.evaluateValueOrReturn { return it }
+                    if (left is IdentifierNode && right.isAnonymous) right.evaluateWithName(left.stringValue)
+                    else right.evaluateValue().orReturn { return it }
                 } else {
-                    val lval = getValueOrReturn(lref) { return it }
+                    val lval = getValue(lref).orReturn { return it }
                     lval.operate(operation.toNonAssign(), right)
-                        .returnIfAbrupt { return it }
+                        .orReturn { return it }
                 }
             lref.putValue(rval)
-                .returnIfAbrupt { return it }
-            return Completion.Normal(rval)
+                .orReturn { return it }
+            return rval.toNormal()
         }
 
-        val lval = left.evaluateValueOrReturn { return it }
+        val lval = left.evaluateValue().orReturn { return it }
 
         return lval.operate(operation, right)
     }
@@ -63,67 +63,65 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             //   require right side to be a Boolean
             //   return right side
             val booleanLeft = left.requireToBe<BooleanType> { return it }
-            if (!booleanLeft.value) return Completion.Normal(BooleanType.FALSE)
-            val right = other.evaluateValueOrReturn { return it }
+            if (!booleanLeft.value) return BooleanType.FALSE.toNormal()
+            val right = other.evaluateValue()
+                .orReturn { return it }
                 .requireToBe<BooleanType> { return it }
-            return Completion.Normal(right)
+            return right.toNormal()
         }
         BinaryOperationType.THEN -> {
             val booleanLeft = left.requireToBe<BooleanType> { return it }
-            if (!booleanLeft.value) return Completion.Normal(BooleanType.FALSE)
+            if (!booleanLeft.value) return BooleanType.FALSE.toNormal()
             return other.evaluateValue()
         }
         BinaryOperationType.OR -> {
-            // NOTE: current behavior
-            // evaluate left side
-            // require left side to be a Boolean
-            // if left side is `true`, return `true`
-            // else,
-            //   evaluate right side
-            //   require right side to be a Boolean
-            //   return right side
             val booleanLeft = left.requireToBe<BooleanType> { return it }
-            if (booleanLeft.value) return Completion.Normal(BooleanType.TRUE)
-            val right = other.evaluateValueOrReturn { return it }
+            if (booleanLeft.value) return BooleanType.TRUE.toNormal()
+            val right = other.evaluateValue().orReturn { return it }
                 .requireToBe<BooleanType> { return it }
-            return Completion.Normal(right)
+            return right.toNormal()
         }
         BinaryOperationType.COALESCE -> return (
-                if (left == NullType) other.evaluateValue()
-                else Completion.Normal(left)
-                )
+            if (left == NullType) other.evaluateValue()
+            else left.toNormal()
+        )
         else -> {}
     }
 
-    val right = other.evaluateValueOrReturn { return it }
+    val right = other.evaluateValue().orReturn { return it }
 
     when (operation) {
         BinaryOperationType.LT, BinaryOperationType.GT, BinaryOperationType.LT_EQ, BinaryOperationType.GT_EQ ->
             return if (left is StringType || left is NumericType<*>) {
                 if (left::class != right::class) throwError(TypeErrorKind.LHS_RHS_NOT_SAME_TYPE)
-                else Completion.Normal(
-                    when (operation) {
-                        BinaryOperationType.LT -> left.isLessThan(right, BooleanType.FALSE)
-                        BinaryOperationType.GT -> right.isLessThan(left, BooleanType.FALSE)
-                        BinaryOperationType.LT_EQ -> !right.isLessThan(left, BooleanType.TRUE)
-                        BinaryOperationType.GT_EQ -> !left.isLessThan(right, BooleanType.TRUE)
-                        else -> neverHappens()
-                    }
-                )
+                else when (operation) {
+                    BinaryOperationType.LT -> left.isLessThan(right, BooleanType.FALSE)
+                    BinaryOperationType.GT -> right.isLessThan(left, BooleanType.FALSE)
+                    BinaryOperationType.LT_EQ -> !right.isLessThan(left, BooleanType.TRUE)
+                    BinaryOperationType.GT_EQ -> !left.isLessThan(right, BooleanType.TRUE)
+                    else -> neverHappens()
+                }
+                    .toNormal()
             }
             else unexpectedType(left, StringType::class, NumericType::class)
         BinaryOperationType.PLUS -> {
             val leftAsString = left as? StringType
             val rightAsString = right as? StringType
             if (leftAsString != null || rightAsString != null) {
-                val stringLeft = leftAsString ?: stringify(left).returnIfAbrupt { return it }
-                val stringRight = rightAsString ?: stringify(right).returnIfAbrupt { return it }
-                return Completion.Normal(stringLeft + stringRight)
+                val stringLeft = leftAsString ?: stringify(left).orReturn { return it }
+                val stringRight = rightAsString ?: stringify(right).orReturn { return it }
+                return (stringLeft + stringRight).toNormal()
             }
             // numeric values will be handled on below
         }
-        BinaryOperationType.EQ -> return Completion.Normal(equal(left, right).languageValue)
-        BinaryOperationType.NOT_EQ -> return Completion.Normal(!equal(left, right).languageValue)
+        BinaryOperationType.EQ ->
+            return equal(left, right)
+                .languageValue
+                .toNormal()
+        BinaryOperationType.NOT_EQ ->
+            return not { equal(left, right) }
+                .languageValue
+                .toNormal()
         else -> {}
     }
 
@@ -131,17 +129,14 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
     val numericRight = right.requireToBe<NumericType<*>> { return it }
     if (left::class != right::class) return throwError(TypeErrorKind.BIGINT_MIXED_TYPES)
 
-    return Completion.Normal(
+    return (
         @CompilerFalsePositive
         @Suppress("TYPE_MISMATCH")
         when (operation) {
             BinaryOperationType.EXPONENTIAL -> numericLeft.pow(numericRight)
             BinaryOperationType.MULTIPLY -> numericLeft * numericRight
             BinaryOperationType.DIVIDE -> numericLeft / numericRight
-            BinaryOperationType.MOD ->
-                @CompilerFalsePositive
-                @Suppress("UNRESOLVED_REFERENCE_WRONG_RECEIVER")
-                numericLeft % numericRight
+            BinaryOperationType.MOD -> numericLeft % numericRight
             BinaryOperationType.PLUS -> numericLeft + numericRight
             BinaryOperationType.MINUS -> numericLeft - numericRight
             BinaryOperationType.SHL -> numericLeft.leftShift(numericRight)
@@ -154,4 +149,5 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
         }
             .extractFromCompletionOrReturn { return it }
     )
+        .toNormal()
 }

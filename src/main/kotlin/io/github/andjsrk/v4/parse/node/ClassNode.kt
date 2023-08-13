@@ -11,6 +11,7 @@ sealed class ClassNode: NonAtomicNode {
     override val childNodes get() = listOf(name, parent) + elements
     override fun toString() =
         stringifyLikeDataClass(::name, ::parent, ::elements, ::range)
+    override fun evaluate() = TODO()
 
     @EsSpec("ConstructorMethod")
     val constructor by lazy {

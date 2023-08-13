@@ -13,7 +13,7 @@ class ModuleEnvironment(outer: Environment?): DeclarativeEnvironment(outer) {
         requireNotNull(binding)
         // TODO: implement step 3
         if (binding.not { isInitialized }) return throwError(ReferenceErrorKind.ACCESSED_UNINITIALIZED_VARIABLE, name)
-        return Completion.Normal(binding.value!!)
+        return binding.value!!.toNormal()
     }
     fun createImportBinding(name: String, module: SourceTextModule, ) {
         TODO()

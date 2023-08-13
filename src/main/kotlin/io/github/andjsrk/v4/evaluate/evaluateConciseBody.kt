@@ -9,7 +9,7 @@ import io.github.andjsrk.v4.parse.node.*
 internal fun evaluateConciseBody(body: ConciseBodyNode): NormalOrAbrupt {
     return when (body) {
         is ExpressionNode -> {
-            val value = body.evaluateValueOrReturn { return it }
+            val value = body.evaluateValue().orReturn { return it }
             Completion.Return(value)
         }
         is BlockNode -> body.evaluate()

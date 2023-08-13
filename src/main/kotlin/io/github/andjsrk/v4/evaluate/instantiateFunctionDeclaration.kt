@@ -22,7 +22,7 @@ internal fun instantiateFunctionDeclaration(func: OrdinaryFunctionType, args: Li
     val env = calleeContext.lexicalEnvironment
     for (paramName in paramNames) env.createMutableBinding(paramName)
     func.parameters.initializeParameterBindings(args.iterator(), env)
-        .returnIfAbrupt { return it }
+        .orReturn { return it }
     if (func.body is BlockNode) instantiateBlockDeclaration(func.body, env)
     return empty
 }

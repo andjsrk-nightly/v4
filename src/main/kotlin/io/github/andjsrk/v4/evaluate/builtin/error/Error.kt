@@ -14,9 +14,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constr
 @EsSpec("Error.prototype.name")
 val errorNameGetter = AccessorProperty.builtinGetter("name") fn@ {
     val error = it.requireToBe<ObjectType> { return@fn it }
-    Completion.Normal(
-        error.findName() ?: NullType
-    )
+    error.findName().normalizeToNormal()
 }
 
 @EsSpec("%Error%")
@@ -37,8 +35,8 @@ val Error = BuiltinClassType(
             ?.requireToBe<ObjectType> { return@ctor it }
         if (message != null) error.createDataProperty("message".languageValue, message)
         error.initializeErrorCause(options)
-            .returnIfAbrupt { return@ctor it }
-        Completion.Normal(error)
+            .orReturn { return@ctor it }
+        error.toNormal()
     },
 )
 
@@ -52,7 +50,7 @@ private fun ObjectType.initializeErrorCause(options: ObjectType?): EmptyOrAbrupt
     if (options == null) return empty
     if (options.hasProperty("cause".languageValue)) {
         val cause = options.get("cause".languageValue)
-            .returnIfAbrupt { return it }
+            .orReturn { return it }
         createNonEnumerablePropertyOrThrow("cause".languageValue, cause)
     }
     return empty

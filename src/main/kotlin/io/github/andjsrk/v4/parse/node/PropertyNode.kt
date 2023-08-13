@@ -10,4 +10,5 @@ class PropertyNode(
     override val range = key.range..value.range
     override fun toString() =
         stringifyLikeDataClass(::key, ::value, ::range)
+    override fun evaluate() = TODO()
 }

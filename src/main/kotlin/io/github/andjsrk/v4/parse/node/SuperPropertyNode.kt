@@ -13,4 +13,5 @@ class SuperPropertyNode(
     override val range = `object`.range..endRange
     override fun toString() =
         stringifyLikeDataClass(::`object`, ::property, ::isComputed, ::range)
+    override fun evaluate() = TODO()
 }

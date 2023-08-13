@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 class LexicalBindingNode(
     val binding: BindingElementNode,
     val value: ExpressionNode?,
-): NonAtomicNode {
+): NonAtomicNode, EvaluationDelegatedNode {
     override val childNodes get() = listOf(binding, value)
     override val range = binding.range.extendCarefully(value?.range)
     override fun toString() =

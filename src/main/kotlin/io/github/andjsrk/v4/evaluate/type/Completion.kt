@@ -6,9 +6,9 @@ import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
 typealias MaybeAbrupt<NormalV> = Completion<NormalV>
-typealias NonEmpty = MaybeAbrupt<AbstractType>
 typealias Empty = Completion.Normal<Nothing?>
 typealias EmptyOrAbrupt = MaybeAbrupt<Nothing?>
+typealias NonEmptyOrAbrupt = MaybeAbrupt<AbstractType>
 typealias NormalOrAbrupt = MaybeAbrupt<LanguageType?>
 typealias NonEmptyNormal = Completion.Normal<LanguageType>
 typealias NonEmptyNormalOrAbrupt = MaybeAbrupt<LanguageType>
@@ -18,18 +18,21 @@ sealed interface Completion<out V: AbstractType?>: Record {
     val value: AbstractType?
 
     @EsSpec("normal completion")
-    open class WideNormal<V: AbstractType?>(override val value: V): Completion<V>
+    open class WideNormal<out V: AbstractType?>(override val value: V): Completion<V>
     /**
      * A normal completion that only contains either a language value or `empty`.
      *
      * @see [WideNormal]
      */
-    data class Normal<V: LanguageType?>(override val value: V): WideNormal<V>(value) {
+    data class Normal<out V: LanguageType?>(override val value: V): WideNormal<V>(value) {
         companion object {
             /**
              * Note that this covers `unused` as well.
              */
             val empty = Normal(null)
+            /**
+             * Indicates a normal completion that contains [NullType].
+             */
             val `null` = Normal(NullType)
         }
     }
@@ -53,3 +56,14 @@ sealed interface Completion<out V: AbstractType?>: Record {
 }
 
 internal inline val empty get() = Completion.Normal.empty
+internal inline val normalNull get() = Completion.Normal.`null`
+
+/**
+ * Returns [normalNull] if the value is `null`, a normal completion that contains the value otherwise.
+ */
+internal fun LanguageType?.normalizeToNormal() =
+    this?.toNormal() ?: normalNull
+internal fun <T: LanguageType> T.toNormal() =
+    Completion.Normal(this)
+internal fun <T: AbstractType> T.toWideNormal() =
+    Completion.WideNormal(this)

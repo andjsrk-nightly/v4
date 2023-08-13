@@ -10,8 +10,8 @@ class OrdinaryClassType(
     override val constructor: OrdinaryFunctionType,
 ): ClassType(name, parent, staticProperties, instancePrototypeProperties, constructor) {
     override fun construct(args: List<LanguageType>): MaybeAbrupt<ObjectType> {
-        val obj = ObjectType.create(instancePrototype)
+        val obj = ObjectType(instancePrototype)
         TODO()
-        return Completion.Normal(obj)
+        return obj.toNormal()
     }
 }

@@ -42,7 +42,7 @@ data class AccessorProperty(
             BuiltinFunctionType(name, 1u) fn@ { thisArg, args ->
                 if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
                 block(thisArg, args[0])
-                Completion.Normal.`null`
+                normalNull
             }
     }
 }

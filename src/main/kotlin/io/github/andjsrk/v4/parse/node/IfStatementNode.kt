@@ -15,7 +15,7 @@ class IfStatementNode(
 ): IfNode<StatementNode>(test, then, `else`), StatementNode {
     override val range = startRange..(`else` ?: then).range
     override fun evaluate(): Completion<*> {
-        val testVal = test.evaluateValueOrReturn { return it }
+        val testVal = test.evaluateValue().orReturn { return it }
             .requireToBe<BooleanType> { return it }
         val completion =
             if (testVal.value) then.evaluate()

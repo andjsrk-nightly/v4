@@ -43,13 +43,13 @@ class NormalForNode(
         runningExecutionContext.lexicalEnvironment.coverBindingsPerIteration(bindingNames)
         while (true) {
             if (test != null) {
-                val testValue = test.evaluateValueOrReturn { return it }
+                val testValue = test.evaluateValue().orReturn { return it }
                     .requireToBe<BooleanType> { return it }
-                if (!testValue.value) return Completion.Normal(res)
+                if (!testValue.value) return res.toNormal()
             }
             res = body.evaluate().returnIfShouldNotContinue(res) { return it }
             runningExecutionContext.lexicalEnvironment.coverBindingsPerIteration(bindingNames)
-            update?.evaluateValueOrReturn { return it }
+            update?.evaluateValue()?.orReturn { return it }
         }
     }
 }
@@ -63,7 +63,8 @@ private fun DeclarativeEnvironment.coverBindingsPerIteration(bindingNames: List<
     val currIterationEnv = DeclarativeEnvironment(outer)
     for (name in bindingNames) {
         currIterationEnv.createNonConfigurableMutableBinding(name)
-        val lastValue = neverAbrupt(lastIterationEnv.getValue(name))
+        val lastValue = lastIterationEnv.getValue(name)
+            .unwrap()
         currIterationEnv.initializeBinding(name, lastValue)
     }
     runningExecutionContext.lexicalEnvironment = currIterationEnv

@@ -6,6 +6,9 @@ import io.github.andjsrk.v4.parse.node.StatementListNode
 
 internal fun evaluateStatements(node: StatementListNode): NormalOrAbrupt {
     return node.elements
-        .map { it.evaluateOrReturn { return it } }
-        .foldRight(empty as NormalOrAbrupt) { it, acc -> updateEmpty(acc, it) }
+        .map {
+            it.evaluate()
+                .orReturn { return it }
+        }
+        .foldRight<_, NormalOrAbrupt>(empty) { it, acc -> updateEmpty(acc, it) }
 }

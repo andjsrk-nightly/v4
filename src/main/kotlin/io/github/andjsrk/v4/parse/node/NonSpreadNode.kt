@@ -7,4 +7,5 @@ open class NonSpreadNode(override val expression: ExpressionNode): MaybeSpreadNo
     override val range by lazy { expression.range }
     override fun toString() =
         stringifyLikeDataClass(::expression, ::range)
+    override fun evaluate() = TODO()
 }

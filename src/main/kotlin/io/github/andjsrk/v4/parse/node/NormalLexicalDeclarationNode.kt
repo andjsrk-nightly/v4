@@ -26,8 +26,8 @@ class NormalLexicalDeclarationNode(
                     val value = binding.run {
                         when {
                             value == null -> NullType
-                            value.isAnonymous -> value.evaluateWithNameOrReturn(name) { return it }
-                            else -> value.evaluateValueOrReturn { return it }
+                            value.isAnonymous -> value.evaluateWithName(name)
+                            else -> value.evaluateValue().orReturn { return it }
                         }
                     }
                     lhs.initializeBinding(value)

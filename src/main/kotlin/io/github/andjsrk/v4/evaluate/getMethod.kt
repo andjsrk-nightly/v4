@@ -1,16 +1,16 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.toNormal
 
 @EsSpec("GetMethod")
 internal fun LanguageType.getMethod(key: PropertyKey): MaybeAbrupt<FunctionType>? {
     val func = getProperty(key)
-        .returnIfAbrupt { return it }
+        .orReturn { return it }
         .normalizeNull()
         ?.requireToBe<FunctionType> { return it }
         ?: return null
-    return Completion.Normal(func)
+    return func.toNormal()
 }

@@ -12,4 +12,5 @@ class AllReExportDeclarationNode(
     override val range = range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::moduleSpecifier, ::range)
+    override fun evaluate() = TODO()
 }

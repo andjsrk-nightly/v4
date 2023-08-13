@@ -28,9 +28,8 @@ class SyncGeneratorType(
                 is Completion.Return -> result.value
                 is Completion.Abrupt -> return@complete result
             }
-            Completion.Normal(
-                createIteratorResult(resValue, true)
-            )
+            createIteratorResult(resValue, true)
+                .toNormal()
         }
         // TODO: step 5
         context = genContext

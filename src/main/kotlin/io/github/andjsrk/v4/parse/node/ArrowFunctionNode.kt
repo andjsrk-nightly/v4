@@ -2,11 +2,10 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.evaluate.ThisMode
-import io.github.andjsrk.v4.evaluate.runningExecutionContext
-import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.OrdinaryFunctionType
 import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
+import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ArrowFunctionNode(
@@ -21,17 +20,21 @@ class ArrowFunctionNode(
     override fun toString() =
         stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator, ::range)
     override fun evaluate() =
-        Completion.Normal(instantiateArrowFunction(null))
+        instantiateArrowFunction(null)
+            .toNormal()
     @EsSpec("InstantiateArrowFunctionExpression")
     @EsSpec("InstantiateAsyncArrowFunctionExpression")
     internal fun instantiateArrowFunction(name: PropertyKey?) =
-        OrdinaryFunctionType(
-            name,
-            parameters,
-            body,
-            runningExecutionContext.lexicalEnvironment,
-            ThisMode.ARROW,
-            isAsync,
-            isGenerator,
-        )
+        when {
+            isGenerator -> TODO(GENERATOR_FUNCTION_NOT_SUPPORTED_YET)
+            else -> OrdinaryFunctionType(
+                name,
+                parameters,
+                body,
+                runningExecutionContext.lexicalEnvironment,
+                ThisMode.ARROW,
+                isAsync,
+                isGenerator,
+            )
+        }
 }

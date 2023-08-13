@@ -10,4 +10,5 @@ class ImportOrExportSpecifierNode(
     override val range = name.range..alias.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::alias, ::range)
+    override fun evaluate() = TODO()
 }

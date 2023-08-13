@@ -13,4 +13,5 @@ class ObjectSetterNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::parameter, ::body, ::range)
+    override fun evaluate() = TODO()
 }

@@ -1,8 +1,8 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class TemplateLiteralNode(
@@ -22,23 +22,25 @@ class TemplateLiteralNode(
                 i++
                 continue
             }
-            val value = expressions[i].evaluateValueOrReturn { return it }
+            val value = expressions[i].evaluateValue().orReturn { return it }
             val stringValue = stringify(value)
             result.append(stringValue)
             result.append(string)
             i++
         }
-        return Completion.Normal(result.toString().languageValue)
+        return result.toString()
+            .languageValue
+            .toNormal()
     }
 }
 
 /**
- * Returns a list that has alternately element of this collection and element of the other array with the same index.
+ * Returns a list that has alternately element of this collection and element of the other list with the same index.
  * The returned list has length as long as possible.
  *
  * @see List.zip
  */
-private fun <T> List<T>.flatZip(other: Iterable<T>) =
+private fun <T> List<T>.flatZip(other: List<T>) =
     sequence {
         val firstIt = iterator()
         val secondIt = other.iterator()

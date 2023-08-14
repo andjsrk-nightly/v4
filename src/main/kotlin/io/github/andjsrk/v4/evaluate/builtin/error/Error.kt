@@ -21,9 +21,7 @@ val errorNameGetter = AccessorProperty.builtinGetter("name") fn@ {
 val Error = BuiltinClassType(
     "Error",
     Object,
-    mutableMapOf(
-        // TODO
-    ),
+    mutableMapOf(),
     mutableMapOf(
         "name".accessor(getter=errorNameGetter, configurable=false),
     ),

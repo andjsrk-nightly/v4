@@ -20,7 +20,7 @@ internal fun stringify(value: LanguageType): MaybeAbrupt<StringType> {
         is SymbolType -> value.toString().languageValue
         is ObjectType -> {
             val toStringMethod = value.getMethod(SymbolType.WellKnown.toString)
-                ?.orReturn { return it }
+                .orReturn { return it }
                 ?: return throwError(TypeErrorKind.CANNOT_CONVERT_TO_STRING)
             val string = toStringMethod._call(value, emptyList())
                 .orReturn { return it }

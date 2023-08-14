@@ -123,7 +123,7 @@ private val findMatchedIndex = builtinMethod("findMatchedIndex", 1u) fn@ { thisA
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0] // intentionally does not coerce to regular expressions
     val findMatchedIndexMethod = generalArg.getMethod(SymbolType.WellKnown.findMatchedIndex)
-        ?.orReturn { return@fn it }
+        .orReturn { return@fn it }
         ?: return@fn unexpectedType(generalArg, "a value that has Symbol.findMatchedIndex method")
     findMatchedIndexMethod._call(generalArg, listOf(stringArg))
 }
@@ -204,7 +204,7 @@ private val matchOne = builtinMethod("matchOne", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0]
     val matchMethod = generalArg.getMethod(SymbolType.WellKnown.match)
-        ?.orReturn { return@fn it }
+        .orReturn { return@fn it }
         ?: return@fn unexpectedType(generalArg, "a value that has Symbol.match method")
     matchMethod._call(generalArg, listOf(stringArg, BooleanType.FALSE))
 }
@@ -214,7 +214,7 @@ private val matchAll = builtinMethod("matchAll", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0]
     val matchMethod = generalArg.getMethod(SymbolType.WellKnown.match)
-        ?.orReturn { return@fn it }
+        .orReturn { return@fn it }
         ?: return@fn unexpectedType(generalArg, "a value that has Symbol.match method")
     matchMethod._call(generalArg, listOf(stringArg, BooleanType.TRUE))
 }
@@ -302,7 +302,7 @@ private val replaceAll = builtinMethod("replaceAll", 2u) fn@ { thisArg, args ->
         is StringType -> value
         else -> return@fn (
             value.getMethod(SymbolType.WellKnown.replace)
-                ?.orReturn { return@fn it }
+                .orReturn { return@fn it }
                 ?.let { replaceMethod ->
                     checkStringReplaceNewArg(new)
                         .orReturn { return@fn it }
@@ -353,7 +353,7 @@ private val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args
         is StringType -> value
         else -> return@fn (
             value.getMethod(SymbolType.WellKnown.replace)
-                ?.orReturn { return@fn it }
+                .orReturn { return@fn it }
                 ?.let { replaceMethod ->
                     checkStringReplaceNewArg(new)
                         .orReturn { return@fn it }
@@ -444,7 +444,7 @@ private val split = builtinMethod("split") fn@ { thisArg, args ->
         }
         else -> {
             val splitMethod = value.getMethod(SymbolType.WellKnown.split)
-                ?.orReturn { return@fn it }
+                .orReturn { return@fn it }
                 ?: return@fn unexpectedType(value, "a value that has Symbol.split method")
             checkSplitLimitArg(limit)
                 .orReturn { return@fn it }

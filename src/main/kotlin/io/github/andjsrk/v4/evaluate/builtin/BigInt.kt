@@ -33,7 +33,30 @@ private val bigintFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
         .toNormal()
 }
 
-@EsSpec("BigInt.prototype.toString") // with dynamic radix
+private val bigintAsIntN = builtinMethod("asIntN", 1u) fn@ { thisArg, args ->
+    val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
+    val bits = args[0]
+        .requireToBe<NumberType> { return@fn it }
+        .requireToBeUnsignedInt { return@fn it }
+    val half = BigInteger.TWO.pow(bits - 1)
+    val modRightHand = half.shiftLeft(1)
+    val mod = bigint.value.mod(modRightHand)
+    (if (mod >= half) mod - modRightHand else mod)
+        .languageValue
+        .toNormal()
+}
+
+private val bigintAsUintN = builtinMethod("asUintN", 1u) fn@ { thisArg, args ->
+    val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
+    val bits = args[0]
+        .requireToBe<NumberType> { return@fn it }
+        .requireToBeUnsignedInt { return@fn it }
+    bigint.value.mod(BigInteger.TWO.pow(bits))
+        .languageValue
+        .toNormal()
+}
+
+@EsSpec("BigInt.prototype.toString")
 private val bigintToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
     val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
     val radix = args.getOptional(0)
@@ -57,12 +80,12 @@ val BigInt = BuiltinClassType(
     Object,
     mutableMapOf(
         sealedMethod(bigintFrom),
-        // TODO
     ),
     mutableMapOf(
+        sealedMethod(bigintAsIntN),
+        sealedMethod(bigintAsUintN),
         sealedMethod(bigintToRadix),
         sealedMethod(bigintToString),
-        // TODO
     ),
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "BigInt")

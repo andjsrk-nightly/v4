@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.evaluate.type.*
 @EsSpec("InitializeHostDefinedRealm")
 fun initializeRealm() {
     val realm = Realm()
-    val newContext = ExecutionContext(ModuleEnvironment(null), realm)
+    val newContext = ExecutionContext(realm, ModuleEnvironment(null))
     executionContextStack.addTop(newContext)
     realm.setGlobalObject(null)
     realm.setDefaultGlobalBindings()

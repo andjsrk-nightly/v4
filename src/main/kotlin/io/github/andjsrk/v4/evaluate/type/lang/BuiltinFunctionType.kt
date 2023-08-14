@@ -21,7 +21,7 @@ class BuiltinFunctionType(
     ): this(name.languageValue, requiredParameterCount, behavior)
     override val isArrow = false
     override fun _call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
-        val calleeContext = ExecutionContext(FunctionEnvironment.from(this, thisArg), realm, this)
+        val calleeContext = ExecutionContext(realm, FunctionEnvironment.from(this, thisArg), this)
         executionContextStack.addTop(calleeContext)
         val res = behavior(thisArg, args)
         executionContextStack.removeTop()

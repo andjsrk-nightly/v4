@@ -105,7 +105,7 @@ private val parseLeadingInteger = BuiltinFunctionType("parseLeadingInteger", 1u)
         .toNormal()
 }
 
-@EsSpec("Number.prototype.toString") // with dynamic radix
+@EsSpec("Number.prototype.toString")
 private val numberToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
     val number = thisArg.requireToBe<NumberType> { return@fn it }
     val radix = args[0]

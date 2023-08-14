@@ -17,9 +17,7 @@ private val functionNameGetter = AccessorProperty.builtinGetter("name") fn@ {
 val Function = BuiltinClassType(
     "Function",
     Object,
-    mutableMapOf(
-        // TODO
-    ),
+    mutableMapOf(),
     mutableMapOf(
         "name".accessor(getter=functionNameGetter),
         // TODO

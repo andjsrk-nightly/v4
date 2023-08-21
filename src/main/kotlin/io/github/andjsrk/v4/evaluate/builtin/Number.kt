@@ -7,6 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import java.math.BigInteger
+import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.ParseException
 import kotlin.math.abs
@@ -113,6 +114,7 @@ private fun String.postProcessExponential() =
         .replace(integerWithoutLeadingZero) { it.groupValues[1] }
         .lowercase()
         .replace(".e", "e")
+@EsSpec("Number.prototype.toExponential")
 private val toExponential = builtinMethod("toExponential") fn@ { thisArg, args ->
     val numberArg = thisArg.requireToBe<NumberType> { return@fn it }
     val number = numberArg.value
@@ -135,6 +137,29 @@ private val toExponential = builtinMethod("toExponential") fn@ { thisArg, args -
         .postProcessExponential()
         .languageValue
         .toNormal()
+}
+
+@EsSpec("Number.prototype.toFixed")
+private val toFixed = builtinMethod("toFixed") fn@ { thisArg, args ->
+    val number = thisArg
+        .requireToBe<NumberType> { return@fn it }
+    val fracPartDigitCount = args.getOptional(0)
+        ?.requireToBe<NumberType> { return@fn it }
+        ?.requireToBeIntWithin(0L..100L) { return@fn it }
+        ?: 0
+    if (number.not { isFinite }) return@fn number.toString(10).toNormal()
+    number.value
+        .toBigDecimal()
+        .setScale(fracPartDigitCount, RoundingMode.DOWN)
+        .toDouble()
+        .languageValue
+        .toNormal()
+}
+
+@EsSpec("Number.prototype.toLocaleString")
+private val numberToLocaleString = builtinMethod("toLocaleString") fn@ { thisArg, args ->
+    val number = thisArg.requireToBe<NumberType> { return@fn it }
+    TODO()
 }
 
 @EsSpec("Number.prototype.toString")
@@ -178,9 +203,10 @@ val Number = BuiltinClassType(
     ),
     mutableMapOf(
         sealedMethod(toExponential),
-        sealedMethod(numberToString),
+        sealedMethod(toFixed),
+        sealedMethod(numberToLocaleString),
         sealedMethod(numberToRadix),
-        // TODO
+        sealedMethod(numberToString),
     ),
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "Number")

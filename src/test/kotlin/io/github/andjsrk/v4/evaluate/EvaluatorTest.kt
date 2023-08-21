@@ -809,7 +809,7 @@ private fun evaluationOf(code: String): EvaluationResult {
  * @see SourceTextModule.executeModule
  */
 private fun SourceTextModule.executeModuleWithoutIgnoringValue(): NormalOrAbrupt {
-    executionContextStack.addTop(ExecutionContext(environment, realm))
+    executionContextStack.addTop(ExecutionContext(realm, environment))
     val res = node.evaluate()
     executionContextStack.removeTop()
     return res

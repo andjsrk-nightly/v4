@@ -294,7 +294,7 @@ value class NumberType(
 }
 
 private val Double.isNegative get() =
-    1.0.withSign(this) < 0
+    1.0.withSign(this) < 0 // since -0.0 is not less than 0.0, copies the sign first
 private inline val Int.isOdd get() =
     this and 1 != 0
 internal val NumberType.isInteger get() =

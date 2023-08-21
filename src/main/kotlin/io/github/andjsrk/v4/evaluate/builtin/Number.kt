@@ -105,6 +105,38 @@ private val parseLeadingInteger = BuiltinFunctionType("parseLeadingInteger", 1u)
         .toNormal()
 }
 
+private val integerWithoutLeadingZero = Regex("\\b0+(?<rest>\\d+)$")
+private val trailingZeroBeforeE = Regex("0+(?=e)")
+private fun String.postProcessExponential() =
+    this
+        .replace(trailingZeroBeforeE, "")
+        .replace(integerWithoutLeadingZero) { it.groupValues[1] }
+        .lowercase()
+        .replace(".e", "e")
+private val toExponential = builtinMethod("toExponential") fn@ { thisArg, args ->
+    val numberArg = thisArg.requireToBe<NumberType> { return@fn it }
+    val number = numberArg.value
+    val fracPartDigitCount = args.getOptional(0)
+        ?.requireToBe<NumberType> { return@fn it }
+        ?.requireToBeIntWithin(0L..100L) { return@fn it }
+        ?: return@fn run {
+            val fracPartDigitCount = number
+                .toBigDecimal()
+                .toPlainString()
+                .substringAfter('.')
+                .length
+            kotlin.String.format("%.${fracPartDigitCount}e", number)
+                .postProcessExponential()
+                .languageValue
+                .toNormal()
+        }
+    if (numberArg.not { isFinite }) return@fn numberArg.toString(10).toNormal()
+    kotlin.String.format("%.${fracPartDigitCount}e", number)
+        .postProcessExponential()
+        .languageValue
+        .toNormal()
+}
+
 @EsSpec("Number.prototype.toString")
 private val numberToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
     val number = thisArg.requireToBe<NumberType> { return@fn it }
@@ -143,9 +175,9 @@ val Number = BuiltinClassType(
         sealedMethod(isSafeInteger),
         sealedMethod(parseLeadingDecimal),
         sealedMethod(parseLeadingInteger),
-        // TODO
     ),
     mutableMapOf(
+        sealedMethod(toExponential),
         sealedMethod(numberToString),
         sealedMethod(numberToRadix),
         // TODO

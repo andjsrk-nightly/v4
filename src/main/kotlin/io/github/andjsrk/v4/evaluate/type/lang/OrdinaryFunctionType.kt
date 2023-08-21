@@ -44,7 +44,7 @@ class OrdinaryFunctionType(
     }
     @EsSpec("PrepareForOrdinaryCall")
     internal fun prepareForOrdinaryCall(): ExecutionContext {
-        val calleeContext = ExecutionContext(FunctionEnvironment.from(this), realm, function=this)
+        val calleeContext = ExecutionContext(realm, FunctionEnvironment.from(this), this)
         executionContextStack.addTop(calleeContext)
         return calleeContext
     }

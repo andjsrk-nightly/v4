@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
+import io.github.andjsrk.v4.evaluate.type.lang.constructor
 
 @EsSpec("%GeneratorFunction%")
 val GeneratorFunction = BuiltinClassType(

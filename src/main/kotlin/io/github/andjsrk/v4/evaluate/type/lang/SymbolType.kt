@@ -21,6 +21,7 @@ class SymbolType(val description: String? = null): PrimitiveLanguageType, Proper
         val replace = SymbolType("Symbol.replace")
         @EsSpec("@@split")
         val split = SymbolType("Symbol.split")
+        val toJson = SymbolType("Symbol.toJson")
         val toString = SymbolType("Symbol.toString")
     }
     companion object {

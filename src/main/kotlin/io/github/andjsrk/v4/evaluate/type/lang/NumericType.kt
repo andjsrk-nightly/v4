@@ -24,6 +24,10 @@ sealed interface NumericType<out Self: NumericType<Self>>: PrimitiveLanguageType
     @EsSpec("::remainder")
     operator fun rem(other: @UnsafeVariance Self): SelfOrCompletion
 
+    // the method is written as an experiment about if the method calms false positive of Kotlin compiler
+    fun mod(other: @UnsafeVariance Self): SelfOrCompletion =
+        rem(other)
+
     @EsSpec("::add")
     operator fun plus(other: @UnsafeVariance Self): Self
 

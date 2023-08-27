@@ -75,7 +75,7 @@ open class ObjectType(
         if (descriptor is DataProperty) return descriptor.value.toNormal()
         require(descriptor is AccessorProperty)
         val getter = descriptor.get ?: return normalNull
-        return getter._call(receiver, emptyList())
+        return getter.call(receiver, emptyList())
     }
     @EsSpec("[[Set]]")
     fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): MaybeAbrupt<BooleanType?> {

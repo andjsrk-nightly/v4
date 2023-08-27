@@ -6,24 +6,23 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 import java.text.Normalizer
 
 private const val REPLACEMENT_CHARACTER = '\uFFFD'
 
 @EsSpec("String(value)")
-private val stringFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
+private val stringFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val value = args[0]
     stringify(value)
 }
 
 @EsSpec("String.fromCodePoint")
-private val fromCodePoint = BuiltinFunctionType("fromCodePoint") fn@ { _, args ->
+private val fromCodePoint = functionWithoutThis("fromCodePoint") fn@ { args ->
     val builder = StringBuilder()
     for (arg in args) {
         val codePoint = arg
             .requireToBe<NumberType> { return@fn it }
-            .requireToBeIntWithin(Ranges.codePoint, "A code point") { return@fn it }
+            .requireToBeIntWithin(NamedRange.codePoint) { return@fn it }
         builder.appendCodePoint(codePoint)
     }
     builder.toString()
@@ -32,12 +31,12 @@ private val fromCodePoint = BuiltinFunctionType("fromCodePoint") fn@ { _, args -
 }
 
 @EsSpec("String.fromCharCode")
-private val fromCodeUnit = BuiltinFunctionType("fromCodeUnit") fn@ { _, args ->
+private val fromCodeUnit = functionWithoutThis("fromCodeUnit") fn@ { args ->
     val builder = StringBuilder(args.size)
     for (arg in args) {
         val codeUnit = arg
             .requireToBe<NumberType> { return@fn it }
-            .requireToBeIntWithin(Ranges.uint16, "A code unit") { return@fn it }
+            .requireToBeIntWithin(NamedRange.uint16.range, "A code unit") { return@fn it }
         builder.append(codeUnit.toChar())
     }
     builder.toString()
@@ -46,7 +45,7 @@ private val fromCodeUnit = BuiltinFunctionType("fromCodeUnit") fn@ { _, args ->
 }
 
 @EsSpec("String.prototype.at")
-private val stringAt = builtinMethod("at", 1u) fn@ { thisArg, args ->
+private val stringAt = method("at", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -59,7 +58,7 @@ private val stringAt = builtinMethod("at", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.codePointAt")
-private val codePoint = builtinMethod("codePoint") fn@ { thisArg, args ->
+private val codePoint = method("codePoint") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val index = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -75,7 +74,7 @@ private val codePoint = builtinMethod("codePoint") fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.charCodeAt")
-private val codeUnit = builtinMethod("codeUnit") fn@ { thisArg, args ->
+private val codeUnit = method("codeUnit") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val index = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -91,7 +90,7 @@ private val codeUnit = builtinMethod("codeUnit") fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.concat")
-private val concatenate = builtinMethod("concatenate") fn@ { thisArg, args ->
+private val concatenate = method("concatenate") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val builder = StringBuilder(string)
     for (arg in args) {
@@ -104,7 +103,7 @@ private val concatenate = builtinMethod("concatenate") fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.endsWith")
-private val endsWith = builtinMethod("endsWith", 1u) fn@ { thisArg, args ->
+private val endsWith = method("endsWith", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
     val stringEnd = args.getOptional(1)
@@ -119,17 +118,17 @@ private val endsWith = builtinMethod("endsWith", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.search")
-private val findMatchedIndex = builtinMethod("findMatchedIndex", 1u) fn@ { thisArg, args ->
+private val findMatchedIndex = method("findMatchedIndex", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0] // intentionally does not coerce to regular expressions
     val findMatchedIndexMethod = generalArg.getMethod(SymbolType.WellKnown.findMatchedIndex)
         .orReturn { return@fn it }
         ?: return@fn unexpectedType(generalArg, "a value that has Symbol.findMatchedIndex method")
-    findMatchedIndexMethod._call(generalArg, listOf(stringArg))
+    findMatchedIndexMethod.call(generalArg, listOf(stringArg))
 }
 
 @EsSpec("String.prototype.includes")
-private val stringIncludes = builtinMethod("includes", 1u) fn@ { thisArg, args ->
+private val stringIncludes = method("includes", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
     val startIndex = args.getOptional(1)
@@ -142,7 +141,7 @@ private val stringIncludes = builtinMethod("includes", 1u) fn@ { thisArg, args -
 }
 
 @EsSpec("String.prototype.indexOf")
-private val stringIndexOf = builtinMethod("indexOf", 1u) fn@ { thisArg, args ->
+private val stringIndexOf = method("indexOf", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
     val startIndex = args.getOptional(1)
@@ -155,7 +154,7 @@ private val stringIndexOf = builtinMethod("indexOf", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.isWellFormed")
-private val isWellFormed = builtinMethod("isWellFormed") fn@ { thisArg, args ->
+private val isWellFormed = method("isWellFormed") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     for (codePoint in string.codePoints()) {
         if (codePoint.isUnpairedSurrogate()) return@fn BooleanType.FALSE.toNormal()
@@ -164,12 +163,12 @@ private val isWellFormed = builtinMethod("isWellFormed") fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype[@@iterator]")
-private val stringIterator = builtinMethod(SymbolType.WellKnown.iterator) fn@ { thisArg, args ->
+private val stringIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     TODO()
 }
 
-private val stringLastIndexOf = builtinMethod("lastIndexOf", 1u) fn@ { thisArg, args ->
+private val stringLastIndexOf = method("lastIndexOf", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
     val stringEnd = args.getOptional(1)
@@ -185,7 +184,7 @@ private val stringLastIndexOf = builtinMethod("lastIndexOf", 1u) fn@ { thisArg, 
  * See [22.1.4.1 length](https://tc39.es/ecma262/multipage/text-processing.html#sec-properties-of-string-instances-length).
  */
 @EsSpec("-")
-private val stringLengthGetter = AccessorProperty.builtinGetter("length") fn@ {
+private val stringLengthGetter = getter("length") fn@ {
     val string = it.requireToBeString { return@fn it }
     string.length
         .languageValue
@@ -193,34 +192,34 @@ private val stringLengthGetter = AccessorProperty.builtinGetter("length") fn@ {
 }
 
 @EsSpec("String.prototype.localeCompare")
-private val localeCompare = builtinMethod("localeCompare", 1u) fn@ { thisArg, args ->
+private val localeCompare = method("localeCompare", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val that = args[0].requireToBeString { return@fn it }
     TODO()
 }
 
 @EsSpec("String.prototype.match")
-private val matchOne = builtinMethod("matchOne", 1u) fn@ { thisArg, args ->
+private val matchOne = method("matchOne", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0]
     val matchMethod = generalArg.getMethod(SymbolType.WellKnown.match)
         .orReturn { return@fn it }
         ?: return@fn unexpectedType(generalArg, "a value that has Symbol.match method")
-    matchMethod._call(generalArg, listOf(stringArg, BooleanType.FALSE))
+    matchMethod.call(generalArg, listOf(stringArg, BooleanType.FALSE))
 }
 
 @EsSpec("String.prototype.matchAll")
-private val matchAll = builtinMethod("matchAll", 1u) fn@ { thisArg, args ->
+private val matchAll = method("matchAll", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0]
     val matchMethod = generalArg.getMethod(SymbolType.WellKnown.match)
         .orReturn { return@fn it }
         ?: return@fn unexpectedType(generalArg, "a value that has Symbol.match method")
-    matchMethod._call(generalArg, listOf(stringArg, BooleanType.TRUE))
+    matchMethod.call(generalArg, listOf(stringArg, BooleanType.TRUE))
 }
 
 @EsSpec("String.prototype.normalize")
-private val normalize = builtinMethod("normalize") fn@ { thisArg, args ->
+private val normalize = method("normalize") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val form = args.getOptional(1)
         ?.requireToBeString { return@fn it }
@@ -232,11 +231,11 @@ private val normalize = builtinMethod("normalize") fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.padEnd")
-private val padEnd = builtinMethod("padEnd", 1u) fn@ { thisArg, args ->
+private val padEnd = method("padEnd", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val maxLength = args[0]
         .requireToBe<NumberType> { return@fn it }
-        .requireToBeIntWithin(Ranges.unsignedInteger, "maxLength") { return@fn it }
+        .requireToBeIntWithin(NamedRange.unsignedInteger, "maxLength") { return@fn it }
     val fillString = args.getOptional(1)
         ?.requireToBeString { return@fn it }
         ?: " "
@@ -257,11 +256,11 @@ private val padEnd = builtinMethod("padEnd", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.padStart")
-private val padStart = builtinMethod("padStart", 1u) fn@ { thisArg, args ->
+private val padStart = method("padStart", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val maxLength = args[0]
         .requireToBe<NumberType> { return@fn it }
-        .requireToBeIntWithin(Ranges.unsignedInteger, "maxLength") { return@fn it }
+        .requireToBeIntWithin(NamedRange.unsignedInteger, "maxLength") { return@fn it }
     val fillString = args.getOptional(1)
         ?.requireToBeString { return@fn it }
         ?: " "
@@ -282,7 +281,7 @@ private val padStart = builtinMethod("padStart", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.repeat")
-private val repeat = builtinMethod("repeat", 1u) fn@ { thisArg, args ->
+private val repeat = method("repeat", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val count = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -294,7 +293,7 @@ private val repeat = builtinMethod("repeat", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.replaceAll")
-private val replaceAll = builtinMethod("replaceAll", 2u) fn@ { thisArg, args ->
+private val replaceAll = method("replaceAll", 2u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val string = stringArg.value
     val new = args[1]
@@ -306,7 +305,7 @@ private val replaceAll = builtinMethod("replaceAll", 2u) fn@ { thisArg, args ->
                 ?.let { replaceMethod ->
                     checkStringReplaceNewArg(new)
                         .orReturn { return@fn it }
-                    replaceMethod._call(value, listOf(stringArg, new, BooleanType.TRUE))
+                    replaceMethod.call(value, listOf(stringArg, new, BooleanType.TRUE))
                 }
                 ?: unexpectedType(value, "${generalizedDescriptionOf<StringType>()} or a value that has Symbol.replace method")
         )
@@ -345,7 +344,7 @@ private val replaceAll = builtinMethod("replaceAll", 2u) fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.replace")
-private val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args ->
+private val replaceFirst = method("replaceFirst", 2u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val string = stringArg.value
     val new = args[1]
@@ -357,7 +356,7 @@ private val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args
                 ?.let { replaceMethod ->
                     checkStringReplaceNewArg(new)
                         .orReturn { return@fn it }
-                    replaceMethod._call(value, listOf(stringArg, new, BooleanType.FALSE))
+                    replaceMethod.call(value, listOf(stringArg, new, BooleanType.FALSE))
                 }
                 ?: unexpectedType(value, "${generalizedDescriptionOf<StringType>()} or a value that has Symbol.replace method")
         )
@@ -385,7 +384,7 @@ private val replaceFirst = builtinMethod("replaceFirst", 2u) fn@ { thisArg, args
 }
 
 @EsSpec("String.prototype.slice")
-private val stringSlice = builtinMethod("slice", 1u) fn@{ thisArg, args ->
+private val stringSlice = method("slice", 1u) fn@{ thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val length = string.length
     val unsafeStart = args[0]
@@ -428,7 +427,7 @@ private val stringSlice = builtinMethod("slice", 1u) fn@{ thisArg, args ->
 // }
 
 @EsSpec("String.prototype.split")
-private val split = builtinMethod("split") fn@ { thisArg, args ->
+private val split = method("split") fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val string = stringArg.value
     val limit = args.getOptional(1)
@@ -448,7 +447,7 @@ private val split = builtinMethod("split") fn@ { thisArg, args ->
                 ?: return@fn unexpectedType(value, "a value that has Symbol.split method")
             checkSplitLimitArg(limit)
                 .orReturn { return@fn it }
-            return@fn splitMethod._call(value, listOf(stringArg, limit ?: NullType))
+            return@fn splitMethod.call(value, listOf(stringArg, limit ?: NullType))
         }
     }
     val separator = separatorArg.value
@@ -468,7 +467,7 @@ private val split = builtinMethod("split") fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.startsWith")
-private val startsWith = builtinMethod("startsWith", 1u) fn@ { thisArg, args ->
+private val startsWith = method("startsWith", 1u) fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     val search = args[0].requireToBeString { return@fn it }
     val startIndex = args.getOptional(1)
@@ -481,19 +480,19 @@ private val startsWith = builtinMethod("startsWith", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.toLocaleLowerCase")
-private val toLocaleLowerCase = builtinMethod("toLocaleLowerCase") fn@ { thisArg, _ ->
+private val toLocaleLowerCase = method("toLocaleLowerCase") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     TODO()
 }
 
 @EsSpec("String.prototype.toLocaleUpperCase")
-private val toLocaleUpperCase = builtinMethod("toLocaleUpperCase") fn@ { thisArg, _ ->
+private val toLocaleUpperCase = method("toLocaleUpperCase") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     TODO()
 }
 
 @EsSpec("String.prototype.toLowerCase")
-private val toLowerCase = builtinMethod("toLowerCase") fn@ { thisArg, args ->
+private val toLowerCase = method("toLowerCase") fn@ { thisArg, args ->
     val string = thisArg.requireToBeString { return@fn it }
     string.lowercase()
         .languageValue
@@ -501,13 +500,13 @@ private val toLowerCase = builtinMethod("toLowerCase") fn@ { thisArg, args ->
 }
 
 @EsSpec("String.prototype.toString")
-private val stringToString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
+private val stringToString = method(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
     thisArg.requireToBe<StringType> { return@fn it }
     thisArg.toNormal()
 }
 
 @EsSpec("String.prototype.toUpperCase")
-private val toUpperCase = builtinMethod("toUpperCase") fn@ { thisArg, _ ->
+private val toUpperCase = method("toUpperCase") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     string.uppercase()
         .languageValue
@@ -515,7 +514,7 @@ private val toUpperCase = builtinMethod("toUpperCase") fn@ { thisArg, _ ->
 }
 
 @EsSpec("String.prototype.toWellFormed")
-private val toWellFormed = builtinMethod("toWellFormed") fn@ { thisArg, _ ->
+private val toWellFormed = method("toWellFormed") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     val builder = StringBuilder()
     for (codePoint in string.codePoints()) {
@@ -528,7 +527,7 @@ private val toWellFormed = builtinMethod("toWellFormed") fn@ { thisArg, _ ->
 }
 
 @EsSpec("String.prototype.trim")
-private val trim = builtinMethod("trim") fn@ { thisArg, _ ->
+private val trim = method("trim") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     string.trim()
         .languageValue
@@ -536,7 +535,7 @@ private val trim = builtinMethod("trim") fn@ { thisArg, _ ->
 }
 
 @EsSpec("String.prototype.trimEnd")
-private val trimEnd = builtinMethod("trimEnd") fn@ { thisArg, _ ->
+private val trimEnd = method("trimEnd") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     string.trimEnd()
         .languageValue
@@ -544,7 +543,7 @@ private val trimEnd = builtinMethod("trimEnd") fn@ { thisArg, _ ->
 }
 
 @EsSpec("String.prototype.trimStart")
-private val trimStart = builtinMethod("trimStart") fn@ { thisArg, _ ->
+private val trimStart = method("trimStart") fn@ { thisArg, _ ->
     val string = thisArg.requireToBeString { return@fn it }
     string.trimStart()
         .languageValue

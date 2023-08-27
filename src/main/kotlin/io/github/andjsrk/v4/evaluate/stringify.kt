@@ -22,7 +22,7 @@ internal fun stringify(value: LanguageType): MaybeAbrupt<StringType> {
             val toStringMethod = value.getMethod(SymbolType.WellKnown.toString)
                 .orReturn { return it }
                 ?: return throwError(TypeErrorKind.CANNOT_CONVERT_TO_STRING)
-            val string = toStringMethod._call(value, emptyList())
+            val string = toStringMethod.call(value, emptyList())
                 .orReturn { return it }
                 .requireToBe<StringType> { return it }
             string

@@ -6,13 +6,12 @@ import io.github.andjsrk.v4.evaluate.builtin.Object
 import io.github.andjsrk.v4.evaluate.builtin.accessor
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 
 /**
  * Note that `Error.prototype.name` has been changed to a getter that returns the object's class' name.
  */
 @EsSpec("Error.prototype.name")
-val errorNameGetter = AccessorProperty.builtinGetter("name") fn@ {
+val errorNameGetter = getter("name") fn@ {
     val error = it.requireToBe<ObjectType> { return@fn it }
     error.findName().normalizeToNormal()
 }

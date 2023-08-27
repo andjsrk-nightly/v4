@@ -20,13 +20,12 @@ sealed class FunctionType(
 ) {
     val realm = runningExecutionContext.realm
     abstract val isArrow: Boolean
-    @EsSpec("[[Call]]")
-    abstract fun _call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt
-    // TODO: throw an error if thisArg is not provided but the function depends on it
+    @EsSpec("Call") // the method implements Call rather than [[Call]] since additional type check is no needed
+    abstract fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt
 }
 
 internal inline fun <reified R: LanguageType> FunctionType.callAndRequireToBe(thisArg: LanguageType?, args: List<LanguageType>, rtn: AbruptReturnLambda) =
-    _call(thisArg, args)
+    call(thisArg, args)
         .orReturn(rtn)
         .requireToBe<R>(rtn)
 
@@ -36,7 +35,7 @@ internal inline fun FunctionType.callCollectionCallback(
     collection: LanguageType,
     rtn: AbruptReturnLambda,
 ) =
-    _call(null, listOf(element, index.languageValue, collection))
+    call(null, listOf(element, index.languageValue, collection))
         .orReturn(rtn)
 
 internal inline fun FunctionType.callPredicate(

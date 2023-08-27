@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
 
 @EsSpec("Object.defineProperties")
-private val defineProperties = BuiltinFunctionType("defineProperties", 2u) fn@ { _, args ->
+private val defineProperties = functionWithoutThis("defineProperties", 2u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val props = args[1].requireToBe<ObjectType> { return@fn it }
     // descriptors should not be a Map, because each descriptor can cause an error when define the property
@@ -29,7 +29,7 @@ private val defineProperties = BuiltinFunctionType("defineProperties", 2u) fn@ {
 }
 
 @EsSpec("Reflect.defineProperty")
-private val defineProperty = BuiltinFunctionType("defineProperty", 3u) fn@ { _, args ->
+private val defineProperty = functionWithoutThis("defineProperty", 3u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val key = args[1].requireToBe<PropertyKey> { return@fn it }
     val descObj = args[2].requireToBe<ObjectType> { return@fn it }
@@ -40,13 +40,13 @@ private val defineProperty = BuiltinFunctionType("defineProperty", 3u) fn@ { _, 
     normalNull
 }
 
-private val getOwnerClass = BuiltinFunctionType("getOwnerClass", 1u) fn@ { _, args ->
+private val getOwnerClass = functionWithoutThis("getOwnerClass", 1u) fn@ { args ->
     val proto = args[0].requireToBe<PrototypeObjectType> { return@fn it }
     proto.ownerClass.toNormal()
 }
 
 @EsSpec("Reflect.ownKeys")
-private val getOwnKeys = BuiltinFunctionType("getOwnKeys", 1u) fn@ { _, args ->
+private val getOwnKeys = functionWithoutThis("getOwnKeys", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     ImmutableArrayType.from(
         obj._ownPropertyKeys()
@@ -55,7 +55,7 @@ private val getOwnKeys = BuiltinFunctionType("getOwnKeys", 1u) fn@ { _, args ->
 }
 
 @EsSpec("Reflect.getOwnPropertyDescriptor")
-private val getOwnPropertyDescriptor = BuiltinFunctionType("getOwnPropertyDescriptor", 2u) fn@ { _, args ->
+private val getOwnPropertyDescriptor = functionWithoutThis("getOwnPropertyDescriptor", 2u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val key = args[1].requireToBe<PropertyKey> { return@fn it }
     val desc = obj._getOwnProperty(key)
@@ -63,7 +63,7 @@ private val getOwnPropertyDescriptor = BuiltinFunctionType("getOwnPropertyDescri
 }
 
 @EsSpec("Object.getOwnPropertyDescriptors")
-private val getOwnPropertyDescriptors = BuiltinFunctionType("getOwnPropertyDescriptors", 1u) fn@ { _, args ->
+private val getOwnPropertyDescriptors = functionWithoutThis("getOwnPropertyDescriptors", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val res = ObjectType.createNormal()
     for ((key, desc) in obj.ownPropertyEntries()) res.createDataProperty(key, desc.toDescriptorObject())
@@ -71,7 +71,7 @@ private val getOwnPropertyDescriptors = BuiltinFunctionType("getOwnPropertyDescr
 }
 
 @EsSpec("Object.getOwnPropertyNames")
-private val getOwnStringKeys = BuiltinFunctionType("getOwnStringKeys", 1u) fn@ { _, args ->
+private val getOwnStringKeys = functionWithoutThis("getOwnStringKeys", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     ImmutableArrayType.from(
         obj._ownPropertyKeys().filterIsInstance<StringType>()
@@ -80,7 +80,7 @@ private val getOwnStringKeys = BuiltinFunctionType("getOwnStringKeys", 1u) fn@ {
 }
 
 @EsSpec("Object.getOwnPropertySymbols")
-private val getOwnSymbolKeys = BuiltinFunctionType("getOwnSymbolKeys", 1u) fn@ { _, args ->
+private val getOwnSymbolKeys = functionWithoutThis("getOwnSymbolKeys", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     ImmutableArrayType.from(
         obj._ownPropertyKeys().filterIsInstance<SymbolType>()
@@ -89,13 +89,13 @@ private val getOwnSymbolKeys = BuiltinFunctionType("getOwnSymbolKeys", 1u) fn@ {
 }
 
 @EsSpec("Object.getPrototypeOf")
-private val getPrototype = BuiltinFunctionType("getPrototype", 1u) fn@ { _, args ->
+private val getPrototype = functionWithoutThis("getPrototype", 1u) fn@ { args ->
     val value = args[0]
     value.prototype.normalizeToNormal()
 }
 
 @EsSpec("Object.prototype.propertyIsEnumerable")
-private val isEnumerableProperty = BuiltinFunctionType("isEnumerableProperty", 2u) fn@{ _, args ->
+private val isEnumerableProperty = functionWithoutThis("isEnumerableProperty", 2u) fn@{ args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val key = args[1].requireToBe<PropertyKey> { return@fn it }
     val desc = obj._getOwnProperty(key) ?: return@fn BooleanType.FALSE.toNormal()
@@ -105,7 +105,7 @@ private val isEnumerableProperty = BuiltinFunctionType("isEnumerableProperty", 2
 }
 
 @EsSpec("Reflect.isExtensible")
-private val isExtensible = BuiltinFunctionType("isExtensible", 1u) fn@ { _, args ->
+private val isExtensible = functionWithoutThis("isExtensible", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     obj.extensible
         .languageValue
@@ -113,7 +113,7 @@ private val isExtensible = BuiltinFunctionType("isExtensible", 1u) fn@ { _, args
 }
 
 @EsSpec("Reflect.preventExtensions")
-private val preventExtensions = BuiltinFunctionType("preventExtensions", 1u) fn@ { _, args ->
+private val preventExtensions = functionWithoutThis("preventExtensions", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     obj.extensible = false
     normalNull

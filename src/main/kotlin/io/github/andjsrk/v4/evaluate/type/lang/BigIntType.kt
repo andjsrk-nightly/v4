@@ -18,7 +18,7 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
             .languageValue
     override fun pow(other: BigIntType) =
         when {
-            other.value < BigInteger.ZERO -> throwError(RangeErrorKind.MUST_BE_POSITIVE)
+            other.value < BigInteger.ZERO -> throwError(RangeErrorKind.NUMBER_MUST_BE, "positive")
             else -> value.operateWithInt(BigInteger::pow, other.value)
                 .languageValue
                 .toNormal()

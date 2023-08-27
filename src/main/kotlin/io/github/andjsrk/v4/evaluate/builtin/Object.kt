@@ -3,10 +3,9 @@ package io.github.andjsrk.v4.evaluate.builtin
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 import io.github.andjsrk.v4.evaluate.type.toNormal
 
-private val objectAssign = BuiltinFunctionType("assign", 2u) fn@ { _, args ->
+private val objectAssign = functionWithoutThis("assign", 2u) fn@ { args ->
     val target = args[0].requireToBe<ObjectType> { return@fn it }
     val sources = args
         .drop(1)
@@ -28,7 +27,7 @@ private val objectAssign = BuiltinFunctionType("assign", 2u) fn@ { _, args ->
     target.toNormal()
 }
 
-private val objectEntries = BuiltinFunctionType("entries", 1u) fn@ { _, args ->
+private val objectEntries = functionWithoutThis("entries", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val entries = obj.ownEnumerableStringKeyEntries()
         .orReturn { return@fn it }
@@ -38,7 +37,7 @@ private val objectEntries = BuiltinFunctionType("entries", 1u) fn@ { _, args ->
 }
 
 @EsSpec("Object.freeze")
-private val freeze = BuiltinFunctionType("freeze", 1u) fn@ { _, args ->
+private val freeze = functionWithoutThis("freeze", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     obj.setImmutabilityLevel(ObjectImmutabilityLevel.FROZEN)
         .orReturn { return@fn it }
@@ -46,14 +45,14 @@ private val freeze = BuiltinFunctionType("freeze", 1u) fn@ { _, args ->
 }
 
 @EsSpec("Object.fromEntries")
-private val fromEntries = BuiltinFunctionType("fromEntries", 1u) { _, args ->
+private val fromEntries = functionWithoutThis("fromEntries", 1u) { args ->
     val obj = ObjectType.createNormal()
     TODO()
 }
 
 // TODO: rename the function
 @EsSpec("Object.keys")
-private val getOwnStringKeys = BuiltinFunctionType("getOwnStringKeys", 1u) fn@ { _, args ->
+private val getOwnStringKeys = functionWithoutThis("getOwnStringKeys", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     // TODO: migrate to generator
     ImmutableArrayType.from(
@@ -64,7 +63,7 @@ private val getOwnStringKeys = BuiltinFunctionType("getOwnStringKeys", 1u) fn@ {
 
 // TODO: rename the function
 @EsSpec("Object.values")
-private val getOwnStringKeyValues = BuiltinFunctionType("getOwnStringKeyValues", 1u) fn@ { _, args ->
+private val getOwnStringKeyValues = functionWithoutThis("getOwnStringKeyValues", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val values = obj.ownEnumerableStringPropertyKeyValues()
         .orReturn { return@fn it }
@@ -74,15 +73,15 @@ private val getOwnStringKeyValues = BuiltinFunctionType("getOwnStringKeyValues",
 }
 
 @EsSpec("Object.is")
-private val objectIs = BuiltinFunctionType("is", 2u) { _, args ->
+private val objectIs = functionWithoutThis("is", 2u) { args ->
     sameValue(args[0], args[1])
         .languageValue
         .toNormal()
 }
 
-private val run = builtinMethod("run", 1u) fn@ { thisArg, args ->
+private val run = method("run", 1u) fn@ { thisArg, args ->
     val func = args[0].requireToBe<FunctionType> { return@fn it }
-    func._call(thisArg, listOf(thisArg))
+    func.call(thisArg, listOf(thisArg))
 }
 
 @EsSpec("%Object%")

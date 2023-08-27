@@ -5,12 +5,11 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import java.math.BigInteger
 
 @EsSpec("BigInt(value)")
-private val bigintFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
+private val bigintFrom = functionWithoutThis("from", 1u) fn@ { args ->
     when (val value = args[0]) {
         is NumberType -> return@fn value.toBigInt()
         is StringType -> {
@@ -33,7 +32,7 @@ private val bigintFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
         .toNormal()
 }
 
-private val bigintAsIntN = builtinMethod("asIntN", 1u) fn@ { thisArg, args ->
+private val bigintAsIntN = method("asIntN", 1u) fn@ { thisArg, args ->
     val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
     val bits = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -46,7 +45,7 @@ private val bigintAsIntN = builtinMethod("asIntN", 1u) fn@ { thisArg, args ->
         .toNormal()
 }
 
-private val bigintAsUintN = builtinMethod("asUintN", 1u) fn@ { thisArg, args ->
+private val bigintAsUintN = method("asUintN", 1u) fn@ { thisArg, args ->
     val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
     val bits = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -57,7 +56,7 @@ private val bigintAsUintN = builtinMethod("asUintN", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("BigInt.prototype.toString")
-private val bigintToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
+private val bigintToRadix = method("toRadix", 1u) fn@ { thisArg, args ->
     val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
     val radix = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -68,7 +67,7 @@ private val bigintToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("BigInt.prototype.toString") // radix is fixed to 10
-private val bigintToString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, args ->
+private val bigintToString = method(SymbolType.WellKnown.toString) fn@ { thisArg, args ->
     val bigint = thisArg.requireToBe<BigIntType> { return@fn it }
     bigint.toString(10)
         .toNormal()

@@ -4,13 +4,12 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.not
 import java.math.BigInteger
 
 @EsSpec("Boolean(value)")
-private val booleanFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
+private val booleanFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val value = args[0]
     when (value) {
         NullType -> false
@@ -25,7 +24,7 @@ private val booleanFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
         .toNormal()
 }
 
-private val booleanToString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
+private val booleanToString = method(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
     val boolean = thisArg.requireToBe<BooleanType> { return@fn it }
     boolean.value.toString()
         .languageValue

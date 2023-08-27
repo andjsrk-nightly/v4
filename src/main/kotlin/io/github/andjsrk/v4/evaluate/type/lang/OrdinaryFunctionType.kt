@@ -32,7 +32,7 @@ class OrdinaryFunctionType(
     },
 ) {
     override val isArrow = thisMode == ThisMode.ARROW
-    override fun _call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
+    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
         val calleeContext = prepareForOrdinaryCall()
         bindThisInCall(calleeContext, thisArg)
         val res = evaluateBody(args)

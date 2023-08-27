@@ -6,28 +6,28 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
+import io.github.andjsrk.v4.not
 
-private val immutableArrayFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
+private val immutableArrayFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val arrayLike = args[0]
     val mapFunc = args.getOptional(1)
         ?.requireToBe<FunctionType> { return@fn it }
     TODO()
 }
 
-private val isArray = BuiltinFunctionType("isArray", 1u) fn@ { _, args ->
+private val isArray = functionWithoutThis("isArray", 1u) fn@ { args ->
     val value = args[0]
-    (value is ArrayType)
+    value.isAnyArray()
         .languageValue
         .toNormal()
 }
 
-private val immutableArrayOf = BuiltinFunctionType("of") fn@ { _, args ->
+private val immutableArrayOf = functionWithoutThis("of") fn@ { args ->
     ImmutableArrayType(args)
         .toNormal()
 }
 
-private val immutableArrayAddAt = builtinMethod("addAt", 1u) fn@ { thisArg, args ->
+private val immutableArrayAddAt = method("addAt", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val size = arr.array.size
     val index = args[0]
@@ -40,19 +40,19 @@ private val immutableArrayAddAt = builtinMethod("addAt", 1u) fn@ { thisArg, args
     new.toNormal()
 }
 
-private val immutableArrayAddFirst = builtinMethod("addFirst") fn@ { thisArg, args ->
+private val immutableArrayAddFirst = method("addFirst") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val new = ImmutableArrayType.from(args + arr.array)
     new.toNormal()
 }
 
-private val immutableArrayAddLast = builtinMethod("addLast") fn@ { thisArg, args ->
+private val immutableArrayAddLast = method("addLast") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val new = ImmutableArrayType.from(arr.array + args)
     new.toNormal()
 }
 
-internal val any = builtinMethod("any") fn@ { thisArg, args ->
+internal val any = method("any") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
@@ -75,7 +75,7 @@ private inline fun <T> List<T>.anyIndexed(predicate: (Int, T) -> Boolean): Boole
 }
 
 @EsSpec("Array.prototype.at")
-internal val arrayAt = builtinMethod("at", 1u) fn@ { thisArg, args ->
+internal val arrayAt = method("at", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -86,7 +86,7 @@ internal val arrayAt = builtinMethod("at", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("Array.prototype.concat")
-private val immutableArrayConcatenate = builtinMethod("concatenate") fn@ { thisArg, args ->
+private val immutableArrayConcatenate = method("concatenate") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val res = arr.array.toMutableList()
     for (item in args) {
@@ -98,19 +98,19 @@ private val immutableArrayConcatenate = builtinMethod("concatenate") fn@ { thisA
 }
 
 @EsSpec("Array.prototype.copyWithin")
-private val copyWithin = builtinMethod("copyWithin") fn@ { thisArg, args ->
+private val copyWithin = method("copyWithin") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     TODO()
 }
 
 @EsSpec("Array.prototype.entries")
-internal val arrayEntries = builtinMethod("entries") fn@ { thisArg, args ->
+internal val arrayEntries = method("entries") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     TODO()
 }
 
 @EsSpec("Array.prototype.every")
-internal val arrayEvery = builtinMethod("every", 1u) fn@ { thisArg, args ->
+internal val arrayEvery = method("every", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     arr.array.forEachIndexed { i, it ->
@@ -122,7 +122,7 @@ internal val arrayEvery = builtinMethod("every", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("Array.prototype.filter")
-private val immutableArrayFilter = builtinMethod("filter", 1u) fn@ { thisArg, args ->
+private val immutableArrayFilter = method("filter", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val res = arr.array.filterIndexed { i, it ->
@@ -133,7 +133,7 @@ private val immutableArrayFilter = builtinMethod("filter", 1u) fn@ { thisArg, ar
 }
 
 @EsSpec("Array.prototype.find")
-internal val arrayFirst = builtinMethod("first") fn@ { thisArg, args ->
+internal val arrayFirst = method("first") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
@@ -154,7 +154,7 @@ private inline fun <T> Iterable<T>.firstIndexed(predicate: (Int, T) -> Boolean):
 }
 
 @EsSpec("Array.prototype.findIndex")
-internal val arrayFirstIndex = builtinMethod("firstIndex") fn@ { thisArg, args ->
+internal val arrayFirstIndex = method("firstIndex") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
@@ -182,7 +182,7 @@ private inline fun <T> Iterable<T>.indexOfFirstIndexed(predicate: (Int, T) -> Bo
 }
 
 @EsSpec("Array.prototype.flat")
-private val immutableArrayFlat = builtinMethod("flat") fn@ { thisArg, args ->
+private val immutableArrayFlat = method("flat") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val depth = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -199,7 +199,7 @@ private fun addFlattened(target: MutableList<LanguageType>, source: LanguageType
 }
 
 @EsSpec("Array.prototype.flatMap")
-private val immutableArrayFlatMap = builtinMethod("flatMap", 1u) fn@ { thisArg, args ->
+private val immutableArrayFlatMap = method("flatMap", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val new = ImmutableArrayType.from(
@@ -213,7 +213,7 @@ private val immutableArrayFlatMap = builtinMethod("flatMap", 1u) fn@ { thisArg, 
 }
 
 @EsSpec("Array.prototype.forEach")
-internal val arrayForEach = builtinMethod("forEach", 1u) fn@ { thisArg, args ->
+internal val arrayForEach = method("forEach", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     arr.array.forEachIndexed { i, it ->
@@ -223,7 +223,7 @@ internal val arrayForEach = builtinMethod("forEach", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("Array.prototype.includes")
-internal val arrayIncludes = builtinMethod("includes", 1u) fn@ { thisArg, args ->
+internal val arrayIncludes = method("includes", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val value = args[0]
     val startIndex = args.getOptional(1)
@@ -239,7 +239,7 @@ internal val arrayIncludes = builtinMethod("includes", 1u) fn@ { thisArg, args -
 }
 
 @EsSpec("Array.prototype.indexOf")
-internal val arrayIndexOf = builtinMethod("indexOf", 1u) fn@ { thisArg, args ->
+internal val arrayIndexOf = method("indexOf", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val value = args[0]
     val startIndex = args.getOptional(1)
@@ -254,7 +254,7 @@ internal val arrayIndexOf = builtinMethod("indexOf", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("Array.prototype.join")
-internal val arrayJoin = builtinMethod("join") fn@ { thisArg, args ->
+internal val arrayJoin = method("join") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val separator = args.getOptional(0)
         ?.requireToBeString { return@fn it }
@@ -272,13 +272,13 @@ internal val arrayJoin = builtinMethod("join") fn@ { thisArg, args ->
 }
 
 @EsSpec("Array.prototype.keys")
-private val keys = builtinMethod("keys") fn@ { thisArg, args ->
+private val keys = method("keys") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     TODO()
 }
 
 @EsSpec("Array.prototype.findLast")
-internal val arrayLast = builtinMethod("last") fn@ { thisArg, args ->
+internal val arrayLast = method("last") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
@@ -290,7 +290,7 @@ internal val arrayLast = builtinMethod("last") fn@ { thisArg, args ->
 }
 
 @EsSpec("Array.prototype.findLastIndex")
-internal val arrayLastIndex = builtinMethod("lastIndex") fn@ { thisArg, args ->
+internal val arrayLastIndex = method("lastIndex") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val index = arr.array.asReversed().indexOfFirstIndexed { i, it ->
@@ -302,7 +302,7 @@ internal val arrayLastIndex = builtinMethod("lastIndex") fn@ { thisArg, args ->
 }
 
 @EsSpec("Array.prototype.map")
-private val immutableArrayMap = builtinMethod("map", 1u) fn@ { thisArg, args ->
+private val immutableArrayMap = method("map", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val res = arr.array.mapIndexed { i, it ->
@@ -319,9 +319,9 @@ private inline fun FunctionType.callReduceCallback(
     collection: LanguageType,
     rtn: AbruptReturnLambda,
 ) =
-    _call(null, listOf(accumulator, element, index.languageValue, collection))
+    call(null, listOf(accumulator, element, index.languageValue, collection))
         .orReturn(rtn)
-internal val reduceFromLeft = builtinMethod("reduceFromLeft", 1u) fn@ { thisArg, args ->
+internal val reduceFromLeft = method("reduceFromLeft", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val initial = args.getOrNull(1) // must not use `.getOptional()` because it will normalize null
@@ -335,7 +335,7 @@ internal val reduceFromLeft = builtinMethod("reduceFromLeft", 1u) fn@ { thisArg,
     res.toNormal()
 }
 
-internal val reduceFromRight = builtinMethod("reduceFromRight", 1u) fn@ { thisArg, args ->
+internal val reduceFromRight = method("reduceFromRight", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val initial = args.getOrNull(1) // must not use `.getOptional()` because it will normalize null
@@ -349,7 +349,7 @@ internal val reduceFromRight = builtinMethod("reduceFromRight", 1u) fn@ { thisAr
     res.toNormal()
 }
 
-private val immutableArrayRemoveAt = builtinMethod("removeAt", 1u) fn@ { thisArg, args ->
+private val immutableArrayRemoveAt = method("removeAt", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -364,7 +364,7 @@ private val immutableArrayRemoveAt = builtinMethod("removeAt", 1u) fn@ { thisArg
     res.toNormal()
 }
 
-private val immutableArrayRemoveFirst = builtinMethod("removeFirst") fn@ { thisArg, args ->
+private val immutableArrayRemoveFirst = method("removeFirst") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val count = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -375,7 +375,7 @@ private val immutableArrayRemoveFirst = builtinMethod("removeFirst") fn@ { thisA
     new.toNormal()
 }
 
-private val immutableArrayRemoveLast = builtinMethod("removeLast") fn@ { thisArg, args ->
+private val immutableArrayRemoveLast = method("removeLast") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val count = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -387,14 +387,14 @@ private val immutableArrayRemoveLast = builtinMethod("removeLast") fn@ { thisArg
 }
 
 @EsSpec("Array.prototype.toReversed")
-private val immutableArrayReverse = builtinMethod("reverse") fn@ { thisArg, args ->
+private val immutableArrayReverse = method("reverse") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val new = ImmutableArrayType.from(arr.array.reversed())
     new.toNormal()
 }
 
 @EsSpec("Array.prototype.slice")
-private val immutableArraySlice = builtinMethod("slice", 1u) fn@ { thisArg, args ->
+private val immutableArraySlice = method("slice", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val size = arr.array.size
     val unsafeStart = args[0]
@@ -419,7 +419,7 @@ private val immutableArraySlice = builtinMethod("slice", 1u) fn@ { thisArg, args
 }
 
 @EsSpec("Array.prototype.toSorted")
-private val immutableArraySort = builtinMethod("sort") fn@ { thisArg, args ->
+private val immutableArraySort = method("sort") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val compareFn = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
@@ -428,7 +428,7 @@ private val immutableArraySort = builtinMethod("sort") fn@ { thisArg, args ->
         ImmutableArrayType.from(arr.array.sortedWith(comp))
     }
 }
-internal val sortDefaultCompareFn = BuiltinFunctionType("compareFn", 2u) { _, args ->
+internal val sortDefaultCompareFn = functionWithoutThis("compareFn", 2u) { args ->
     val a = args[0]
     val b = args[1]
     when {
@@ -447,7 +447,7 @@ internal inline fun generalSort(
     var abrupt: Completion.Abrupt? = null
     try {
         res = sort { a, b ->
-            val compareRes = compareFn._call(null, listOf(a, b))
+            val compareRes = compareFn.call(null, listOf(a, b))
                 .orReturn {
                     abrupt = it
                     throw SortBreakException()
@@ -474,7 +474,7 @@ internal inline fun generalSort(
 internal class SortBreakException: Exception()
 
 @EsSpec("Array.prototype.with")
-private val immutableArraySet = builtinMethod("set", 2u) fn@ { thisArg, args ->
+private val immutableArraySet = method("set", 2u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -491,7 +491,7 @@ private val immutableArraySet = builtinMethod("set", 2u) fn@ { thisArg, args ->
  * See [23.1.4.1 length](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-properties-of-array-instances-length).
  */
 @EsSpec("-")
-internal val arrayLengthGetter = AccessorProperty.builtinGetter("length") fn@ { thisArg ->
+internal val arrayLengthGetter = getter("length") fn@ { thisArg ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     arr.array.size
         .languageValue
@@ -499,7 +499,7 @@ internal val arrayLengthGetter = AccessorProperty.builtinGetter("length") fn@ { 
 }
 
 @EsSpec("%Array%")
-val Array = BuiltinClassType(
+val Array: BuiltinClassType = BuiltinClassType(
     "Array",
     Object,
     mutableMapOf(
@@ -547,7 +547,7 @@ val Array = BuiltinClassType(
             ?.requireToBe<FunctionType> { return@ctor it }
         val arr = ImmutableArrayType(
             List(size) { i ->
-                mapFn?._call(null, listOf(i.languageValue))
+                mapFn?.call(null, listOf(i.languageValue))
                     ?.orReturn { return@ctor it }
                     ?: NullType
             }
@@ -555,6 +555,11 @@ val Array = BuiltinClassType(
         arr.toNormal()
     },
 )
+
+internal inline fun LanguageType?.requireToBeAnyArray(rtn: AbruptReturnLambda): ArrayType {
+    if (this?.not { isAnyArray() } ?: true) rtn(unexpectedType(this, ArrayType::class))
+    return this as ArrayType
+}
 
 internal fun flatCallback(value: LanguageType) =
     if (value is ArrayType) value.array

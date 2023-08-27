@@ -3,23 +3,22 @@ package io.github.andjsrk.v4.evaluate.builtin
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 import io.github.andjsrk.v4.evaluate.type.toNormal
 
-private val mutableArrayFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
+private val mutableArrayFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val arrayLike = args[0]
     val mapFunc = args.getOptional(1)
         ?.requireToBe<FunctionType> { return@fn it }
     TODO()
 }
 
-private val mutableArrayOf = BuiltinFunctionType("of") fn@ { _, args ->
+private val mutableArrayOf = functionWithoutThis("of") fn@ { args ->
     MutableArrayType(args.toMutableList())
         .toNormal()
 }
 
 @EsSpec("Array.prototype.splice")
-private val mutableArrayAddAt = builtinMethod("addAt", 1u) fn@ { thisArg, args ->
+private val mutableArrayAddAt = method("addAt", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -32,7 +31,7 @@ private val mutableArrayAddAt = builtinMethod("addAt", 1u) fn@ { thisArg, args -
 }
 
 @EsSpec("Array.prototype.unshift")
-private val mutableArrayAddFirst = builtinMethod("addFirst") fn@ { thisArg, args ->
+private val mutableArrayAddFirst = method("addFirst") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     withUnsafeModification({ return@fn it }) {
         arr.array.addAll(0, args)
@@ -41,7 +40,7 @@ private val mutableArrayAddFirst = builtinMethod("addFirst") fn@ { thisArg, args
 }
 
 @EsSpec("Array.prototype.push")
-private val mutableArrayAddLast = builtinMethod("addLast") fn@ { thisArg, args ->
+private val mutableArrayAddLast = method("addLast") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     withUnsafeModification({ return@fn it }) {
         arr.array.addAll(args)
@@ -49,7 +48,7 @@ private val mutableArrayAddLast = builtinMethod("addLast") fn@ { thisArg, args -
     arr.toNormal()
 }
 
-private val mutableArrayConcatenate = builtinMethod("concatenate") fn@ { thisArg, args ->
+private val mutableArrayConcatenate = method("concatenate") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     withUnsafeModification({ return@fn it }) {
         args.forEach {
@@ -60,7 +59,7 @@ private val mutableArrayConcatenate = builtinMethod("concatenate") fn@ { thisArg
     arr.toNormal()
 }
 
-private val mutableArrayFilter = builtinMethod("filter", 1u) fn@ { thisArg, args ->
+private val mutableArrayFilter = method("filter", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     var i = 0
@@ -78,7 +77,7 @@ private val mutableArrayFilter = builtinMethod("filter", 1u) fn@ { thisArg, args
     arr.toNormal()
 }
 
-private val mutableArrayFlat = builtinMethod("flat") fn@ { thisArg, args ->
+private val mutableArrayFlat = method("flat") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val depth = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -102,13 +101,13 @@ private fun MutableList<LanguageType>.addFlattenedAt(index: Int, flattened: List
 private fun List<LanguageType>.carefulSubList(start: Int, end: Int = size) =
     subList(start.coerceAtMost(size), end.coerceAtMost(size))
 
-private val mutableArrayFlatMap = builtinMethod("flatMap", 1u) fn@ { thisArg, args ->
+private val mutableArrayFlatMap = method("flatMap", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     var i = 0
     while (i < arr.array.size) {
         val value = arr.array[i]
-        val res = callback._call(null, listOf(value, i.languageValue, arr))
+        val res = callback.call(null, listOf(value, i.languageValue, arr))
             .orReturn { return@fn it }
         val items = flatCallback(res)
         arr.array.addFlattenedAt(i, items, 1)
@@ -117,18 +116,18 @@ private val mutableArrayFlatMap = builtinMethod("flatMap", 1u) fn@ { thisArg, ar
     arr.toNormal()
 }
 
-private val mutableArrayMap = builtinMethod("map", 1u) fn@ { thisArg, args ->
+private val mutableArrayMap = method("map", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     repeat(arr.array.size) { i ->
-        arr.array[i] = callback._call(null, listOf(arr.array[i], i.languageValue, arr))
+        arr.array[i] = callback.call(null, listOf(arr.array[i], i.languageValue, arr))
             .orReturn { return@fn it }
     }
     arr.toNormal()
 }
 
 @EsSpec("Array.prototype.splice")
-private val mutableArrayRemoveAt = builtinMethod("removeAt", 1u) fn@ { thisArg, args ->
+private val mutableArrayRemoveAt = method("removeAt", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -154,7 +153,7 @@ private val mutableArrayRemoveAt = builtinMethod("removeAt", 1u) fn@ { thisArg, 
 }
 
 @EsSpec("Array.prototype.shift")
-private val mutableArrayRemoveFirst = builtinMethod("removeFirst") fn@ { thisArg, args ->
+private val mutableArrayRemoveFirst = method("removeFirst") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val count = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -167,7 +166,7 @@ private val mutableArrayRemoveFirst = builtinMethod("removeFirst") fn@ { thisArg
 }
 
 @EsSpec("Array.prototype.pop")
-private val mutableArrayRemoveLast = builtinMethod("removeLast") fn@ { thisArg, args ->
+private val mutableArrayRemoveLast = method("removeLast") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val count = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
@@ -178,13 +177,13 @@ private val mutableArrayRemoveLast = builtinMethod("removeLast") fn@ { thisArg, 
 }
 
 @EsSpec("Array.prototype.reverse")
-private val mutableArrayReverse = builtinMethod("reverse") fn@ { thisArg, _ ->
+private val mutableArrayReverse = method("reverse") fn@ { thisArg, _ ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     arr.array.reverse()
     arr.toNormal()
 }
 
-private val mutableArraySet = builtinMethod("set", 2u) fn@ { thisArg, args ->
+private val mutableArraySet = method("set", 2u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -195,7 +194,7 @@ private val mutableArraySet = builtinMethod("set", 2u) fn@ { thisArg, args ->
     arr.toNormal()
 }
 
-private val mutableArraySlice = builtinMethod("slice", 1u) fn@ { thisArg, args ->
+private val mutableArraySlice = method("slice", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val start = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -203,7 +202,7 @@ private val mutableArraySlice = builtinMethod("slice", 1u) fn@ { thisArg, args -
 }
 
 @EsSpec("Array.prototype.sort")
-private val mutableArraySort = builtinMethod("sort") fn@ { thisArg, args ->
+private val mutableArraySort = method("sort") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val compareFn = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }

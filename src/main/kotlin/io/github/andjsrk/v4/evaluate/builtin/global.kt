@@ -8,7 +8,7 @@ import io.github.andjsrk.v4.evaluate.type.DataProperty
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.normalNull
 
-private val assert = BuiltinFunctionType("assert", 1u) fn@ { _, args ->
+private val assert = functionWithoutThis("assert", 1u) fn@ { args ->
     val value = args[0].requireToBe<BooleanType> { return@fn it }
     val reason = args.getOptional(1)
         ?.requireToBeString { return@fn it }
@@ -39,6 +39,7 @@ val global = ObjectType(properties=mutableMapOf(
     sealedData(::TypeError),
 
     // 19.4 (Other Properties)
+    sealedData(::Json),
     sealedData(::Reflect),
 ))
     .apply {

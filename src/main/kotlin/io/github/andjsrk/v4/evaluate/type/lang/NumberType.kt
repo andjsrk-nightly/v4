@@ -325,20 +325,24 @@ internal inline fun NumberType.requireToBeIntWithin(range: LongRange, descriptio
     requireToBeIntegerWithin(range)
         ?.toInt()
         ?: rtn(throwMustBeIntegerInRange(description, range))
+internal inline fun NumberType.requireToBeIntWithin(range: NamedRange, description: String = "The number", rtn: AbruptReturnLambda) =
+    requireToBeIntegerWithin(range.range)
+        ?.toInt()
+        ?: rtn(unexpectedRange(description, range.name))
 
 internal inline fun NumberType.requireToBeUnsignedInt(rtn: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.unsignedInteger, rtn=rtn)
+    requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
 internal inline fun NumberType.requireToBeRadix(rtn: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.radix, "A radix", rtn)
+    requireToBeIntWithin(NamedRange.radix, rtn=rtn)
 internal inline fun NumberType.requireToBeIndex(rtn: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.unsignedInteger, "An index", rtn)
+    requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
 internal inline fun NumberType.requireToBeIndexWithin(size: Int, rtn: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.unsignedInteger, "An index", rtn)
+    requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
         .let {
             it.takeIf { it < size } ?: rtn(invalidIndex(it))
         }
 internal inline fun NumberType.requireToBeRelativeIndex(rtn: AbruptReturnLambda) =
-    requireToBeIntWithin(Ranges.relativeIndex, "A relative index", rtn)
+    requireToBeIntWithin(NamedRange.relativeIndex, rtn=rtn)
 /**
  * Returns `null` if the number is greater than [Int.MAX_VALUE].
  * Note that the function assumes that the number is an index.

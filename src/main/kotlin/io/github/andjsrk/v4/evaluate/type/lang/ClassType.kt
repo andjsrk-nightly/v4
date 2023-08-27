@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
+import io.github.andjsrk.v4.evaluate.builtin.Object
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.*
 
@@ -11,7 +12,7 @@ sealed class ClassType(
     open val constructor: FunctionType,
 ): ObjectType(properties=staticProperties) {
     val instancePrototype: PrototypeObjectType =
-        PrototypeObjectType(lazy { parent?.instancePrototype }, instancePrototypeProperties, this)
+        PrototypeObjectType(lazy { (parent ?: Object).instancePrototype }, instancePrototypeProperties, this)
     init {
         definePropertyOrThrow("instancePrototype".languageValue, DataProperty.sealed(instancePrototype))
     }

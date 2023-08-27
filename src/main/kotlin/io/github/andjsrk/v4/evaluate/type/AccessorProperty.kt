@@ -31,18 +31,16 @@ data class AccessorProperty(
         obj.createDataProperty("set".languageValue, set ?: NullType)
         return super.toDescriptorObject(obj)
     }
-
-    companion object {
-        internal inline fun builtinGetter(name: String, crossinline block: (thisArg: LanguageType) -> NonEmptyNormalOrAbrupt) =
-            BuiltinFunctionType(name, 0u) fn@ { thisArg, _ ->
-                if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
-                block(thisArg)
-            }
-        internal inline fun builtinSetter(name: String, crossinline block: (thisArg: LanguageType, value: LanguageType) -> Unit) =
-            BuiltinFunctionType(name, 1u) fn@ { thisArg, args ->
-                if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
-                block(thisArg, args[0])
-                normalNull
-            }
-    }
 }
+
+internal inline fun getter(name: String, crossinline block: (thisArg: LanguageType) -> NonEmptyNormalOrAbrupt) =
+    BuiltinFunctionType(name, 0u) fn@ { thisArg, _ ->
+        if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
+        block(thisArg)
+    }
+internal inline fun setter(name: String, crossinline block: (thisArg: LanguageType, value: LanguageType) -> Unit) =
+    BuiltinFunctionType(name, 1u) fn@ { thisArg, args ->
+        if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
+        block(thisArg, args[0])
+        normalNull
+    }

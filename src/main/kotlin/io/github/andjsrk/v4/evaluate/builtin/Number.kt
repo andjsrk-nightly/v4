@@ -4,7 +4,6 @@ import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import java.math.BigInteger
 import java.math.RoundingMode
@@ -15,7 +14,7 @@ import kotlin.math.abs
 private const val DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 @EsSpec("Number(value)")
-private val numberFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
+private val numberFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val value = args[0]
     when (value) {
         is StringType -> parseNumber(value.value)
@@ -30,7 +29,7 @@ private val numberFrom = BuiltinFunctionType("from", 1u) fn@ { _, args ->
 }
 
 @EsSpec("Number.isFinite")
-private val isFinite = BuiltinFunctionType("isFinite", 1u) { _, args ->
+private val isFinite = functionWithoutThis("isFinite", 1u) { args ->
     val number = args[0]
     (number is NumberType && number.isFinite)
         .languageValue
@@ -38,7 +37,7 @@ private val isFinite = BuiltinFunctionType("isFinite", 1u) { _, args ->
 }
 
 @EsSpec("Number.isInteger")
-private val isInteger = BuiltinFunctionType("isInteger", 1u) { _, args ->
+private val isInteger = functionWithoutThis("isInteger", 1u) { args ->
     val number = args[0]
     (number is NumberType && number.isFinite && number.value.isInteger)
         .languageValue
@@ -46,14 +45,14 @@ private val isInteger = BuiltinFunctionType("isInteger", 1u) { _, args ->
 }
 
 @EsSpec("Number.isNaN")
-private val isNaN = BuiltinFunctionType("isNaN", 1u) { _, args ->
+private val isNaN = functionWithoutThis("isNaN", 1u) { args ->
     (args[0] == NumberType.NaN)
         .languageValue
         .toNormal()
 }
 
 @EsSpec("Number.isSafeInteger")
-private val isSafeInteger = BuiltinFunctionType("isSafeInteger", 1u) { _, args ->
+private val isSafeInteger = functionWithoutThis("isSafeInteger", 1u) { args ->
     val number = args[0]
     (
         number is NumberType
@@ -65,7 +64,7 @@ private val isSafeInteger = BuiltinFunctionType("isSafeInteger", 1u) { _, args -
 }
 
 @EsSpec("Number.parseFloat")
-private val parseLeadingDecimal = BuiltinFunctionType("parseLeadingDecimal", 1u) fn@ { _, args ->
+private val parseLeadingDecimal = functionWithoutThis("parseLeadingDecimal", 1u) fn@ { args ->
     val string = args[0].requireToBe<StringType> { return@fn it }
     // does not perform trim to input string
     val input = string.value
@@ -91,7 +90,7 @@ private val parseLeadingDecimal = BuiltinFunctionType("parseLeadingDecimal", 1u)
 }
 
 @EsSpec("Number.parseInt")
-private val parseLeadingInteger = BuiltinFunctionType("parseLeadingInteger", 1u) fn@ { _, args ->
+private val parseLeadingInteger = functionWithoutThis("parseLeadingInteger", 1u) fn@ { args ->
     val string = args[0].requireToBe<StringType> { return@fn it }
     val radix = args.getOptional(1)
         ?.requireToBe<NumberType> { return@fn it }
@@ -115,7 +114,7 @@ private fun String.postProcessExponential() =
         .lowercase()
         .replace(".e", "e")
 @EsSpec("Number.prototype.toExponential")
-private val toExponential = builtinMethod("toExponential") fn@ { thisArg, args ->
+private val toExponential = method("toExponential") fn@ { thisArg, args ->
     val numberArg = thisArg.requireToBe<NumberType> { return@fn it }
     val number = numberArg.value
     val fracPartDigitCount = args.getOptional(0)
@@ -140,7 +139,7 @@ private val toExponential = builtinMethod("toExponential") fn@ { thisArg, args -
 }
 
 @EsSpec("Number.prototype.toFixed")
-private val toFixed = builtinMethod("toFixed") fn@ { thisArg, args ->
+private val toFixed = method("toFixed") fn@ { thisArg, args ->
     val number = thisArg
         .requireToBe<NumberType> { return@fn it }
     val fracPartDigitCount = args.getOptional(0)
@@ -157,13 +156,13 @@ private val toFixed = builtinMethod("toFixed") fn@ { thisArg, args ->
 }
 
 @EsSpec("Number.prototype.toLocaleString")
-private val numberToLocaleString = builtinMethod("toLocaleString") fn@ { thisArg, args ->
+private val numberToLocaleString = method("toLocaleString") fn@ { thisArg, args ->
     val number = thisArg.requireToBe<NumberType> { return@fn it }
     TODO()
 }
 
 @EsSpec("Number.prototype.toString")
-private val numberToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
+private val numberToRadix = method("toRadix", 1u) fn@ { thisArg, args ->
     val number = thisArg.requireToBe<NumberType> { return@fn it }
     val radix = args[0]
         .requireToBe<NumberType> { return@fn it }
@@ -174,7 +173,7 @@ private val numberToRadix = builtinMethod("toRadix", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("Number.prototype.toString") // radix is fixed to 10
-private val numberToString = builtinMethod(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
+private val numberToString = method(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
     val number = thisArg.requireToBe<NumberType> { return@fn it }
     number.toString(10)
         .toNormal()

@@ -5,10 +5,9 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType.Companion.constructor
 
 @EsSpec("Symbol([description])")
-private val symbolCreate = BuiltinFunctionType("create") fn@ { _, args ->
+private val symbolCreate = functionWithoutThis("create") fn@ { args ->
     val description = args.getOptional(0)
         ?.requireToBeString { return@fn it }
     SymbolType(description)
@@ -16,14 +15,14 @@ private val symbolCreate = BuiltinFunctionType("create") fn@ { _, args ->
 }
 
 @EsSpec("Symbol.for")
-private val `for` = BuiltinFunctionType("for",  1u) fn@ { _, args ->
+private val `for` = functionWithoutThis("for",  1u) fn@ { args ->
     val key = args[0].requireToBeString { return@fn it }
     val symbol = SymbolType.registry.getOrPut(key) { SymbolType(key) }
     symbol.toNormal()
 }
 
 @EsSpec("get Symbol.prototype.description")
-private val descriptionGetter = AccessorProperty.builtinGetter("description") fn@ { thisArg ->
+private val descriptionGetter = getter("description") fn@ { thisArg ->
     val symbol = thisArg.requireToBe<SymbolType> { return@fn it }
     symbol.description?.languageValue.normalizeToNormal()
 }

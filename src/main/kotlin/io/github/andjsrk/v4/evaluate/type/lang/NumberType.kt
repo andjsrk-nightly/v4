@@ -2,6 +2,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.RangeErrorKind
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType.Companion.FALSE
@@ -48,7 +49,7 @@ value class NumberType(
             .languageValue
             .toNormal()
     }
-    override fun pow(other: NumberType): NumberType =
+    override fun pow(other: NumberType) =
         when {
             other.isNaN -> other
             other.isZero -> 1.0.languageValue
@@ -96,6 +97,7 @@ value class NumberType(
             value < 0 && other.value.not { isInteger } -> NaN
             else -> value.pow(other.value).languageValue
         }
+            .toNormal()
     override fun times(other: NumberType): NumberType =
         when {
             this.isNaN || other.isNaN -> this
@@ -149,6 +151,7 @@ value class NumberType(
                 (value / other.value)
                     .languageValue
         }
+            .toNormal()
     override fun rem(other: NumberType) =
         when {
             this.isNaN || other.isNaN -> NaN
@@ -160,6 +163,7 @@ value class NumberType(
                 (value % other.value)
                     .languageValue
         }
+            .toNormal()
     override fun plus(other: NumberType) =
         when {
             this.isNaN || other.isNaN -> NaN
@@ -197,9 +201,9 @@ value class NumberType(
         generalShift(other, ::toInt32, Double::toInt) { a, b -> (a shr b).toDouble() }
     override fun unsignedRightShift(other: NumberType) =
         generalShift(other, ::toUint32, Double::toUInt) { a, b -> (a shr b).toDouble() }
-    override fun lessThan(other: NumberType, undefinedReplacement: BooleanType) =
-        when {
-            this.isNaN || other.isNaN -> undefinedReplacement
+    override fun lessThan(other: NumberType): MaybeAbrupt<BooleanType> {
+        return when {
+            this.isNaN || other.isNaN -> return throwError(TypeErrorKind.CANNOT_COMPARE_NAN)
             this.value == other.value -> FALSE // +0 < -0 or -0 < +0 will be handled on this case
             this.isPositiveInfinity -> FALSE
             other.isPositiveInfinity -> TRUE
@@ -209,6 +213,8 @@ value class NumberType(
                 (value < other.value)
                     .languageValue
         }
+            .toNormal()
+    }
     override fun equal(other: NumberType) =
         when {
             this.isNaN || other.isNaN -> false
@@ -328,7 +334,7 @@ internal inline fun NumberType.requireToBeIntWithin(range: LongRange, descriptio
 internal inline fun NumberType.requireToBeIntWithin(range: NamedRange, description: String = "The number", rtn: AbruptReturnLambda) =
     requireToBeIntegerWithin(range.range)
         ?.toInt()
-        ?: rtn(unexpectedRange(description, range.name))
+        ?: rtn(unexpectedNumberRange(description, range.name))
 
 internal inline fun NumberType.requireToBeUnsignedInt(rtn: AbruptReturnLambda) =
     requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)

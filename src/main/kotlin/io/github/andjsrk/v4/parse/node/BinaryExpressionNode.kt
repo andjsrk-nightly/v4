@@ -95,13 +95,18 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             return if (left is StringType || left is NumericType<*>) {
                 if (left::class != right::class) throwError(TypeErrorKind.LHS_RHS_NOT_SAME_TYPE)
                 else when (operation) {
-                    BinaryOperationType.LT -> left.isLessThan(right, BooleanType.FALSE)
-                    BinaryOperationType.GT -> right.isLessThan(left, BooleanType.FALSE)
-                    BinaryOperationType.LT_EQ -> !right.isLessThan(left, BooleanType.TRUE)
-                    BinaryOperationType.GT_EQ -> !left.isLessThan(right, BooleanType.TRUE)
+                    BinaryOperationType.LT -> left.isLessThan(right)
+                    BinaryOperationType.GT -> right.isLessThan(left)
+                    BinaryOperationType.LT_EQ -> {
+                        val greater = right.isLessThan(left).orReturn { return it }
+                        (!greater).toNormal()
+                    }
+                    BinaryOperationType.GT_EQ -> {
+                        val less = left.isLessThan(right).orReturn { return it }
+                        (!less).toNormal()
+                    }
                     else -> neverHappens()
                 }
-                    .toNormal()
             }
             else unexpectedType(left, StringType::class, NumericType::class)
         BinaryOperationType.PLUS -> {
@@ -134,11 +139,11 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
         @Suppress("TYPE_MISMATCH")
         when (operation) {
             BinaryOperationType.EXPONENTIAL -> numericLeft.pow(numericRight)
-            BinaryOperationType.MULTIPLY -> numericLeft * numericRight
-            BinaryOperationType.DIVIDE -> numericLeft / numericRight
-            BinaryOperationType.MOD -> numericLeft % numericRight
-            BinaryOperationType.PLUS -> numericLeft + numericRight
-            BinaryOperationType.MINUS -> numericLeft - numericRight
+            BinaryOperationType.MULTIPLY -> (numericLeft * numericRight).toNormal()
+            BinaryOperationType.DIVIDE -> (numericLeft / numericRight)
+            BinaryOperationType.MOD -> (numericLeft % numericRight)
+            BinaryOperationType.PLUS -> (numericLeft + numericRight).toNormal()
+            BinaryOperationType.MINUS -> (numericLeft - numericRight).toNormal()
             BinaryOperationType.SHL -> numericLeft.leftShift(numericRight)
             BinaryOperationType.SAR -> numericLeft.signedRightShift(numericRight)
             BinaryOperationType.SHR -> numericLeft.unsignedRightShift(numericRight)
@@ -147,7 +152,5 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             BinaryOperationType.BITWISE_OR -> numericLeft.bitwiseOr(numericRight)
             else -> missingBranch()
         }
-            .extractFromCompletionOrReturn { return it }
     )
-        .toNormal()
 }

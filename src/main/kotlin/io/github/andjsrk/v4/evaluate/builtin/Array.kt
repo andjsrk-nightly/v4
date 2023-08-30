@@ -6,7 +6,6 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.not
 
 private val immutableArrayFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val arrayLike = args[0]
@@ -428,12 +427,17 @@ private val immutableArraySort = method("sort") fn@ { thisArg, args ->
         ImmutableArrayType.from(arr.array.sortedWith(comp))
     }
 }
-internal val sortDefaultCompareFn = functionWithoutThis("compareFn", 2u) { args ->
+internal val sortDefaultCompareFn = functionWithoutThis("compareFn", 2u) sort@ { args ->
     val a = args[0]
     val b = args[1]
     when {
-        a.isLessThan(b, BooleanType.FALSE).value -> -1
-        b.isLessThan(a, BooleanType.FALSE).value -> 1
+        a.isLessThan(b)
+            .orReturn { return@sort it }
+            .value
+            -> -1
+        b.isLessThan(a)
+            .orReturn { return@sort it }
+            .value -> 1
         else -> 0
     }
         .languageValue
@@ -555,11 +559,6 @@ val Array: BuiltinClassType = BuiltinClassType(
         arr.toNormal()
     },
 )
-
-internal inline fun LanguageType?.requireToBeAnyArray(rtn: AbruptReturnLambda): ArrayType {
-    if (this?.not { isAnyArray() } ?: true) rtn(unexpectedType(this, ArrayType::class))
-    return this as ArrayType
-}
 
 internal fun flatCallback(value: LanguageType) =
     if (value is ArrayType) value.array

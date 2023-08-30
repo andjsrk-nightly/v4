@@ -40,6 +40,7 @@ val global = ObjectType(properties=mutableMapOf(
 
     // 19.4 (Other Properties)
     sealedData(::Json),
+    sealedData(::Math),
     sealedData(::Reflect),
 ))
     .apply {

@@ -25,11 +25,13 @@ open class UnaryExpressionNode(
     override fun evaluate(): NonEmptyNormalOrAbrupt {
         return when (this.operation) {
             VOID -> {
-                operand.evaluateValue().orReturn { return it }
+                operand.evaluateValue()
+                    .orReturn { return it }
                 return normalNull
             }
             TYPEOF -> {
-                val value = operand.evaluateValue().orReturn { return it }
+                val value = operand.evaluateValue()
+                    .orReturn { return it }
                 when (value) {
                     NullType -> "null"
                     is StringType -> "string"
@@ -42,17 +44,21 @@ open class UnaryExpressionNode(
                     .languageValue
             }
             MINUS -> {
-                val value = operand.evaluateValue().orReturn { return it }
+                val value = operand.evaluateValue()
+                    .orReturn { return it }
                     .requireToBe<NumericType<*>> { return it }
                 -value
             }
             BITWISE_NOT -> {
-                val value = operand.evaluateValue().orReturn { return it }
+                val value = operand.evaluateValue()
+                    .orReturn { return it }
                     .requireToBe<NumericType<*>> { return it }
-                value.bitwiseNot().extractFromCompletionOrReturn { return it }
+                value.bitwiseNot()
+                    .orReturn { return it }
             }
             NOT -> {
-                val value = operand.evaluateValue().orReturn { return it }
+                val value = operand.evaluateValue()
+                    .orReturn { return it }
                     .requireToBe<BooleanType> { return it }
                 !value
             }

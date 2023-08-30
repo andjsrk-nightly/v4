@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.error.RangeErrorKind
 
-internal fun unexpectedRange(
+internal fun unexpectedNumberRange(
     argName: String?,
     expectedRange: String,
 ) =

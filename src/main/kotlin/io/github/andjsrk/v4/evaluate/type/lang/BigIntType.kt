@@ -32,12 +32,11 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
             .languageValue
             .toNormal()
     }
-    override fun rem(other: BigIntType): MaybeAbrupt<BigIntType> {
-        if (other.value == BigInteger.ZERO) return throwError(RangeErrorKind.BIGINT_DIV_ZERO)
-        return (value % other.value)
+    override fun rem(other: BigIntType): MaybeAbrupt<BigIntType> =
+        if (other.value == BigInteger.ZERO) throwError(RangeErrorKind.BIGINT_DIV_ZERO)
+        else (value % other.value)
             .languageValue
             .toNormal()
-    }
     override fun plus(other: BigIntType) =
         (value + other.value)
             .languageValue
@@ -47,24 +46,29 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
     override fun leftShift(other: BigIntType) =
         value.operateWithInt(BigInteger::shiftLeft, other.value)
             .languageValue
+            .toNormal()
     override fun signedRightShift(other: BigIntType) =
         leftShift(-other)
     override fun unsignedRightShift(other: BigIntType) =
         throwError(TypeErrorKind.BIGINT_SHR)
-    override fun lessThan(other: BigIntType, undefinedReplacement: BooleanType): BooleanType =
+    override fun lessThan(other: BigIntType): MaybeAbrupt<BooleanType> =
         (value < other.value)
             .languageValue
+            .toNormal()
     override fun equal(other: BigIntType) =
         value == other.value
     override fun bitwiseAnd(other: BigIntType) =
         (value and other.value)
             .languageValue
+            .toNormal()
     override fun bitwiseXor(other: BigIntType) =
         (value xor other.value)
             .languageValue
+            .toNormal()
     override fun bitwiseOr(other: BigIntType) =
         (value or other.value)
             .languageValue
+            .toNormal()
     override fun toString(radix: Int) =
         value.toString(radix)
             .languageValue

@@ -22,6 +22,7 @@ enum class TypeErrorKind(override val message: String): ErrorKind {
     CALLED_ON_NON_OBJECT("% called on non-object"),
     CALLED_ON_NULL_OR_UNDEFINED("% called on null or undefined"),
     CANNOT_ASSIGN_TO_READ_ONLY_PROPERTY("Cannot assign to read only property '%'"),
+    CANNOT_COMPARE_NAN("Cannot compare NaN with a number"),
     CANNOT_CONSTRUCT("Cannot construct an instance of %"),
     CANNOT_CONVERT_TO_STRING("Cannot convert object to a string"),
     CANNOT_CONVERT_BIGINT_TO_JSON("Cannot convert a BigInt to JSON representation since it have ambiguity with a number"),

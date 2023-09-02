@@ -7,6 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.not
 import kotlin.math.*
+import kotlin.random.Random
 import kotlin.math.log10 as kotlinLog10
 import kotlin.math.log2 as kotlinLog2
 
@@ -252,12 +253,119 @@ val max = functionWithoutThis("max", 1u) fn@ { args ->
     highest.toNormal()
 }
 
+@EsSpec("Math.min")
+val min = functionWithoutThis("min", 1u) fn@ { args ->
+    var lowest = NumberType.POSITIVE_INFINITY
+    args.forEach {
+        val number = it.requireToBe<NumberType> { return@fn it }
+        if (number.isNaN) return@fn throwError(TypeErrorKind.CANNOT_COMPARE_NAN)
+        if (number.value < lowest.value) lowest = number
+    }
+    lowest.toNormal()
+}
+
+@EsSpec("Math.pow")
+val power = functionWithoutThis("power", 2u) fn@ { args ->
+    val base = args[0]
+        .requireToBe<NumberType> { return@fn it }
+    val exponent = args[1]
+        .requireToBe<NumberType> { return@fn it }
+    base.pow(exponent)
+}
+
+@EsSpec("Math.random")
+val random = functionWithoutThis("random") fn@ { _ ->
+    Random.nextDouble().toNormal()
+}
+
+@EsSpec("Math.round")
+val round = functionWithoutThis("round", 1u) fn@ { args ->
+    val x = args[0]
+        .requireToBe<NumberType> { return@fn it }
+    if (x.not { isFinite } || x.isInteger) return@fn x.toNormal()
+    if (x.value < 0.5 && x.value > 0.0) return@fn NumberType.POSITIVE_ZERO.toNormal()
+    if (x.value < 0.0 && x.value >= -0.5) return@fn NumberType.NEGATIVE_ZERO.toNormal()
+    round(x.value)
+        .toNormal()
+}
+
 @EsSpec("Math.fround")
 val roundToFloat = functionWithoutThis("roundToFloat", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.not { isFinite } || x.isZero) return@fn x.toNormal()
     x.value.toFloat().toDouble()
+        .toNormal()
+}
+
+@EsSpec("Math.sign")
+val sign = functionWithoutThis("sign", 1u) fn@ { args ->
+    val x = args[0]
+        .requireToBe<NumberType> { return@fn it }
+    if (x.isNaN) return@fn x.toNormal()
+    // since -0 exists, +0 is positive and -0 is negative
+    (
+        if (x.isNegative) -1.0
+        else 1.0
+    )
+        .toNormal()
+}
+
+@EsSpec("Math.sin")
+val sin = functionWithoutThis("sin", 1u) fn@ { args ->
+    val x = args[0]
+        .requireToBe<NumberType> { return@fn it }
+    if (x.isNaN || x.isZero) return@fn x.toNormal()
+    if (x.isInfinity) return@fn NumberType.NaN.toNormal()
+    sin(x.value)
+        .toNormal()
+}
+
+@EsSpec("Math.sinh")
+val sinh = functionWithoutThis("sinh", 1u) fn@ { args ->
+    val x = args[0]
+        .requireToBe<NumberType> { return@fn it }
+    if (x.not { isFinite } || x.isZero) return@fn x.toNormal()
+    sinh(x.value)
+        .toNormal()
+}
+
+@EsSpec("Math.sqrt")
+val sqrt = functionWithoutThis("sqrt", 1u) fn@ { args ->
+    val x = args[0]
+        .requireToBe<NumberType> { return@fn it }
+    if (x.isNaN || x.isZero || x.isPositiveInfinity) return@fn x.toNormal()
+    if (x.isNegative) return@fn NumberType.NaN.toNormal()
+    sqrt(x.value)
+        .toNormal()
+}
+
+@EsSpec("Math.tan")
+val tan = functionWithoutThis("tan", 1u) fn@ { args ->
+    val x = args[0]
+        .requireToBe<NumberType> { return@fn it }
+    if (x.isNaN || x.isZero) return@fn x.toNormal()
+    if (x.isInfinity) return@fn NumberType.NaN.toNormal()
+    tan(x.value)
+        .toNormal()
+}
+
+@EsSpec("Math.tanh")
+val tanh = functionWithoutThis("tanh", 1u) fn@ { args ->
+    val x = args[0]
+        .requireToBe<NumberType> { return@fn it }
+    if (x.isNaN || x.isZero) return@fn x.toNormal()
+    if (x.isInfinity) return@fn 1.0.withSign(x.value).toNormal()
+    tan(x.value)
+        .toNormal()
+}
+
+@EsSpec("Math.truncate")
+val truncate = functionWithoutThis("truncate", 1u) fn@ { args ->
+    val x = args[0]
+        .requireToBe<NumberType> { return@fn it }
+    if (x.not { isFinite } || x.isZero) return@fn x.toNormal()
+    truncate(x.value)
         .toNormal()
 }
 
@@ -294,7 +402,18 @@ val Math = ObjectType(properties=mutableMapOf(
     sealedMethod(log10),
     sealedMethod(log2),
     sealedMethod(max),
+    sealedMethod(min),
+    sealedMethod(power),
+    sealedMethod(random),
+    sealedMethod(round),
     sealedMethod(roundToFloat),
+    sealedMethod(sign),
+    sealedMethod(sin),
+    sealedMethod(sinh),
+    sealedMethod(sqrt),
+    sealedMethod(tan),
+    sealedMethod(tanh),
+    sealedMethod(truncate),
 ))
 
 private fun Double.toNormal() =

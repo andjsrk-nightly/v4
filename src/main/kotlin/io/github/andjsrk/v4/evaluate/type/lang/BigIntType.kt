@@ -16,6 +16,7 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
     override fun bitwiseNot() =
         (-value - BigInteger.ONE)
             .languageValue
+            .toNormal()
     override fun pow(other: BigIntType) =
         when {
             other.value < BigInteger.ZERO -> throwError(RangeErrorKind.NUMBER_MUST_BE, "positive")

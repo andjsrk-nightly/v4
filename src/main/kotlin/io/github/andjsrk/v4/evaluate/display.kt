@@ -5,6 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.AccessorProperty
 import io.github.andjsrk.v4.evaluate.type.DataProperty
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.isIdentifierChar
+import io.github.andjsrk.v4.thenTake
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -18,6 +19,11 @@ fun LanguageType.display(raw: Boolean = false): String =
         is BigIntType -> value.toString(10)
         is BooleanType -> value.toString()
         is SymbolType -> toString()
+        is ArrayType -> {
+            val mutabilityPrefix = (this is MutableArrayType).thenTake { "(mutable) " }.orEmpty()
+            val items = array.joinToString(", ") { it.display(true) }
+            "$mutabilityPrefix[$items]"
+        }
         is ObjectType -> {
             val prefix =
                 if (prototype == Object.instancePrototype) ""
@@ -48,7 +54,7 @@ fun LanguageType.display(raw: Boolean = false): String =
                     }
                     "$key: $value"
                 }
-            var whitespace = " "
+            var whitespace = ""
             val joinedWithoutNewline = props.joinToString(", ")
             val joined =
                 if (5 < properties.size || 80 < joinedWithoutNewline.length) {

@@ -22,8 +22,11 @@ sealed interface NumericType<out Self: NumericType<Self>>: PrimitiveLanguageType
     @EsSpec("::remainder")
     operator fun rem(other: @UnsafeVariance Self): MaybeAbrupt<Self>
 
-    // the method is written as an experiment about if the method calms false positive of Kotlin compiler
-    fun mod(other: @UnsafeVariance Self): MaybeAbrupt<Self> =
+    /**
+     * The method is written to calm false positive of Kotlin compiler.
+     * Use [rem] instead.
+     */
+    fun mod(other: @UnsafeVariance Self) =
         rem(other)
 
     @EsSpec("::add")

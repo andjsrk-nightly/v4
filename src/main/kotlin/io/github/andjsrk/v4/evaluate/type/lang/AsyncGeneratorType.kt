@@ -12,7 +12,7 @@ class AsyncGeneratorType(
     override var context = runningExecutionContext
     override var state: AsyncGeneratorState? = null // [[AsyncGeneratorState]]
     @EsSpec("AsyncGeneratorStart")
-    override fun start(createResult: () -> NormalOrAbrupt) {
+    override fun start(result: Sequence<NormalOrAbrupt>) {
         TODO()
     }
 }

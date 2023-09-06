@@ -63,19 +63,21 @@ class OrdinaryFunctionType(
     @EsSpec("EvaluateFunctionBody")
     @EsSpec("EvaluateGeneratorBody")
     fun evaluateConciseBody(args: List<LanguageType>): NormalOrAbrupt {
-        when {
+        return when {
             this.isAsync && this.isGenerator -> TODO()
             this.isAsync -> TODO()
             this.isGenerator -> {
                 instantiateFunctionDeclaration(this, args)
                 val generator = SyncGeneratorType()
-                generator.start { evaluateConciseBody(body) }
-                return Completion.Return(generator)
+                generator.start(sequence {
+                    yield(evaluateConciseBody(body))
+                })
+                Completion.Return(generator)
             }
             else -> {
                 instantiateFunctionDeclaration(this, args)
                     .orReturn { return it }
-                return evaluateConciseBody(body)
+                evaluateConciseBody(body)
             }
         }
     }

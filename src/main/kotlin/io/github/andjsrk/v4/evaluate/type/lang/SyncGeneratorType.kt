@@ -11,25 +11,36 @@ class SyncGeneratorType(
 ): GeneratorType<SyncGeneratorState>(lazy { Generator.instancePrototype }) {
     override var context = runningExecutionContext
     override var state: SyncGeneratorState? = null // [[GeneratorState]]
-    var complete: (() -> NonEmptyNormalOrAbrupt)? = null
+    var complete: Sequence<NormalOrAbrupt>? = null
     @EsSpec("GeneratorStart")
-    override fun start(createResult: () -> NormalOrAbrupt) {
+    override fun start(result: Sequence<NormalOrAbrupt>) {
         val genContext = runningExecutionContext
         genContext.generator = this
-        complete = complete@ { // TODO: migrate to iterators
+        complete = sequence {
             val acGenContext = runningExecutionContext
             val acGenerator = acGenContext.generator as SyncGeneratorType? ?: neverHappens()
-            val result = createResult()
+            val iter = result.iterator()
+            var lastComp: NormalOrAbrupt = empty
+            while (iter.hasNext()) {
+                val comp = iter.next()
+                lastComp = comp
+                yield(comp)
+            }
             executionContextStack.removeTop()
             acGenerator.state = SyncGeneratorState.COMPLETED
             complete = null // drops the closure since it is no longer needed
-            val resValue = when (result) {
+            val resValue = when (lastComp) {
                 is Completion.WideNormal -> NullType
-                is Completion.Return -> result.value
-                is Completion.Abrupt -> return@complete result
+                is Completion.Return -> lastComp.value
+                is Completion.Abrupt -> {
+                    yield(lastComp)
+                    return@sequence
+                }
             }
-            createIteratorResult(resValue, true)
-                .toNormal()
+            yield(
+                createIteratorResult(resValue, true)
+                    .toNormal()
+            )
         }
         // TODO: step 5
         context = genContext

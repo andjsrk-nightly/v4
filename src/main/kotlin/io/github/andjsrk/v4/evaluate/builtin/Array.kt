@@ -103,9 +103,13 @@ private val copyWithin = method("copyWithin") fn@ { thisArg, args ->
 }
 
 @EsSpec("Array.prototype.entries")
-internal val arrayEntries = method("entries") fn@ { thisArg, args ->
-    val arr = thisArg.requireToBe<ArrayType> { return@fn it }
-    TODO()
+internal val immutableArrayEntries = method("entries") fn@ { thisArg, args ->
+    val arr = thisArg.requireToBe<ImmutableArrayType> { return@fn it }
+    val entriesSequence = arr.array.asSequence().mapIndexed { i, it ->
+        ImmutableArrayType(listOf(i.languageValue, it))
+    }
+    createIteratorObjectFromSequence(entriesSequence)
+        .toNormal()
 }
 
 @EsSpec("Array.prototype.every")
@@ -252,6 +256,15 @@ internal val arrayIndexOf = method("indexOf", 1u) fn@ { thisArg, args ->
         .toNormal()
 }
 
+@EsSpec("Array.prototype.keys")
+private val indices = method("indices") fn@ { thisArg, args ->
+    val arr = thisArg.requireToBe<ArrayType> { return@fn it }
+    val indicesSeq = arr.array.indices.asSequence()
+        .map { it.languageValue }
+    createIteratorObjectFromSequence(indicesSeq)
+        .toNormal()
+}
+
 @EsSpec("Array.prototype.join")
 internal val arrayJoin = method("join") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
@@ -268,12 +281,6 @@ internal val arrayJoin = method("join") fn@ { thisArg, args ->
     res
         .languageValue
         .toNormal()
-}
-
-@EsSpec("Array.prototype.keys")
-private val keys = method("keys") fn@ { thisArg, args ->
-    val arr = thisArg.requireToBe<ArrayType> { return@fn it }
-    TODO()
 }
 
 @EsSpec("Array.prototype.findLast")
@@ -518,6 +525,7 @@ val Array: BuiltinClassType = BuiltinClassType(
         sealedMethod(any),
         sealedMethod(arrayAt),
         sealedMethod(immutableArrayConcatenate),
+        sealedMethod(immutableArrayEntries),
         sealedMethod(arrayEvery),
         sealedMethod(immutableArrayFilter),
         sealedMethod(arrayFirst),
@@ -527,6 +535,7 @@ val Array: BuiltinClassType = BuiltinClassType(
         sealedMethod(arrayForEach),
         sealedMethod(arrayIncludes),
         sealedMethod(arrayIndexOf),
+        sealedMethod(indices),
         sealedMethod(arrayJoin),
         sealedMethod(arrayLast),
         sealedMethod(arrayLastIndex),

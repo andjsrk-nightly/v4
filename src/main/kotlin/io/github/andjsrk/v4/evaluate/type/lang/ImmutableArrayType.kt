@@ -3,14 +3,12 @@ package io.github.andjsrk.v4.evaluate.type.lang
 import io.github.andjsrk.v4.evaluate.builtin.Array
 
 class ImmutableArrayType(
-    override val array: List<LanguageType>,
+    array: List<LanguageType>,
     origin: List<LanguageType>? = null,
 ): ArrayType(lazy { Array.instancePrototype }) {
-    init {
-        if (origin != null) {
-            TODO()
-        }
-    }
+    override val array: List<LanguageType> =
+        if (origin != null) TODO()
+        else array
 
     companion object {
         fun from(collection: Collection<LanguageType>) =

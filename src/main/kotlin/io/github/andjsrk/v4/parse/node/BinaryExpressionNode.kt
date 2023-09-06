@@ -141,7 +141,10 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             BinaryOperationType.EXPONENTIAL -> numericLeft.pow(numericRight)
             BinaryOperationType.MULTIPLY -> (numericLeft * numericRight).toNormal()
             BinaryOperationType.DIVIDE -> (numericLeft / numericRight)
-            BinaryOperationType.MOD -> (numericLeft % numericRight)
+            BinaryOperationType.MOD ->
+                @CompilerFalsePositive
+                @Suppress("OPERATOR_MODIFIER_REQUIRED")
+                (numericLeft % numericRight)
             BinaryOperationType.PLUS -> (numericLeft + numericRight).toNormal()
             BinaryOperationType.MINUS -> (numericLeft - numericRight).toNormal()
             BinaryOperationType.SHL -> numericLeft.leftShift(numericRight)

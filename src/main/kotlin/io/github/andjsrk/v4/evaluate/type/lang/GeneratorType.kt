@@ -9,5 +9,5 @@ sealed class GeneratorType<S: Enum<*>>(
     abstract var context: ExecutionContext // [[GeneratorContext]]
     abstract var state: S?
     abstract val brand: String? // [[GeneratorBrand]]
-    abstract fun start(createResult: () -> NormalOrAbrupt)
+    abstract fun start(result: Sequence<NormalOrAbrupt>)
 }

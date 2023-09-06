@@ -754,11 +754,8 @@ internal class EvaluatorTest {
     }
 }
 
-private fun ArrayType.at(index: Int): LanguageType? {
-    val desc = properties[index.toString().languageValue] ?: return null
-    assertIs<DataProperty>(desc)
-    return desc.value
-}
+private fun ArrayType.at(index: Int) =
+    array.getOrNull(index)
 private fun ObjectType.dataPropertyNamed(name: String) =
     properties[name.languageValue].assertType<DataProperty>()
 private fun SourceTextModule.variableNamed(name: String): Binding {

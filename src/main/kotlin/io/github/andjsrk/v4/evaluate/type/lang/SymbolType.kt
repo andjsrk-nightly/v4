@@ -11,6 +11,8 @@ class SymbolType(val description: String? = null): PrimitiveLanguageType, Proper
         "Symbol(${description ?: ""})"
 
     object WellKnown {
+        @EsSpec("@@asyncIterator")
+        val asyncIterator = SymbolType("Symbol.asyncIterator")
         @EsSpec("@@search")
         val findMatchedIndex = SymbolType("Symbol.findMatchedIndex")
         @EsSpec("@@iterator")

@@ -290,7 +290,7 @@ internal val arrayLast = method("last") fn@ { thisArg, args ->
         ?.requireToBe<FunctionType> { return@fn it }
         ?: return@fn arr.array.lastOrNull().normalizeToNormal()
     val found = arr.array.asReversed().firstIndexed { i, it ->
-        callback.callPredicate(it, i, arr) { return@fn it }
+        callback.callPredicate(it, arr.array.lastIndex - i, arr) { return@fn it }
     }
     found.normalizeToNormal()
 }
@@ -300,7 +300,7 @@ internal val arrayLastIndex = method("lastIndex") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val index = arr.array.asReversed().indexOfFirstIndexed { i, it ->
-        callback.callPredicate(it, i, arr) { return@fn it }
+        callback.callPredicate(it, arr.array.lastIndex - i, arr) { return@fn it }
     }
     index
         .languageValue
@@ -438,13 +438,14 @@ internal val sortDefaultCompareFn = functionWithoutThis("compareFn", 2u) sort@ {
     val a = args[0]
     val b = args[1]
     when {
-        a.isLessThan(b)
+        a.lessThan(b)
             .orReturn { return@sort it }
             .value
             -> -1
-        b.isLessThan(a)
+        b.lessThan(a)
             .orReturn { return@sort it }
-            .value -> 1
+            .value
+            -> 1
         else -> 0
     }
         .languageValue

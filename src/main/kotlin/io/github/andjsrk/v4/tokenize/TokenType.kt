@@ -1,5 +1,9 @@
 package io.github.andjsrk.v4.tokenize
 
+/**
+ * @param staticContent A static content of the token.
+ * `null` if the token contains dynamic content.
+ */
 enum class TokenType(val staticContent: String?) {
     EOS(null),
     ILLEGAL(null),
@@ -7,6 +11,7 @@ enum class TokenType(val staticContent: String?) {
     TEMPLATE_HEAD(null),
     TEMPLATE_MIDDLE(null),
     TEMPLATE_TAIL(null),
+    COMMA(","),
     DOT("."),
     LEFT_BRACKET("["),
     QUESTION_DOT("?."),
@@ -36,10 +41,8 @@ enum class TokenType(val staticContent: String?) {
     ASSIGN_EXPONENTIAL("**="),
     ASSIGN_PLUS("+="),
     ASSIGN_MINUS("-="),
-    COMMA(","),
     COALESCE("??"),
     OR("||"),
-    THEN("&&>"),
     AND("&&"),
     BITWISE_OR("|"),
     BITWISE_XOR("^"),
@@ -53,6 +56,7 @@ enum class TokenType(val staticContent: String?) {
     EXPONENTIAL("**"),
     PLUS("+"),
     MINUS("-"),
+    THEN("&&>"),
     NOT("!"),
     BITWISE_NOT("~"),
     INCREMENT("++"),

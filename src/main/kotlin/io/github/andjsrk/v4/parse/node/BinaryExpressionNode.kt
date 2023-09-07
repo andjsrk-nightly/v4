@@ -95,14 +95,14 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
             return if (left is StringType || left is NumericType<*>) {
                 if (left::class != right::class) throwError(TypeErrorKind.LHS_RHS_NOT_SAME_TYPE)
                 else when (operation) {
-                    BinaryOperationType.LT -> left.isLessThan(right)
-                    BinaryOperationType.GT -> right.isLessThan(left)
+                    BinaryOperationType.LT -> left.lessThan(right)
+                    BinaryOperationType.GT -> right.lessThan(left)
                     BinaryOperationType.LT_EQ -> {
-                        val greater = right.isLessThan(left).orReturn { return it }
+                        val greater = right.lessThan(left).orReturn { return it }
                         (!greater).toNormal()
                     }
                     BinaryOperationType.GT_EQ -> {
-                        val less = left.isLessThan(right).orReturn { return it }
+                        val less = left.lessThan(right).orReturn { return it }
                         (!less).toNormal()
                     }
                     else -> neverHappens()

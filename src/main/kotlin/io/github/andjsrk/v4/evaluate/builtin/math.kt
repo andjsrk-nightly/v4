@@ -206,7 +206,7 @@ val ln = functionWithoutThis("ln", 1u) fn@ { args ->
         .toNormal()
 }
 
-val log = functionWithoutThis("log", 2u) fn@ { args ->
+val mathLog = functionWithoutThis("log", 2u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     val base = args[1]
@@ -370,7 +370,7 @@ val truncate = functionWithoutThis("truncate", 1u) fn@ { args ->
 }
 
 @EsSpec("%Math%")
-val Math = ObjectType(properties=mutableMapOf(
+val math = ObjectType(properties=mutableMapOf(
     "E".sealedData(E.languageValue),
     "LN_10".sealedData(ln(10.0).languageValue),
     "LN_2".sealedData(ln(2.0).languageValue),
@@ -398,7 +398,7 @@ val Math = ObjectType(properties=mutableMapOf(
     sealedMethod(hypot),
     sealedMethod(imul),
     sealedMethod(ln),
-    sealedMethod(log),
+    sealedMethod(mathLog),
     sealedMethod(log10),
     sealedMethod(log2),
     sealedMethod(max),

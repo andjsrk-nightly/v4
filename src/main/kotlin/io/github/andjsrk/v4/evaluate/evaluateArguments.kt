@@ -11,7 +11,8 @@ internal fun evaluateArguments(args: ArgumentsNode): MaybeAbrupt<ListType<Langua
     for (arg in args.elements) {
         when (arg) {
             is NonSpreadNode -> {
-                val value = arg.expression.evaluateValue().orReturn { return it }
+                val value = arg.expression.evaluateValue()
+                    .orReturn { return it }
                 values += value
             }
             is SpreadNode -> {

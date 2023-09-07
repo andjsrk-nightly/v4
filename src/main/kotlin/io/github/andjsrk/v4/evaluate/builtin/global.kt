@@ -19,9 +19,15 @@ private val assert = functionWithoutThis("assert", 1u) fn@ { args ->
     normalNull
 }
 
+private val log = functionWithoutThis("log", 1u) fn@ { args ->
+    println(args.joinToString(" ") { it.display() })
+    normalNull
+}
+
 @EsSpec("global object")
 val global = ObjectType(properties=mutableMapOf(
     sealedData(::assert),
+    sealedData(::log),
 
     // 19.3 (Constructor Properties)
     sealedData(::Array),
@@ -39,9 +45,9 @@ val global = ObjectType(properties=mutableMapOf(
     sealedData(::TypeError),
 
     // 19.4 (Other Properties)
-    sealedData(::Json),
-    sealedData(::Math),
-    sealedData(::Reflect),
+    sealedData(::json),
+    sealedData(::math),
+    sealedData(::reflect),
 ))
     .apply {
         _defineOwnProperty("global".languageValue, DataProperty.sealed(this))

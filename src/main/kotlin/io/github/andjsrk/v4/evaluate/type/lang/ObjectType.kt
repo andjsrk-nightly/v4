@@ -99,7 +99,8 @@ open class ObjectType(
             }
             is AccessorProperty -> {
                 val setter = ownDesc.set ?: return throwError(TypeErrorKind.NO_SETTER)
-                TODO()
+                setter.call(receiver, listOf(value))
+                    .orReturn { return it }
             }
         }
         return empty

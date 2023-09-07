@@ -4,6 +4,8 @@ import io.github.andjsrk.v4.tokenize.TokenType
 
 enum class BinaryOperationType {
     ASSIGN,
+    // NOTE: operations without assignment are required right next to complex assignment operations
+    // example: ASSIGN_A, ASSIGN_B, A, B, C
     ASSIGN_COALESCE,
     ASSIGN_OR,
     ASSIGN_AND,
@@ -21,7 +23,6 @@ enum class BinaryOperationType {
     ASSIGN_MINUS,
     COALESCE,
     OR,
-    THEN,
     AND,
     BITWISE_OR,
     BITWISE_XOR,
@@ -35,6 +36,7 @@ enum class BinaryOperationType {
     EXPONENTIAL,
     PLUS,
     MINUS,
+    THEN,
     EQ,
     NOT_EQ,
     LT,
@@ -56,7 +58,10 @@ enum class BinaryOperationType {
 
     companion object {
         /**
-         * Warning: call this function only if you are sure of the operation is included in this enum.
+         * WARNING: The function assumes that a [BinaryOperationType] that has same name with [tokenType] exists;
+         * otherwise the function will throw an exception.
+         *
+         * @throws IllegalArgumentException
          */
         fun fromTokenType(tokenType: TokenType) =
             BinaryOperationType.valueOf(tokenType.name)

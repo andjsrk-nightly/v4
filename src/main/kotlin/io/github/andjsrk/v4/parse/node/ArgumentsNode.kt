@@ -21,7 +21,8 @@ class ArgumentsNode(
         for (arg in elements) {
             when (arg) {
                 is NonSpreadNode -> {
-                    val value = arg.expression.evaluateValue().orReturn { return it }
+                    val value = arg.expression.evaluateValue()
+                        .orReturn { return it }
                     values += value
                 }
                 is SpreadNode -> {
@@ -29,6 +30,8 @@ class ArgumentsNode(
                 }
             }
         }
-        return Completion.WideNormal(ListType(values.toList()))
+        return Completion.WideNormal(
+            ListType(values)
+        )
     }
 }

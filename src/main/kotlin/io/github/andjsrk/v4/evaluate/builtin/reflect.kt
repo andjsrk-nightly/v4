@@ -120,7 +120,7 @@ private val preventExtensions = functionWithoutThis("preventExtensions", 1u) fn@
 }
 
 @EsSpec("%Reflect%")
-val Reflect = ObjectType(properties=mutableMapOf(
+val reflect = ObjectType(properties=mutableMapOf(
     sealedMethod(defineProperty),
     sealedMethod(defineProperties),
     sealedMethod(getOwnPropertyDescriptor),

@@ -7,10 +7,10 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 
 internal fun PrimitiveLanguageType.toBuiltinClass() =
     when (this) {
+        NullType -> null
         is StringType -> String
         is NumberType -> Number
         is BigIntType -> BigInt
         is BooleanType -> Boolean
         is SymbolType -> Symbol
-        else -> TODO()
     }

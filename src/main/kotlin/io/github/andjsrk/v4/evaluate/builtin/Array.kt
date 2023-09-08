@@ -456,34 +456,27 @@ internal inline fun generalSort(
     sort: (comparator: (LanguageType, LanguageType) -> Int) -> ArrayType,
 ): MaybeAbrupt<ArrayType> {
     val res: ArrayType
-    var abrupt: Completion.Abrupt? = null
     try {
         res = sort { a, b ->
             val compareRes = compareFn.call(null, listOf(a, b))
-                .orReturn {
-                    abrupt = it
-                    throw SortBreakException()
-                }
-                .requireToBe<NumberType> {
-                    abrupt = it
-                    throw SortBreakException()
-                }
+                .orReturn { throw SortBreakException(it) }
+                .requireToBe<NumberType> { throw SortBreakException(it) }
             when {
-                compareRes.isNaN -> {
-                    abrupt = throwError(TypeErrorKind.COMPARATOR_RETURNED_NAN)
-                    throw SortBreakException()
-                }
-                compareRes.isNegative -> -1
+                compareRes.isNaN ->
+                    throw SortBreakException(
+                        throwError(TypeErrorKind.COMPARATOR_RETURNED_NAN)
+                    )
                 compareRes.isZero -> 0
+                compareRes.isNegative -> -1
                 else -> 1
             }
         }
     } catch (e: SortBreakException) {
-        return abrupt!!
+        return e.abruptCompletion
     }
     return res.toNormal()
 }
-internal class SortBreakException: Exception()
+internal class SortBreakException(val abruptCompletion: Completion.Abrupt): Exception()
 
 @EsSpec("Array.prototype.with")
 private val immutableArraySet = method("set", 2u) fn@ { thisArg, args ->

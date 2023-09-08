@@ -91,24 +91,23 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
     val right = other.evaluateValue().orReturn { return it }
 
     when (operation) {
-        BinaryOperationType.LT, BinaryOperationType.GT, BinaryOperationType.LT_EQ, BinaryOperationType.GT_EQ ->
-            return if (left is StringType || left is NumericType<*>) {
-                if (left::class != right::class) throwError(TypeErrorKind.LHS_RHS_NOT_SAME_TYPE)
-                else when (operation) {
-                    BinaryOperationType.LT -> left.lessThan(right)
-                    BinaryOperationType.GT -> right.lessThan(left)
-                    BinaryOperationType.LT_EQ -> {
-                        val greater = right.lessThan(left).orReturn { return it }
-                        (!greater).toNormal()
-                    }
-                    BinaryOperationType.GT_EQ -> {
-                        val less = left.lessThan(right).orReturn { return it }
-                        (!less).toNormal()
-                    }
-                    else -> neverHappens()
-                }
+        BinaryOperationType.LT,
+        BinaryOperationType.GT,
+        BinaryOperationType.LT_EQ,
+        BinaryOperationType.GT_EQ
+        -> return when (operation) {
+            BinaryOperationType.LT -> left.lessThan(right)
+            BinaryOperationType.GT -> right.lessThan(left)
+            BinaryOperationType.LT_EQ -> {
+                val greater = right.lessThan(left).orReturn { return it }
+                (!greater).toNormal()
             }
-            else unexpectedType(left, StringType::class, NumericType::class)
+            BinaryOperationType.GT_EQ -> {
+                val less = left.lessThan(right).orReturn { return it }
+                (!less).toNormal()
+            }
+            else -> neverHappens()
+        }
         BinaryOperationType.PLUS -> {
             val leftAsString = left as? StringType
             val rightAsString = right as? StringType
@@ -140,7 +139,7 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
         when (operation) {
             BinaryOperationType.EXPONENTIAL -> numericLeft.pow(numericRight)
             BinaryOperationType.MULTIPLY -> (numericLeft * numericRight).toNormal()
-            BinaryOperationType.DIVIDE -> (numericLeft / numericRight)
+            BinaryOperationType.DIVIDE -> numericLeft / numericRight
             BinaryOperationType.MOD ->
                 @CompilerFalsePositive
                 @Suppress("OPERATOR_MODIFIER_REQUIRED")

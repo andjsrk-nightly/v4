@@ -271,8 +271,7 @@ value class NumberType(
                 10 ->
                     value
                         .toBigDecimal().toPlainString() // prevent scientific notation
-                        .removeSuffix(".0") // remove trailing `.0` if possible
-                        // because trailing `.0` means the number can be represented as an integer
+                        .removeSuffix(".0") // remove trailing `.0` because it means the number can be represented as an integer
                 else -> {
                     assert(value.isInteger)
                     value

@@ -4,7 +4,6 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.thenTake
 
 data class IteratorRecord(
     val sourceObject: ObjectType, // [[Iterator]]
@@ -29,18 +28,18 @@ data class IteratorRecord(
     }
 
     companion object {
-        @EsSpec("GetIterator")
-        fun from(value: LanguageType, kind: GeneratorKind): MaybeAbrupt<IteratorRecord> {
-            val method =
-                (kind == GeneratorKind.ASYNC).thenTake {
-                    value.getMethod(SymbolType.WellKnown.asyncIterator)
-                        .orReturn { return it }
-                }
-                    ?: value.getMethod(SymbolType.WellKnown.iterator)
-                        .orReturn { return it }
-                    ?: return throwError(TypeErrorKind.NOT_ITERABLE)
-            return fromIteratorMethod(value, method)
-        }
+        // @EsSpec("GetIterator")
+        // fun from(value: LanguageType, kind: GeneratorKind): MaybeAbrupt<IteratorRecord> {
+        //     val method =
+        //         (kind == GeneratorKind.ASYNC).thenTake {
+        //             value.getMethod(SymbolType.WellKnown.asyncIterator)
+        //                 .orReturn { return it }
+        //         }
+        //             ?: value.getMethod(SymbolType.WellKnown.iterator)
+        //                 .orReturn { return it }
+        //             ?: return throwError(TypeErrorKind.NOT_ITERABLE)
+        //     return fromIteratorMethod(value, method)
+        // }
         @EsSpec("GetIteratorFromMethod")
         fun fromIteratorMethod(value: LanguageType, method: FunctionType): MaybeAbrupt<IteratorRecord> {
             val iterator = method.call(value, emptyList())
@@ -55,11 +54,12 @@ data class IteratorRecord(
 }
 
 @EsSpec("IteratorComplete")
-internal inline fun ObjectType.isDoneIterResult(rtn: AbruptReturnLambda) =
-    get("done".languageValue)
-        .orReturn(rtn)
-        .requireToBe<BooleanType>(rtn)
-        .value
+internal fun ObjectType.getIterResultDone(): MaybeAbrupt<BooleanType> {
+    return get("done".languageValue)
+        .orReturn { return it }
+        .requireToBe<BooleanType> { return it }
+        .toNormal()
+}
 
 @EsSpec("IteratorValue")
 internal fun ObjectType.getIterResultValue() =

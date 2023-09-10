@@ -492,6 +492,12 @@ private val immutableArraySet = method("set", 2u) fn@ { thisArg, args ->
     new.toNormal()
 }
 
+private val immutableArrayIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, args ->
+    val arr = thisArg.requireToBe<ImmutableArrayType> { return@fn it }
+    createIteratorObjectFromSequence(arr.array.asSequence())
+        .toNormal()
+}
+
 /**
  * See [23.1.4.1 length](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-properties-of-array-instances-length).
  */
@@ -543,6 +549,7 @@ val Array: BuiltinClassType = BuiltinClassType(
         sealedMethod(immutableArraySlice),
         sealedMethod(immutableArraySort),
         sealedMethod(immutableArraySet),
+        sealedMethod(immutableArrayIterator),
         "length".accessor(getter=arrayLengthGetter),
     ),
     constructor ctor@ { _, args ->

@@ -13,7 +13,7 @@ class NewExpressionNode(
     override val range = startRange..arguments.range
     override fun evaluate(): NonEmptyNormalOrAbrupt {
         val calleeValue = callee.evaluateValue().orReturn { return it }
-        val args = evaluateArguments(arguments)
+        val args = arguments.evaluate()
             .orReturn { return it }
         val clazz = calleeValue.requireToBe<ClassType> { return it }
         return clazz.construct(args)

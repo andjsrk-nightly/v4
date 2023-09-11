@@ -17,21 +17,18 @@ private fun List<MaybeRestNode>.initializeParameterBindings(argsIterator: Iterat
                 when (val binding = element.binding) {
                     is IdentifierNode -> {
                         val ref = resolveBinding(binding.stringValue, env)
-                        val defaultExpr = element.default
-                        var value = when {
-                            argsIterator.hasNext() -> argsIterator.next()
-                            defaultExpr == null -> neverHappens() // this case will be handled on `instantiateFunctionDeclaration`
-                            else -> NullType
-                        }
-                        if (value == NullType && defaultExpr != null) {
-                            val defaultValue =
-                                if (defaultExpr.isAnonymous) defaultExpr.evaluateWithName(binding.stringValue)
-                                else defaultExpr.evaluateValue().orReturn { return it }
-                            value = defaultValue
-                        }
+                        val value = element.getArgValueOrDefault(argsIterator, binding.stringValue)
+                            .orReturn { return it }
                         ref.putOrInitializeBinding(value, env)
+                            .orReturn { return it }
                     }
-                    is BindingPatternNode -> TODO()
+                    is ArrayBindingPatternNode -> {
+                        val value = element.getArgValueOrDefault(argsIterator)
+                        TODO()
+                    }
+                    is ObjectBindingPatternNode -> {
+                        TODO()
+                    }
                     else ->
                         @CompilerFalsePositive
                         neverHappens()
@@ -55,4 +52,19 @@ private fun List<MaybeRestNode>.initializeParameterBindings(argsIterator: Iterat
         }
     }
     return empty
+}
+private fun NonRestNode.getArgValueOrDefault(argsIterator: Iterator<LanguageType>, paramName: StringType? = null): NonEmptyNormalOrAbrupt {
+    val value = when {
+        argsIterator.hasNext() -> argsIterator.next()
+        default == null -> neverHappens() // this case will be handled on `instantiateFunctionDeclaration`
+        else -> NullType
+    }
+    return (
+        if (value == NullType && default != null) {
+            if (paramName != null && default.isAnonymous) default.evaluateWithName(paramName)
+            else default.evaluateValue()
+                .orReturn { return it }
+        } else value
+    )
+        .toNormal()
 }

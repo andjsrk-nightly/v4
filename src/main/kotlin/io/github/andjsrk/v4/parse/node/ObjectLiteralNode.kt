@@ -16,8 +16,8 @@ class ObjectLiteralNode(
         stringifyLikeDataClass(::elements, ::range)
     override fun evaluate(): NonEmptyNormalOrAbrupt {
         val obj = ObjectType.createNormal()
-        for (element in elements) {
-            evaluatePropertyDefinition(obj, element)
+        elements.forEach {
+            evaluatePropertyDefinition(obj, it)
                 .orReturn { return it }
         }
         return obj.toNormal()
@@ -33,7 +33,8 @@ class ObjectLiteralNode(
                 val key: PropertyKey = with (keyNode) {
                     when (this) {
                         is ComputedPropertyKeyNode -> {
-                            val value = expression.evaluateValue().orReturn { return it }
+                            val value = expression.evaluateValue()
+                                .orReturn { return it }
                             value.toPropertyKey()
                                 .orReturn { return it }
                         }
@@ -45,16 +46,19 @@ class ObjectLiteralNode(
                 val value = when {
                     isShorthand && keyNode is ComputedPropertyKeyNode -> key // should be evaluated only once in this case
                     property.value.isAnonymous -> property.value.evaluateWithName(key)
-                    else -> property.value.evaluateValue().orReturn { return it }
+                    else -> property.value.evaluateValue()
+                        .orReturn { return it }
                 }
-                obj.createDataPropertyOrThrow(key, value)
-                return empty
+                obj.createDataProperty(key, value)
             }
             is SpreadNode -> {
-                val value = property.expression.evaluateValue().orReturn { return it }
-                TODO()
+                val value = property.expression.evaluateValue()
+                    .orReturn { return it }
+                copyDataProperties(obj, value)
+                    .orReturn { return it }
             }
             else -> TODO()
         }
+        return empty
     }
 }

@@ -17,6 +17,7 @@ internal fun generalizedDescriptionOf(clazz: KClass<*>) =
         clazz.`is`<NumericType<*>>() -> "a number or a BigInt"
         clazz.`is`<BooleanType>() -> "a boolean"
         clazz.`is`<SymbolType>() -> "a symbol"
+        clazz.`is`<PropertyKey>() -> "a property key"
         clazz.`is`<ArrayType>() -> "an array"
         clazz.`is`<FunctionType>() -> "a function"
         clazz.`is`<RegExpType>() -> "a regular expression"

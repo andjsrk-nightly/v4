@@ -19,14 +19,16 @@ class MemberExpressionNode(
     override fun toString() =
         stringifyLikeDataClass(::`object`, ::property, ::isOptionalChain, ::isComputed, ::range)
     override fun evaluate(): MaybeAbrupt<Reference> {
-        val baseRef = `object`.evaluate().orReturn { return it }
+        val baseRef = `object`.evaluate()
+            .orReturn { return it }
 
         if (baseRef is Reference) {
             val isOptionalChain = baseRef.isOptionalChain || this.isOptionalChain
             if (isOptionalChain && baseRef.base == NullType) return baseRef.toWideNormal() // continue resulting null
         }
 
-        val base = getValue(baseRef).orReturn { return it }
+        val base = getValue(baseRef)
+            .orReturn { return it }
 
         if (this.isOptionalChain && base == NullType) {
             return Reference(NullType, null, isOptionalChain=true)
@@ -35,10 +37,10 @@ class MemberExpressionNode(
 
         return (
             if (this.isComputed) {
-                val key = property.evaluateValue().orReturn { return it }
-                val coercedKey = key.toPropertyKey()
+                val key = property.evaluateValue()
                     .orReturn { return it }
-                Reference(base, coercedKey)
+                    .requireToBePropertyKey { return it }
+                Reference(base, key)
             } else {
                 require(property is IdentifierNode)
                 Reference(base, property.stringValue)

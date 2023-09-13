@@ -2,8 +2,7 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
-import io.github.andjsrk.v4.evaluate.type.EmptyOrAbrupt
-import io.github.andjsrk.v4.evaluate.type.empty
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.OrdinaryFunctionType
 import io.github.andjsrk.v4.parse.boundStringNames
@@ -21,7 +20,7 @@ internal fun instantiateFunctionDeclaration(func: OrdinaryFunctionType, args: Li
     val paramNames = func.parameters.boundStringNames()
     val env = calleeContext.lexicalEnvironment
     for (paramName in paramNames) env.createMutableBinding(paramName)
-    func.parameters.initializeParameterBindings(args.iterator(), env)
+    func.parameters.initializeParameterBindings(args.map { it.toNormal() }.iterator(), env)
         .orReturn { return it }
     if (func.body is BlockNode) instantiateBlockDeclaration(func.body, env)
     return empty

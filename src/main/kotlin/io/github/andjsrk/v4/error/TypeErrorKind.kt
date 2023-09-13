@@ -75,6 +75,7 @@ enum class TypeErrorKind(override val message: String): ErrorKind {
     INVALID_RAW_JSON_VALUE("Invalid value for JSON.rawJSON"),
     INVALID_REG_EXP_EXEC_RESULT("RegExp exec method returned something other than an Object or null"),
     INVALID_UNIT("Invalid unit argument for %() '%'"),
+    ITERABLE_YIELDED_INSUFFICIENT_NUMBER_OF_VALUES("Iterable yielded insufficient number of values (expected: %, actual: %)"),
     ITERABLE_YIELDED_NON_STRING("Iterable yielded % which is not a string"),
     ITERATOR_REDUCE_NO_INITIAL("Reduce of a done iterator with no initial value"),
     ITERATOR_RESULT_NOT_AN_OBJECT("Iterator result % is not an object"),

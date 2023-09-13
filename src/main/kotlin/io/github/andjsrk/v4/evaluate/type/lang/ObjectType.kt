@@ -225,13 +225,13 @@ open class ObjectType(
 
     companion object {
         @EsSpec("MakeBasicObject")
-        fun createBasic() =
+        fun createBasic(properties: MutableMap<PropertyKey, Property> = mutableMapOf()) =
             // TODO: fix if needed
             ObjectType(lazy { null })
         /**
          * Returns an Object that `[[Prototype]]` is set to `%Object.prototype%`.
          */
-        fun createNormal(): ObjectType =
-            ObjectType()
+        fun createNormal(properties: MutableMap<PropertyKey, Property> = mutableMapOf()): ObjectType =
+            ObjectType(properties=properties)
     }
 }

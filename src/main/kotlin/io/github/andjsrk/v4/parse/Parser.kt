@@ -474,7 +474,9 @@ class Parser(sourceText: String) {
         when (currToken.type) {
             LEFT_BRACE -> parseObjectBindingPattern()
             LEFT_BRACKET -> parseArrayBindingPattern()
-            else -> null
+            else ->
+                @CompilerFalsePositive
+                null as BindingPatternNode?
         }
     @Careful
     private fun parseCoverParenthesizedExpressionAndArrowParameterList(): ExpressionNode? {

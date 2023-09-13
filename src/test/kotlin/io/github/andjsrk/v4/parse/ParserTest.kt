@@ -694,7 +694,7 @@ internal class ParserTest {
                         key.assertIdentifierNamed("ab")
                         binding.assertIdentifierNamed("a")
                     }
-                    elements[1].assertTypeAnd<NonRestNode> {
+                    elements[1].assertTypeAnd<NonRestObjectPropertyNode> {
                         binding.assertIdentifierNamed("b")
                         assertIs<NumberLiteralNode>(default)
                     }

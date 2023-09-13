@@ -1,7 +1,6 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class UniqueFormalParametersNode(
@@ -11,5 +10,5 @@ class UniqueFormalParametersNode(
     override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
-    override fun evaluate() = neverHappens()
+    override fun evaluate() = super.evaluate()
 }

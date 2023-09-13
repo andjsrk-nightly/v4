@@ -13,9 +13,12 @@ sealed class CallNode(
     override fun toString() =
         stringifyLikeDataClass(::callee, ::arguments, ::range)
     override fun evaluate(): NonEmptyNormalOrAbrupt {
-        val ref = callee.evaluate().orReturn { return it }
-        val func = getValue(ref).orReturn { return it }
-        val args = arguments.evaluate().orReturn { return it }
+        val ref = callee.evaluate()
+            .orReturn { return it }
+        val func = getValue(ref)
+            .orReturn { return it }
+        val args = arguments.evaluate()
+            .orReturn { return it }
         return evaluateCall(func, ref, args)
     }
 }

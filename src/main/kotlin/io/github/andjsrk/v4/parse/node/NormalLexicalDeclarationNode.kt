@@ -27,10 +27,12 @@ class NormalLexicalDeclarationNode(
                         when {
                             value == null -> NullType
                             value.isAnonymous -> value.evaluateWithName(name)
-                            else -> value.evaluateValue().orReturn { return it }
+                            else -> value.evaluateValue()
+                                .orReturn { return it }
                         }
                     }
                     lhs.initializeBinding(value)
+                        .unwrap()
                 }
                 is BindingPatternNode -> TODO()
                 else ->

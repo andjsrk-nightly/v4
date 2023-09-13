@@ -17,3 +17,7 @@ internal inline fun <reified T: ObjectType> LanguageType?.requireToBe(clazz: Cla
 internal inline fun LanguageType.requireToBeString(rtn: AbruptReturnLambda) =
     requireToBe<StringType>(rtn)
         .value
+
+internal inline fun LanguageType.requireToBePropertyKey(rtn: AbruptReturnLambda) =
+    if (this !is PropertyKey) rtn(unexpectedType(this, PropertyKey::class))
+    else this

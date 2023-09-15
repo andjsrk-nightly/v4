@@ -5,4 +5,4 @@ import io.github.andjsrk.v4.evaluate.builtin.MutableArray
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 fun LanguageType.isAnyArray() =
-    this.isInstanceOfOneOf(Array, MutableArray)
+    prototype?.ownerClass?.isSubTypeOfOneOf(Array, MutableArray) ?: false

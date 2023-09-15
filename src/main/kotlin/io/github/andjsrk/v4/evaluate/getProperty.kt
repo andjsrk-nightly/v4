@@ -5,10 +5,10 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("GetV")
-internal fun LanguageType.getProperty(key: PropertyKey) =
+fun LanguageType.getProperty(key: PropertyKey) =
     when (this) {
         NullType -> throwError(TypeErrorKind.CANNOT_READ_PROPERTY, key.string(), generalizedDescriptionOf(this))
         is ObjectType -> get(key)
         else -> prototype!!.get(key)
-//                       ^^ every primitive types have its own prototype object, so it cannot be `null`
+        //               ^^ every primitive types have its own prototype object, so it cannot be `null`
     }

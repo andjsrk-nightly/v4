@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type
 
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
 class GlobalEnvironment(global: ObjectType): Environment(null) {
     val declarative = DeclarativeEnvironment(null)
@@ -8,10 +9,10 @@ class GlobalEnvironment(global: ObjectType): Environment(null) {
     override fun hasBinding(name: String) =
         declarative.hasBinding(name) || `object`.hasBinding(name)
     override fun createMutableBinding(name: String) =
-        if (declarative.hasBinding(name)) Completion.Throw(NullType/* TypeError */) // TODO
+        if (declarative.hasBinding(name)) TODO()
         else declarative.createMutableBinding(name)
     override fun createImmutableBinding(name: String) =
-        if (declarative.hasBinding(name)) Completion.Throw(NullType/* TypeError */) // TODO
+        if (declarative.hasBinding(name)) TODO()
         else declarative.createImmutableBinding(name)
     override fun initializeBinding(name: String, value: LanguageType) =
         ifHasBinding(name) {

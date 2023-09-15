@@ -10,7 +10,7 @@ internal inline fun <reified T: LanguageType> LanguageType?.requireToBe(rtn: Abr
 
 // type parameter is for providing proper error message
 internal inline fun <reified T: ObjectType> LanguageType?.requireToBe(clazz: ClassType, rtn: AbruptReturnLambda): ObjectType {
-    if (this !is ObjectType || this.not { isInstanceOfOneOf(clazz) }) rtn(unexpectedType(this, T::class))
+    if (this !is ObjectType || this.not { isInstanceOf(clazz) }) rtn(unexpectedType(this, T::class))
     return this
 }
 

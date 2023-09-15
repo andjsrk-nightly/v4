@@ -1,17 +1,17 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.*
-import io.github.andjsrk.v4.BinaryOperationType.ASSIGN
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.parse.*
+import io.github.andjsrk.v4.BinaryOperationType as BinaryOpType
 
 class BinaryExpressionNode(
     val left: ExpressionNode,
     val right: ExpressionNode,
-    val operation: BinaryOperationType,
+    val operation: BinaryOpType,
 ): ExpressionNode, NonAtomicNode {
     override val childNodes get() = listOf(left, right)
     override val range = left.range..right.range
@@ -23,7 +23,7 @@ class BinaryExpressionNode(
 
             val lref = left.evaluate().orReturn { return it } as Reference
             val rval =
-                if (operation == ASSIGN) {
+                if (operation == BinaryOpType.ASSIGN) {
                     if (left is IdentifierNode && right.isAnonymous) right.evaluateWithName(left.stringValue)
                     else right.evaluateValue().orReturn { return it }
                 } else {
@@ -36,7 +36,8 @@ class BinaryExpressionNode(
             return rval.toNormal()
         }
 
-        val lval = left.evaluateValue().orReturn { return it }
+        val lval = left.evaluateValue()
+            .orReturn { return it }
 
         return lval.operate(operation, right)
     }
@@ -47,13 +48,13 @@ class BinaryExpressionNode(
  *
  * Note that [other] is not a [LanguageType] because right side needs to be evaluated conditionally for some operations.
  */
-internal fun LanguageType.operate(operation: BinaryOperationType, other: ExpressionNode): NonEmptyNormalOrAbrupt {
+internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode): NonEmptyNormalOrAbrupt {
     assert(operation.not { isAssignLike })
 
     val left = this
 
     when (operation) {
-        BinaryOperationType.AND -> {
+        BinaryOpType.AND -> {
             // NOTE: current behavior
             // evaluate left side
             // require left side to be a Boolean
@@ -69,63 +70,78 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
                 .requireToBe<BooleanType> { return it }
             return right.toNormal()
         }
-        BinaryOperationType.THEN -> {
+        BinaryOpType.THEN -> {
             val booleanLeft = left.requireToBe<BooleanType> { return it }
             if (!booleanLeft.value) return BooleanType.FALSE.toNormal()
             return other.evaluateValue()
         }
-        BinaryOperationType.OR -> {
+        BinaryOpType.OR -> {
             val booleanLeft = left.requireToBe<BooleanType> { return it }
             if (booleanLeft.value) return BooleanType.TRUE.toNormal()
-            val right = other.evaluateValue().orReturn { return it }
+            val right = other.evaluateValue()
+                .orReturn { return it }
                 .requireToBe<BooleanType> { return it }
             return right.toNormal()
         }
-        BinaryOperationType.COALESCE -> return (
+        BinaryOpType.COALESCE -> return (
             if (left == NullType) other.evaluateValue()
             else left.toNormal()
         )
         else -> {}
     }
 
-    val right = other.evaluateValue().orReturn { return it }
+    val right = other.evaluateValue()
+        .orReturn { return it }
 
     when (operation) {
-        BinaryOperationType.LT,
-        BinaryOperationType.GT,
-        BinaryOperationType.LT_EQ,
-        BinaryOperationType.GT_EQ
-        -> return when (operation) {
-            BinaryOperationType.LT -> left.lessThan(right)
-            BinaryOperationType.GT -> right.lessThan(left)
-            BinaryOperationType.LT_EQ -> {
-                val greater = right.lessThan(left).orReturn { return it }
-                (!greater).toNormal()
-            }
-            BinaryOperationType.GT_EQ -> {
-                val less = left.lessThan(right).orReturn { return it }
-                (!less).toNormal()
-            }
-            else -> neverHappens()
+        BinaryOpType.LT -> return left.lessThan(right)
+        BinaryOpType.GT -> return right.lessThan(left)
+        BinaryOpType.LT_EQ -> {
+            val greater = right.lessThan(left)
+                .orReturn { return it }
+            return (!greater).toNormal()
         }
-        BinaryOperationType.PLUS -> {
+        BinaryOpType.GT_EQ -> {
+            val less = left.lessThan(right)
+                .orReturn { return it }
+            return (!less).toNormal()
+        }
+        BinaryOpType.PLUS -> {
             val leftAsString = left as? StringType
             val rightAsString = right as? StringType
             if (leftAsString != null || rightAsString != null) {
-                val stringLeft = leftAsString ?: stringify(left).orReturn { return it }
-                val stringRight = rightAsString ?: stringify(right).orReturn { return it }
+                val stringLeft = leftAsString
+                    ?: stringify(left)
+                        .orReturn { return it }
+                val stringRight = rightAsString
+                    ?: stringify(right)
+                        .orReturn { return it }
                 return (stringLeft + stringRight).toNormal()
             }
             // numeric values will be handled on below
         }
-        BinaryOperationType.EQ ->
+        BinaryOpType.EQ ->
             return equal(left, right)
                 .languageValue
                 .toNormal()
-        BinaryOperationType.NOT_EQ ->
+        BinaryOpType.NOT_EQ ->
             return not { equal(left, right) }
                 .languageValue
                 .toNormal()
+        BinaryOpType.IN -> {
+            val key = left.requireToBePropertyKey { return it }
+            return right.hasProperty(key)
+                .languageValue
+                .toNormal()
+        }
+        BinaryOpType.INSTANCEOF -> {
+            if (right !is ClassType) return throwError(TypeErrorKind.INSTANCEOF_RHS_IS_NOT_CLASS)
+            // there is no @@hasInstance
+            if (left !is ObjectType) return BooleanType.FALSE.toNormal()
+            return left.isInstanceOf(right)
+                .languageValue
+                .toNormal()
+        }
         else -> {}
     }
 
@@ -137,21 +153,21 @@ internal fun LanguageType.operate(operation: BinaryOperationType, other: Express
         @CompilerFalsePositive
         @Suppress("TYPE_MISMATCH")
         when (operation) {
-            BinaryOperationType.EXPONENTIAL -> numericLeft.pow(numericRight)
-            BinaryOperationType.MULTIPLY -> (numericLeft * numericRight).toNormal()
-            BinaryOperationType.DIVIDE -> numericLeft / numericRight
-            BinaryOperationType.MOD ->
+            BinaryOpType.EXPONENTIAL -> numericLeft.pow(numericRight)
+            BinaryOpType.MULTIPLY -> (numericLeft * numericRight).toNormal()
+            BinaryOpType.DIVIDE -> numericLeft / numericRight
+            BinaryOpType.MOD ->
                 @CompilerFalsePositive
                 @Suppress("OPERATOR_MODIFIER_REQUIRED")
                 (numericLeft % numericRight)
-            BinaryOperationType.PLUS -> (numericLeft + numericRight).toNormal()
-            BinaryOperationType.MINUS -> (numericLeft - numericRight).toNormal()
-            BinaryOperationType.SHL -> numericLeft.leftShift(numericRight)
-            BinaryOperationType.SAR -> numericLeft.signedRightShift(numericRight)
-            BinaryOperationType.SHR -> numericLeft.unsignedRightShift(numericRight)
-            BinaryOperationType.BITWISE_AND -> numericLeft.bitwiseAnd(numericRight)
-            BinaryOperationType.BITWISE_XOR -> numericLeft.bitwiseXor(numericRight)
-            BinaryOperationType.BITWISE_OR -> numericLeft.bitwiseOr(numericRight)
+            BinaryOpType.PLUS -> (numericLeft + numericRight).toNormal()
+            BinaryOpType.MINUS -> (numericLeft - numericRight).toNormal()
+            BinaryOpType.SHL -> numericLeft.leftShift(numericRight)
+            BinaryOpType.SAR -> numericLeft.signedRightShift(numericRight)
+            BinaryOpType.SHR -> numericLeft.unsignedRightShift(numericRight)
+            BinaryOpType.BITWISE_AND -> numericLeft.bitwiseAnd(numericRight)
+            BinaryOpType.BITWISE_XOR -> numericLeft.bitwiseXor(numericRight)
+            BinaryOpType.BITWISE_OR -> numericLeft.bitwiseOr(numericRight)
             else -> missingBranch()
         }
     )

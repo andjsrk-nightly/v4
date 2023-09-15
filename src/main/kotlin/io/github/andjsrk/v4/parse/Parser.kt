@@ -1538,8 +1538,8 @@ class Parser(sourceText: String) {
                 binding
             }
             val body = parseBlock() ?: return null
-            val bodyNames = body.lexicallyDeclaredNames()
-            reportDuplicateName((binding?.boundNames() ?: emptyList()) + bodyNames)
+            val namesInBody = body.lexicallyDeclaredNames()
+            reportDuplicateName((binding?.boundNames() ?: emptyList()) + namesInBody)
 
             ifHasNoError { CatchNode(binding, body, startRange) }
         }

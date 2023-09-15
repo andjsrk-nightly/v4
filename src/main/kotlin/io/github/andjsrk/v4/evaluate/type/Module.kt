@@ -7,4 +7,5 @@ abstract class Module(
 ): Record {
     lateinit var environment: ModuleEnvironment
     lateinit var namespaceObject: ObjectType
+    abstract fun resolveExport(exportName: String, resolveSet: MutableList<Pair<Module, String>> = mutableListOf()): ExportResolveResult?
 }

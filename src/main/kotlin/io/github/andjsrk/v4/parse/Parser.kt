@@ -191,7 +191,7 @@ class Parser(sourceText: String) {
     @Careful
     private fun parseComputedPropertyName(): ComputedPropertyKeyNode? {
         val startRange = takeIfMatches(LEFT_BRACKET)?.range ?: return null
-        val expression = parseExpression() ?: return null
+        val expression = parseAssignment() ?: return null
         val endRange = expect(RIGHT_BRACKET)?.range ?: return null
 
         return ComputedPropertyKeyNode(expression, startRange..endRange)
@@ -666,7 +666,7 @@ class Parser(sourceText: String) {
         val strings = mutableListOf(head)
         val expressions = mutableListOf<ExpressionNode>()
         while (true) {
-            val expr = parseExpression() ?: return null
+            val expr = parseAssignment() ?: return null
             tokenizer.back() // current token is right brace, which is not expected, so get back to previous state then get template middle token
             val string = tokenizer.getTemplateMiddleToken()
             if (string.type.not { isOneOf(TEMPLATE_MIDDLE, TEMPLATE_TAIL) }) return reportError(SyntaxErrorKind.UNTERMINATED_TEMPLATE_EXPR)
@@ -756,7 +756,7 @@ class Parser(sourceText: String) {
         when (currToken.type) {
             LEFT_BRACKET -> {
                 advance()
-                property = parseExpression() ?: return reportUnexpectedToken()
+                property = parseAssignment() ?: return reportUnexpectedToken()
                 endRange = expect(RIGHT_BRACKET)?.range ?: return null
                 isComputed = true
             }
@@ -1127,7 +1127,7 @@ class Parser(sourceText: String) {
     private fun parseIfExpression(): ExpressionNode? {
         val startRange = takeIfMatchesKeyword(IF)?.range ?: return parseShortCircuit()
         expect(LEFT_PARENTHESIS) ?: return null
-        val test = parseExpression() ?: return null
+        val test = parseAssignment() ?: return null
         expect(RIGHT_PARENTHESIS) ?: return null
         val then = parseAssignment() ?: return null
         takeIfMatchesKeyword(ELSE) ?: return reportUnexpectedToken()
@@ -1366,7 +1366,7 @@ class Parser(sourceText: String) {
      */
     @Careful
     private fun parseExpressionStatement(): ExpressionStatementNode? {
-        val expr = parseExpression() ?: return null
+        val expr = parseAssignment() ?: return null
         return ExpressionStatementNode(expr, takeOptionalSemicolonRange())
     }
     /**
@@ -1402,7 +1402,7 @@ class Parser(sourceText: String) {
         val startRange = takeIfMatchesKeyword(IF)?.range ?: return null
 
         expect(LEFT_PARENTHESIS) ?: return null
-        val test = parseExpression() ?: return null
+        val test = parseAssignment() ?: return null
         expect(RIGHT_PARENTHESIS) ?: return null
         val then = parseStatement() ?: return null
         takeIfMatchesKeyword(ELSE) ?: return IfStatementNode(test, then, null, startRange)
@@ -1462,7 +1462,7 @@ class Parser(sourceText: String) {
         val startRange = takeIfMatchesKeyword(WHILE)?.range ?: return null
         val atLeastOnce = takeIfMatches(PLUS) != null
         expect(LEFT_PARENTHESIS) ?: return null
-        val test = parseExpression() ?: return null
+        val test = parseAssignment() ?: return null
         expect(RIGHT_PARENTHESIS) ?: return null
         val body = parseStatement() ?: return null
         return WhileNode(test, body, atLeastOnce, startRange)

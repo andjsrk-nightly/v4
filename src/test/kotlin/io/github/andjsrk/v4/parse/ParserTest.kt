@@ -448,13 +448,13 @@ internal class ParserTest {
     fun testUpdate() {
         """
             a++
-        """.shouldBeValidExpressionAnd<UpdateNode> {
+        """.shouldBeValidExpressionAnd<UnaryExpressionNode> {
             assert(!isPrefixed)
         }
 
         """
             ++a
-        """.shouldBeValidExpressionAnd<UpdateNode> {
+        """.shouldBeValidExpressionAnd<UnaryExpressionNode> {
             assert(isPrefixed)
         }
 
@@ -466,7 +466,7 @@ internal class ParserTest {
             val exprs = elements.map { it.unwrapExprStmt<ExpressionNode>() }
 
             exprs[0].assertIdentifierNamed("a")
-            exprs[1].assertTypeAnd<UpdateNode> {
+            exprs[1].assertTypeAnd<UnaryExpressionNode> {
                 assert(isPrefixed)
             }
         }
@@ -478,7 +478,7 @@ internal class ParserTest {
             val exprs = elements.map { it.unwrapExprStmt<ExpressionNode>() }
 
             exprs[0].assertIdentifierNamed("a")
-            exprs[1].assertTypeAnd<UpdateNode> {
+            exprs[1].assertTypeAnd<UnaryExpressionNode> {
                 assert(isPrefixed)
             }
         }
@@ -497,7 +497,7 @@ internal class ParserTest {
             typeof ++a
         """.shouldBeValidExpressionAnd<UnaryExpressionNode> {
             assert(operation == UnaryOperationType.TYPEOF)
-            assertIs<UpdateNode>(operand)
+            assertIs<UnaryExpressionNode>(operand)
         }
 
         """
@@ -513,7 +513,7 @@ internal class ParserTest {
             ++a ** 1
         """.shouldBeValidExpressionAnd<BinaryExpressionNode> {
             assert(operation == BinaryOperationType.EXPONENTIAL)
-            assertIs<UpdateNode>(left)
+            assertIs<UnaryExpressionNode>(left)
         }
 
         """
@@ -781,7 +781,7 @@ internal class ParserTest {
         """.shouldBeValidStatementAnd<NormalForNode> {
             assertIs<NormalLexicalDeclarationNode>(init)
             assertIs<BinaryExpressionNode>(test)
-            assertIs<UpdateNode>(update)
+            assertIs<UnaryExpressionNode>(update)
             assertIs<EmptyStatementNode>(body)
         }
 

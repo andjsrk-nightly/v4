@@ -10,5 +10,8 @@ enum class UnaryOperationType {
     // keywords
     AWAIT,
     TYPEOF,
-    VOID
+    VOID;
+
+    val isUpdate get() =
+        this == INCREMENT || this == DECREMENT
 }

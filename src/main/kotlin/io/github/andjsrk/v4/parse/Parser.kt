@@ -898,7 +898,7 @@ class Parser(sourceText: String) {
             INCREMENT, DECREMENT -> {
                 val token = advance()
                 val leftHandSideExpr = parseLeftHandSideExpression() ?: return null
-                UpdateNode(
+                UnaryExpressionNode(
                     leftHandSideExpr,
                     UnaryOperationType.valueOf(token.type.name),
                     token.range,
@@ -910,7 +910,7 @@ class Parser(sourceText: String) {
                 val leftHandSideExpr = parseLeftHandSideExpression() ?: return null
                 if (currToken.not { isPrevLineTerminator } && currToken.type.isOneOf(INCREMENT, DECREMENT)) {
                     val token = advance()
-                    UpdateNode(
+                    UnaryExpressionNode(
                         leftHandSideExpr,
                         UnaryOperationType.valueOf(token.type.name),
                         token.range,
@@ -921,20 +921,24 @@ class Parser(sourceText: String) {
             }
         }
     }
-    private fun UpdateNode?.withLhsCheck() =
-        this?.takeIf {
-            when {
-                operand.isAssignmentTarget() -> true
-                else -> {
-                    reportError(
-                        if (isPrefixed) SyntaxErrorKind.INVALID_LHS_IN_PREFIX_OP
-                        else SyntaxErrorKind.INVALID_LHS_IN_POSTFIX_OP,
-                        operand.range,
-                    )
-                    false
+    private fun UnaryExpressionNode?.withLhsCheck() =
+        this
+            ?.also {
+                assert(operation == UnaryOperationType.INCREMENT || operation == UnaryOperationType.DECREMENT)
+            }
+            ?.takeIf {
+                when {
+                    operand.isAssignmentTarget() -> true
+                    else -> {
+                        reportError(
+                            if (isPrefixed) SyntaxErrorKind.INVALID_LHS_IN_PREFIX_OP
+                            else SyntaxErrorKind.INVALID_LHS_IN_POSTFIX_OP,
+                            operand.range,
+                        )
+                        false
+                    }
                 }
             }
-        }
     /**
      * Parses [UnaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-UnaryExpression).
      */
@@ -964,7 +968,7 @@ class Parser(sourceText: String) {
         val expr = parseUnaryExpression() ?: return null
         if (currToken.type != EXPONENTIAL) return expr
         val exponentiationToken = advance()
-        if (expr is UnaryExpressionNode && expr !is UpdateNode) return reportError(
+        if (expr is UnaryExpressionNode && expr.operation.not { isUpdate }) return reportError(
             SyntaxErrorKind.UNEXPECTED_TOKEN_UNARY_EXPONENTIATION,
             expr.range..exponentiationToken.range,
         )

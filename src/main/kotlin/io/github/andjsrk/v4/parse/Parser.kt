@@ -946,8 +946,9 @@ class Parser(sourceText: String) {
     private fun parseUnaryExpression(): ExpressionNode? {
         val operation = when {
             currToken.isKeyword(AWAIT) -> UnaryOperationType.AWAIT
-            currToken.isKeyword(VOID) -> UnaryOperationType.VOID
+            currToken.isKeyword(THROW) -> UnaryOperationType.THROW
             currToken.isKeyword(TYPEOF) -> UnaryOperationType.TYPEOF
+            currToken.isKeyword(VOID) -> UnaryOperationType.VOID
             else -> when (currToken.type) {
                 MINUS -> UnaryOperationType.MINUS
                 NOT -> UnaryOperationType.NOT
@@ -1517,16 +1518,6 @@ class Parser(sourceText: String) {
         return ReturnNode(expr, returnTokenRange, takeOptionalSemicolonRange())
     }
     /**
-     * Parses [ThrowStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ThrowStatement).
-     */
-    @Careful
-    private fun parseThrow(): ThrowNode? {
-        val throwTokenRange = takeIfMatchesKeyword(THROW)?.range ?: return null
-        if (currToken.isPrevLineTerminator) return reportError(SyntaxErrorKind.NEWLINE_AFTER_THROW, throwTokenRange)
-        val expr = parseAssignment() ?: return null
-        return ThrowNode(expr, throwTokenRange, takeOptionalSemicolonRange())
-    }
-    /**
      * Parses [TryStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-try-statement).
      */
     @Careful
@@ -1567,7 +1558,6 @@ class Parser(sourceText: String) {
                 ::parseContinue,
                 ::parseBreak,
                 ::parseReturn,
-                ::parseThrow,
                 ::parseTry,
                 ::parseExpressionStatement,
             )

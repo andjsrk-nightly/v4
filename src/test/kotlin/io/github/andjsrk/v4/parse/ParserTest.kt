@@ -486,12 +486,16 @@ internal class ParserTest {
     @Test
     fun testUnaryExpression() {
         """
-            void 0
+            throw 0
         """.shouldBeValidExpressionAnd<UnaryExpressionNode> {
-            assert(operation == UnaryOperationType.VOID)
-            assertTrue(isPrefixed)
+            assert(operation == UnaryOperationType.THROW)
             assertIs<NumberLiteralNode>(operand)
         }
+
+        """
+            throw
+            0
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.NEWLINE_AFTER_THROW)
 
         """
             typeof ++a
@@ -505,6 +509,14 @@ internal class ParserTest {
         """.shouldBeValidExpressionAnd<UnaryExpressionNode> {
             assert(operation == UnaryOperationType.TYPEOF)
             assertIs<UnaryExpressionNode>(operand)
+        }
+
+        """
+            void 0
+        """.shouldBeValidExpressionAnd<UnaryExpressionNode> {
+            assert(operation == UnaryOperationType.VOID)
+            assertTrue(isPrefixed)
+            assertIs<NumberLiteralNode>(operand)
         }
     }
     @Test
@@ -892,18 +904,6 @@ internal class ParserTest {
         """
             return
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.ILLEGAL_RETURN)
-    }
-    @Test
-    fun testThrow() {
-        """
-            throw 0
-        """.shouldBeValidStatementAnd<ThrowNode> {
-            assertIs<NumberLiteralNode>(expression)
-        }
-        """
-            throw
-            0
-        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.NEWLINE_AFTER_THROW)
     }
     @Test
     fun testTry() {

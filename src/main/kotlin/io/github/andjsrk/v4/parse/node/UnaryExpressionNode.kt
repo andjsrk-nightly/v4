@@ -29,6 +29,11 @@ open class UnaryExpressionNode(
                     .orReturn { return it }
                 return normalNull
             }
+            THROW -> {
+                val value = operand.evaluateValue()
+                    .orReturn { return it }
+                return Completion.Throw(value)
+            }
             TYPEOF -> {
                 val value = operand.evaluateValue()
                     .orReturn { return it }

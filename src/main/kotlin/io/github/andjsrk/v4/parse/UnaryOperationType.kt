@@ -9,6 +9,7 @@ enum class UnaryOperationType {
 
     // keywords
     AWAIT,
+    THROW,
     TYPEOF,
     VOID;
 

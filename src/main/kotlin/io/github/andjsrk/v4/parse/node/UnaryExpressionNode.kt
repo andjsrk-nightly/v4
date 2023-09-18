@@ -23,49 +23,35 @@ open class UnaryExpressionNode(
     override fun toString() =
         stringifyLikeDataClass(::operand, ::operation, ::range)
     override fun evaluate(): NonEmptyNormalOrAbrupt {
+        val value = operand.evaluateValue()
+            .orReturn { return it }
         return when (this.operation) {
-            VOID -> {
-                operand.evaluateValue()
-                    .orReturn { return it }
-                return normalNull
+            VOID -> return normalNull
+            THROW -> return Completion.Throw(value)
+            TYPEOF -> when (value) {
+                NullType -> "null"
+                is StringType -> "string"
+                is NumberType -> "number"
+                is BooleanType -> "boolean"
+                is SymbolType -> "symbol"
+                is BigIntType -> "bigint"
+                is ObjectType -> "object"
             }
-            THROW -> {
-                val value = operand.evaluateValue()
-                    .orReturn { return it }
-                return Completion.Throw(value)
-            }
-            TYPEOF -> {
-                val value = operand.evaluateValue()
-                    .orReturn { return it }
-                when (value) {
-                    NullType -> "null"
-                    is StringType -> "string"
-                    is NumberType -> "number"
-                    is BooleanType -> "boolean"
-                    is SymbolType -> "symbol"
-                    is BigIntType -> "bigint"
-                    is ObjectType -> "object"
-                }
-                    .languageValue
-            }
+                .languageValue
             MINUS -> {
-                val value = operand.evaluateValue()
-                    .orReturn { return it }
+                val number = value
                     .requireToBe<NumericType<*>> { return it }
-                -value
+                -number
             }
             BITWISE_NOT -> {
-                val value = operand.evaluateValue()
-                    .orReturn { return it }
+                val number = value
                     .requireToBe<NumericType<*>> { return it }
-                value.bitwiseNot()
-                    .orReturn { return it }
+                return number.bitwiseNot()
             }
             NOT -> {
-                val value = operand.evaluateValue()
-                    .orReturn { return it }
+                val boolean = value
                     .requireToBe<BooleanType> { return it }
-                !value
+                !boolean
             }
             // TODO: await expression
             else -> missingBranch()

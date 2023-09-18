@@ -147,10 +147,10 @@ val stringify = functionWithoutThis("stringify", 1u) fn@ { args ->
         }
         else -> return@fn unexpectedType(indentArg, StringType::class, NumberType::class)
     }
-    val string = StringBuilder()
-    string.appendJsonStringifiedLanguageValue(value, JsonStringifyContext(indent))
+    val builder = StringBuilder()
+    builder.appendJsonStringifiedLanguageValue(value, JsonStringifyContext(indent))
         .orReturn { return@fn it }
-    string.toString()
+    builder.toString()
         .languageValue
         .toNormal()
 }

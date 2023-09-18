@@ -163,6 +163,7 @@ enum class TypeErrorKind(override val message: String): ErrorKind {
     REGEXP_NON_GLOBAL_CALLED_WITH_GLOBAL("% called with a global RegExp argument"),
     RELATIVE_DATE_TIME_FORMATTER_BAD_PARAMETERS("Incorrect RelativeDateTimeFormatter provided"),
     REQUIRED_ARGUMENTS_NOT_PROVIDED("Required arguments are not provided (expected: %, actual: %)"),
+    REQUIRED_PROPERTY_NOT_FOUND("Property '%' not found, which is required for the destructuring assignment"),
     RESOLVER_NOT_A_FUNCTION("Promise resolver % is not a function"),
     RETURN_METHOD_NOT_CALLABLE("The iterator's 'return' method is not callable"),
     SHARED_ARRAY_BUFFER_TOO_SHORT("Derived SharedArrayBuffer constructor created a buffer which was too small"),

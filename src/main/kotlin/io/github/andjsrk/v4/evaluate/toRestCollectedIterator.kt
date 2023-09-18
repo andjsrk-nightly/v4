@@ -1,10 +1,12 @@
 package io.github.andjsrk.v4.evaluate
 
+import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.not
+import io.github.andjsrk.v4.parse.isAnonymous
 import io.github.andjsrk.v4.parse.node.*
 
 /**
@@ -64,10 +66,34 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
                     val key = elem.key.toPropertyKey()
                         .orReturn { return@map it }
                     nonRestKeys += key
-                    getProperty(key)
+                    if (!hasProperty(key) && elem.default == null) throwError(TypeErrorKind.REQUIRED_PROPERTY_NOT_FOUND, key.display())
+                    else getProperty(key)
                 }
                 is NonRestNode -> neverHappens()
             }
         }
         .iterator()
+}
+
+fun NonRestNode.getValueOrDefault(
+    valuesIterator: Iterator<NonEmptyNormalOrAbrupt>,
+    expectedCount: Int,
+    index: Int,
+    paramName: StringType? = null,
+): NonEmptyNormalOrAbrupt {
+    val value = when {
+        valuesIterator.hasNext() ->
+            valuesIterator.next()
+                .orReturn { return it }
+        default == null -> return throwError(TypeErrorKind.ITERABLE_YIELDED_INSUFFICIENT_NUMBER_OF_VALUES, expectedCount.toString(), index.toString())
+        else -> NullType
+    }
+    return (
+        if (value == NullType && default != null) {
+            if (paramName != null && default.isAnonymous) default.evaluateWithName(paramName)
+            else default.evaluateValue()
+                .orReturn { return it }
+        } else value
+    )
+        .toNormal()
 }

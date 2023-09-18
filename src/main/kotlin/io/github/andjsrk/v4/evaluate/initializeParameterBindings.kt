@@ -1,10 +1,8 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.*
-import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.parse.isAnonymous
+import io.github.andjsrk.v4.evaluate.type.lang.ArrayType
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.stringValue
 
@@ -84,26 +82,4 @@ private fun List<MaybeRestNode>.initializeParameterBindings(valuesIterator: Iter
         }
     }
     return empty
-}
-private fun NonRestNode.getValueOrDefault(
-    valuesIterator: Iterator<NonEmptyNormalOrAbrupt>,
-    expectedCount: Int,
-    index: Int,
-    paramName: StringType? = null,
-): NonEmptyNormalOrAbrupt {
-    val value = when {
-        valuesIterator.hasNext() ->
-            valuesIterator.next()
-                .orReturn { return it }
-        default == null -> return throwError(TypeErrorKind.ITERABLE_YIELDED_INSUFFICIENT_NUMBER_OF_VALUES, expectedCount.toString(), index.toString())
-        else -> NullType
-    }
-    return (
-        if (value == NullType && default != null) {
-            if (paramName != null && default.isAnonymous) default.evaluateWithName(paramName)
-            else default.evaluateValue()
-                .orReturn { return it }
-        } else value
-    )
-        .toNormal()
 }

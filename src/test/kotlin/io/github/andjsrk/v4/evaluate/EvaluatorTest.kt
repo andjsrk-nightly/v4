@@ -795,8 +795,11 @@ private fun evaluationOf(code: String): EvaluationResult {
     return when (val moduleOrError = parseModule(code.trimIndent(), runningExecutionContext.realm)) {
         is Valid -> {
             val module = moduleOrError.value
-            module.initializeEnvironment()
-            val res = module.executeModuleWithoutIgnoringValue()
+            val res = run {
+                module.initializeEnvironment()
+                    .orReturn { return@run it }
+                module.executeModuleWithoutIgnoringValue()
+            }
             EvaluationResult(res, module)
         }
         is Invalid -> throw moduleOrError.value

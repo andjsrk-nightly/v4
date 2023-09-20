@@ -949,7 +949,7 @@ internal class ParserTest {
         """.shouldBeValidStatementAnd<NormalLexicalDeclarationNode> {
             assert(kind == LexicalDeclarationKind.VAR)
             bindings[0].run {
-                binding.assertIdentifierNamed("a")
+                element.assertIdentifierNamed("a")
                 assertIs<NumberLiteralNode>(value)
             }
         }
@@ -978,11 +978,11 @@ internal class ParserTest {
             let a = 1, b = 2
         """.shouldBeValidStatementAnd<NormalLexicalDeclarationNode> {
             bindings[0].run {
-                binding.assertIdentifierNamed("a")
+                element.assertIdentifierNamed("a")
                 assertIs<NumberLiteralNode>(value)
             }
             bindings[1].run {
-                binding.assertIdentifierNamed("b")
+                element.assertIdentifierNamed("b")
                 assertIs<NumberLiteralNode>(value)
             }
         }

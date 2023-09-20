@@ -61,7 +61,7 @@ internal fun Node.boundNames(): List<IdentifierNode> =
     when (this) {
         is IdentifierNode -> listOf(this)
         is LexicalDeclarationWithoutInitializerNode -> binding.boundNames()
-        is NormalLexicalDeclarationNode -> bindings.flatMap { it.binding.boundNames() }
+        is NormalLexicalDeclarationNode -> bindings.flatMap { it.element.boundNames() }
         is MaybeRestNode -> binding.boundNames()
         is BindingPatternNode -> elements.flatMap { it.boundNames() }
         is UniqueFormalParametersNode -> elements.flatMap { it.boundNames() }

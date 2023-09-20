@@ -1,5 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type
 
+import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
@@ -10,7 +11,11 @@ class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environm
         `object`.hasProperty(name.languageValue)
     override fun createMutableBinding(name: String) =
         `object`.definePropertyOrThrow(name.languageValue, DataProperty(NullType))
-    override fun createNonConfigurableMutableBinding(name: String) =
+    /**
+     * Indicates `CreateMutableBinding` with argument `D` that is set to `false`.
+     */
+    @EsSpec("CreateMutableBinding")
+    fun createNonConfigurableMutableBinding(name: String) =
         `object`.definePropertyOrThrow(name.languageValue, DataProperty(NullType, configurable=false))
     override fun createImmutableBinding(name: String) =
         throw NotImplementedError()

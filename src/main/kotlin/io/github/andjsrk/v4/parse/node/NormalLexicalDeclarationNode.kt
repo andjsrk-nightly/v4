@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.parse.node
 
-import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.EmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.empty
@@ -19,26 +19,18 @@ class NormalLexicalDeclarationNode(
         stringifyLikeDataClass(::kind, ::bindings, ::range)
     override fun evaluate(): EmptyOrAbrupt {
         for (binding in bindings) {
-            when (binding.binding) {
-                is IdentifierNode -> {
-                    val name = binding.binding.stringValue
-                    val lhs = resolveBinding(name)
-                    val value = binding.run {
-                        when {
-                            value == null -> NullType
-                            value.isAnonymous -> value.evaluateWithName(name)
-                            else -> value.evaluateValue()
-                                .orReturn { return it }
-                        }
-                    }
-                    lhs.initializeBinding(value)
-                        .unwrap()
+            val bindingElement = binding.element
+            val name = (bindingElement as? IdentifierNode)?.stringValue
+            val value = binding.run {
+                when {
+                    value == null -> NullType
+                    name != null && value.isAnonymous -> value.evaluateWithName(name)
+                    else -> value.evaluateValue()
+                        .orReturn { return it }
                 }
-                is BindingPatternNode -> TODO()
-                else ->
-                    @CompilerFalsePositive
-                    neverHappens()
             }
+            bindingElement.initializeBy(value, runningExecutionContext.lexicalEnvironment)
+                .orReturn { return it }
         }
         return empty
     }

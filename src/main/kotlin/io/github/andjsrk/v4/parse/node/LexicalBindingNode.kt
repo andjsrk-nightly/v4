@@ -3,11 +3,11 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class LexicalBindingNode(
-    val binding: BindingElementNode,
+    val element: BindingElementNode,
     val value: ExpressionNode?,
 ): NonAtomicNode, EvaluationDelegatedNode {
-    override val childNodes get() = listOf(binding, value)
-    override val range = binding.range.extendCarefully(value?.range)
+    override val childNodes get() = listOf(element, value)
+    override val range = element.range.extendCarefully(value?.range)
     override fun toString() =
-        stringifyLikeDataClass(::binding, ::value, ::range)
+        stringifyLikeDataClass(::element, ::value, ::range)
 }

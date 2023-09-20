@@ -62,7 +62,7 @@ private fun DeclarativeEnvironment.coverBindingsPerIteration(bindingNames: List<
     requireNotNull(outer)
     val currIterationEnv = DeclarativeEnvironment(outer)
     for (name in bindingNames) {
-        currIterationEnv.createNonConfigurableMutableBinding(name)
+        currIterationEnv.createMutableBinding(name)
         val lastValue = lastIterationEnv.getValue(name)
             .unwrap()
         currIterationEnv.initializeBinding(name, lastValue)

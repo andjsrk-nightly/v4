@@ -5,10 +5,16 @@ import io.github.andjsrk.v4.parse.boundStringNames
 import io.github.andjsrk.v4.parse.isConstant
 import io.github.andjsrk.v4.parse.node.DeclarationNode
 
-internal fun DeclarationNode.instantiateIn(env: DeclarativeEnvironment, names: List<String> = this.boundStringNames()) {
+/**
+ * @param names Omittable in most cases, but can be specified explicitly to use less lists.
+ */
+internal fun DeclarationNode.instantiateIn(
+    env: DeclarativeEnvironment,
+    names: List<String> = this.boundStringNames(),
+) {
     val isConstant = this.isConstant
     for (name in names) {
         if (isConstant) env.createImmutableBinding(name)
-        else env.createNonConfigurableMutableBinding(name)
+        else env.createMutableBinding(name)
     }
 }

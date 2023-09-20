@@ -8,6 +8,7 @@ import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.not
 import io.github.andjsrk.v4.parse.isAnonymous
 import io.github.andjsrk.v4.parse.node.*
+import io.github.andjsrk.v4.parse.stringValue
 
 /**
  * Transforms the iterator to simple form to initialize a binding easily.
@@ -75,23 +76,27 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
         .iterator()
 }
 
-fun NonRestNode.getValueOrDefault(
-    valuesIterator: Iterator<NonEmptyNormalOrAbrupt>,
+fun Iterator<NonEmptyNormalOrAbrupt>.nextOrDefault(
+    element: NonRestNode,
     expectedCount: Int,
     index: Int,
-    paramName: StringType? = null,
 ): NonEmptyNormalOrAbrupt {
     val value = when {
-        valuesIterator.hasNext() ->
-            valuesIterator.next()
+        hasNext() ->
+            next()
                 .orReturn { return it }
-        default == null -> return throwError(TypeErrorKind.ITERABLE_YIELDED_INSUFFICIENT_NUMBER_OF_VALUES, expectedCount.toString(), index.toString())
+        element.default == null -> return throwError(
+            TypeErrorKind.ITERABLE_YIELDED_INSUFFICIENT_NUMBER_OF_VALUES,
+            expectedCount.toString(),
+            index.toString(),
+        )
         else -> NullType
     }
     return (
-        if (value == NullType && default != null) {
-            if (paramName != null && default.isAnonymous) default.evaluateWithName(paramName)
-            else default.evaluateValue()
+        if (value == NullType && element.default != null) {
+            val paramName = (element.binding as? IdentifierNode)?.stringValue
+            if (paramName != null && element.default.isAnonymous) element.default.evaluateWithName(paramName)
+            else element.default.evaluateValue()
                 .orReturn { return it }
         } else value
     )

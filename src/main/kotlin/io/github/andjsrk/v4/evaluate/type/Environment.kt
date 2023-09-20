@@ -9,12 +9,6 @@ sealed class Environment(var outer: Environment?): Record {
     abstract fun hasBinding(name: String): Boolean
     @EsSpec("CreateMutableBinding")
     abstract fun createMutableBinding(name: String): EmptyOrAbrupt
-    /**
-     * Indicates `CreateMutableBinding` with argument `D` that is set to `false`.
-     */
-    @EsSpec("CreateMutableBinding")
-    open fun createNonConfigurableMutableBinding(name: String) =
-        createMutableBinding(name)
     @EsSpec("CreateImmutableBinding")
     abstract fun createImmutableBinding(name: String): EmptyOrAbrupt
     @EsSpec("InitializeBinding")

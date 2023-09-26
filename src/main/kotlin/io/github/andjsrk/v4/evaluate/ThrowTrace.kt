@@ -12,7 +12,9 @@ data class ThrowTrace(
                 val env = it.lexicalEnvironment as FunctionEnvironment
                 StackTraceItem(env.function)
             }
-            .toList()
+            .toList(),
+    val nativeStackTrace: List<StackTraceElement> =
+        Error().stackTrace.asList()
 ) {
     companion object {
         var instance: ThrowTrace? = null

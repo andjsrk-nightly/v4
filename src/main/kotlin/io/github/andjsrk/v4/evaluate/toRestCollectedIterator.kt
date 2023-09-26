@@ -53,10 +53,8 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
                 is RestNode -> {
                     val maybeObj = this as? ObjectType
                     val rest = maybeObj?.run {
-                        val props = properties.toMutableMap() // clone the original object first
-                        // syntactically rest element must be the last,
-                        // so we can sure that appropriate keys are added to the list `key`
-                        props -= nonRestKeys
+                        val props = properties.toMutableMap() // clone the original object
+                        props -= nonRestKeys // remove properties that its key is contained in non-rest keys
                         props.entries.removeAll { (_, prop) -> prop.not { enumerable } }
                         ObjectType.createNormal(props)
                     }

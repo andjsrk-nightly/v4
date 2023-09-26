@@ -1,32 +1,37 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.not
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 // https://stackoverflow.com/a/47948047/16815911
-internal class MutableLazy<T>(val initializer: () -> T): ReadWriteProperty<Any?, T> {
-    private object UninitializedValue
-    private var _value: Any? = UninitializedValue
-    var value
-        @Suppress("UNCHECKED_CAST")
-        get() = _value as T
-        set(value) {
-            _value = value
-        }
-    private inline val isInitialized get() =
-        _value != UninitializedValue
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        if (this.isInitialized) return value
-        synchronized(this) {
-            if (this.not { isInitialized }) value = initializer()
-            return value
-        }
-    }
+internal class MutableLazy<T>(initializer: () -> T): ReadWriteProperty<Any?, T>, Lazy<T> {
+    private var initializer: (() -> T)? = initializer
+    @Volatile
+    private var _value: T? = null
+    override var value
+        get() =
+            synchronized(this) {
+                val currValue = _value
+                val init = initializer
+                @Suppress("UNCHECKED_CAST")
+                if (init == null) currValue as T
+                else {
+                    val value = init()
+                    _value = value
+                    initializer = null
+                    value
+                }
+            }
+        set(value) =
+            synchronized(this) {
+                _value = value
+            }
+    override fun isInitialized() =
+        initializer == null
+    override fun getValue(thisRef: Any?, property: KProperty<*>) =
+        value
     override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-        synchronized(this) {
-            this.value = value
-        }
+        this.value = value
     }
 
     companion object {

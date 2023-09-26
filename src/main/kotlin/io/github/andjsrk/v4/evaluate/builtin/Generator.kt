@@ -2,26 +2,36 @@ package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.DataProperty
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.toNormal
+
+val generatorClose = functionWithoutThis("close") {
+    normalNull
+}
+
+val generatorIterator = method(SymbolType.WellKnown.iterator) { thisArg, _ ->
+    thisArg.toNormal()
+}
 
 @EsSpec("%GeneratorFunction.prototype%")
 val Generator = BuiltinClassType(
     "Generator",
     Object,
     mutableMapOf(),
-    mutableMapOf(),
+    mutableMapOf(
+        sealedMethod(generatorClose),
+        sealedMethod(generatorIterator),
+    ),
     constructor ctor@ { _, args ->
         val sourceObj = args[0]
             .requireToBe<ObjectType> { return@ctor it }
         val nextMethod = sourceObj.getMethod("next".languageValue)
             .orReturn { return@ctor it }
-        val returnMethod = sourceObj.getMethod("return".languageValue)
+        val closeMethod = sourceObj.getMethod("close".languageValue)
             .orReturn { return@ctor it }
         val gen = SyncGeneratorType()
         gen.definePropertyOrThrow("next".languageValue, DataProperty(nextMethod)).unwrap()
-        if (returnMethod != null) gen.definePropertyOrThrow("return".languageValue, DataProperty(returnMethod)).unwrap()
+        if (closeMethod != null) gen.definePropertyOrThrow("close".languageValue, DataProperty(closeMethod)).unwrap()
         gen.toNormal()
     },
 )

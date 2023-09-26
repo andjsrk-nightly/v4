@@ -6,14 +6,14 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.not
 
-fun createIteratorObject(nextMethod: FunctionType, returnMethod: FunctionType? = null): ObjectType {
-    val obj = ObjectType(properties=mutableMapOf(
-        *listOfNotNull(
+fun createIteratorObject(nextMethod: FunctionType, closeMethod: FunctionType? = null): ObjectType {
+    val obj = ObjectType(
+        properties=listOfNotNull(
             "next".sealedData(nextMethod),
-            returnMethod?.let { "return".sealedData(it) },
+            closeMethod?.let { "close".sealedData(it) },
         )
-            .toTypedArray()
-    ))
+            .toMutableMap()
+    )
     return Generator.construct(listOf(obj))
         .unwrap()
 }
@@ -29,11 +29,10 @@ fun createIteratorObjectFromSequence(sequence: Sequence<LanguageType>, containsR
                 val value = seqIter.next()
                 val done = seqIter.not { hasNext() } && containsReturnValue
                 createIteratorResult(value, done)
-                    .toNormal()
             } else {
                 createIteratorResult(NullType, true)
-                    .toNormal()
             }
+                .toNormal()
         }
     )
 }

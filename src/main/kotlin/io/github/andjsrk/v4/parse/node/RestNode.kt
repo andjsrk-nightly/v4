@@ -10,5 +10,4 @@ class RestNode(
     override val childNodes get() = listOf(binding)
     override fun toString() =
         stringifyLikeDataClass(::binding, ::range)
-    override fun evaluate() = TODO()
 }

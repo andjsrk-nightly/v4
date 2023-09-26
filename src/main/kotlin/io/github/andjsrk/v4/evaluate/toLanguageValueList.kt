@@ -22,9 +22,9 @@ fun List<MaybeSpreadNode>.toLanguageValueList(): MaybeAbrupt<ListType<LanguageTy
         when (elem) {
             is NonSpreadNode -> listOf(value)
             is SpreadNode ->
-                iterableToSequence(value)
+                IteratorRecord.from(value)
                     .orReturn { return it }
-                    .value
+                    .toSequence()
                     .iterator()
                     .toLanguageValueList()
                     .orReturn { return it }

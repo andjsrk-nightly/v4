@@ -1,7 +1,9 @@
 package io.github.andjsrk.v4.evaluate
 
+import io.github.andjsrk.v4.CompilerFalsePositive
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.stringValue
 
@@ -20,9 +22,9 @@ fun List<MaybeRestNode>.initializeBy(valuesIterator: Iterator<NonEmptyNormalOrAb
                     is ArrayBindingPatternNode -> {
                         val arr = valuesIterator.next()
                             .orReturn { return it }
-                        val iter = iterableToSequence(arr)
+                        val iter = IteratorRecord.from(arr)
                             .orReturn { return it }
-                            .value
+                            .toSequence()
                             .iterator()
                             .toRestCollectedArrayIterator(binding.elements)
                         binding.elements.initializeBy(iter, env)
@@ -35,6 +37,9 @@ fun List<MaybeRestNode>.initializeBy(valuesIterator: Iterator<NonEmptyNormalOrAb
                         binding.elements.initializeBy(iter, env)
                             .orReturn { return it }
                     }
+                    else ->
+                        @CompilerFalsePositive
+                        neverHappens()
                 }
             }
             is NonRestNode -> {
@@ -55,9 +60,9 @@ fun BindingElementNode.initializeBy(value: LanguageType, env: Environment?): Emp
             ref.putOrInitializeBinding(value, env)
         }
         is ArrayBindingPatternNode -> {
-            val valueIter = iterableToSequence(value)
+            val valueIter = IteratorRecord.from(value)
                 .orReturn { return it }
-                .value
+                .toSequence()
                 .iterator()
             val iter = valueIter.toRestCollectedArrayIterator(elements)
             elements.initializeBy(iter, env)
@@ -66,5 +71,8 @@ fun BindingElementNode.initializeBy(value: LanguageType, env: Environment?): Emp
             val iter = value.toRestCollectedObjectIterator(elements)
             elements.initializeBy(iter, env)
         }
+        else ->
+            @CompilerFalsePositive
+            neverHappens()
     }
 }

@@ -21,11 +21,11 @@ class ForInNode(
     override fun evaluateLoop(): NonEmptyNormalOrAbrupt {
         val iter = evaluateHead()
             .orReturn { return it }
-            .value
+            .toSequence()
             .iterator()
         return evaluateBody(iter)
     }
-    private fun evaluateHead(): MaybeAbrupt<GeneralSpecValue<Sequence<NonEmptyNormalOrAbrupt>>> {
+    private fun evaluateHead(): MaybeAbrupt<IteratorRecord> {
         val oldEnv = runningExecutionContext.lexicalEnvironment
         val uninitializedBoundNames = declaration.boundStringNames()
         if (uninitializedBoundNames.isNotEmpty()) {
@@ -39,7 +39,7 @@ class ForInNode(
         runningExecutionContext.lexicalEnvironment = oldEnv
         val targetValue = targetValueOrAbrupt
             .orReturn { return it }
-        return iterableToSequence(targetValue)
+        return IteratorRecord.from(targetValue)
     }
     @EsSpec("ForIn/OfBodyEvaluation")
     private fun evaluateBody(iterator: Iterator<NonEmptyNormalOrAbrupt>): NonEmptyNormalOrAbrupt {

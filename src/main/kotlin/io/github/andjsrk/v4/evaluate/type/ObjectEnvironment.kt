@@ -27,7 +27,7 @@ class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environm
             .orReturn { return it }
         return empty
     }
-    override fun getValue(name: String): NonEmptyNormalOrAbrupt {
+    override fun getBindingValue(name: String): NonEmptyOrAbrupt {
         if (`object`.not { hasProperty(name.languageValue) }) return throwError(ReferenceErrorKind.NOT_DEFINED, name)
         return `object`.get(name.languageValue)
     }

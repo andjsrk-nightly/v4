@@ -22,7 +22,7 @@ open class UnaryExpressionNode(
     }
     override fun toString() =
         stringifyLikeDataClass(::operand, ::operation, ::range)
-    override fun evaluate(): NonEmptyNormalOrAbrupt {
+    override fun evaluate(): NonEmptyOrAbrupt {
         val value = operand.evaluateValue()
             .orReturn { return it }
         return when (this.operation) {

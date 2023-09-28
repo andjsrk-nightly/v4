@@ -66,7 +66,7 @@ open class ObjectType(
     fun _hasProperty(key: PropertyKey): Boolean =
         hasOwnProperty(key) || prototype?._hasProperty(key) ?: false
     @EsSpec("[[Get]]")
-    fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyNormalOrAbrupt {
+    fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyOrAbrupt {
         val descriptor = _getOwnProperty(key)
         if (descriptor == null) {
             val proto = prototype ?: return normalNull
@@ -130,11 +130,6 @@ open class ObjectType(
         createDataPropertyOrThrow(key, value)
             .unwrap()
     }
-    @EsSpec("CreateMethodProperty")
-    fun createMethodProperty(key: PropertyKey, value: LanguageType) {
-        definePropertyOrThrow(key, DataProperty(value, writable=false, enumerable=false))
-            .unwrap()
-    }
     @EsSpec("CreateDataPropertyOrThrow")
     inline fun createDataPropertyOrThrow(key: PropertyKey, value: LanguageType) =
         _defineOwnProperty(key, DataProperty(value))
@@ -144,6 +139,11 @@ open class ObjectType(
     @EsSpec("DefinePropertyOrThrow")
     inline fun definePropertyOrThrow(key: PropertyKey, descriptor: Property) =
         _defineOwnProperty(key, descriptor)
+    @EsSpec("CreateMethodProperty")
+    fun defineMethodProperty(key: PropertyKey, value: LanguageType) {
+        definePropertyOrThrow(key, DataProperty(value, enumerable=false))
+            .unwrap()
+    }
     @EsSpec("DeletePropertyOrThrow")
     inline fun deletePropertyOrThrow(key: PropertyKey) =
         _delete(key)

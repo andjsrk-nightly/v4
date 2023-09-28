@@ -12,7 +12,7 @@ class BlockNode(
     override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
-    override fun evaluate(): NormalOrAbrupt {
+    override fun evaluate(): MaybeEmptyOrAbrupt {
         if (elements.isEmpty()) return empty
 
         val oldEnv = runningExecutionContext.lexicalEnvironment

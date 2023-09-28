@@ -7,5 +7,5 @@ fun LanguageType.getOwnProperty(key: PropertyKey) =
     when (this) {
         NullType -> neverHappens()
         is ObjectType -> _getOwnProperty(key)
-        else -> TODO()
+        else -> null
     }

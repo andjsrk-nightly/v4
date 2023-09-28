@@ -12,7 +12,7 @@ import kotlinx.serialization.json.Json as KotlinxJson
 
 private const val SPACE = '\u0020'
 
-private fun JsonElement.toLanguageValue(): NonEmptyNormalOrAbrupt {
+private fun JsonElement.toLanguageValue(): NonEmptyOrAbrupt {
     return when (this) {
         is JsonObject ->
             ObjectType(properties=mutableMapOf(

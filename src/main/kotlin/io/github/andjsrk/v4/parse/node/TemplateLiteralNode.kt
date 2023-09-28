@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
@@ -13,7 +13,7 @@ class TemplateLiteralNode(
     override val range = strings.first().range..strings.last().range
     override fun toString() =
         stringifyLikeDataClass(::strings, ::expressions, ::range)
-    override fun evaluate(): NonEmptyNormalOrAbrupt {
+    override fun evaluate(): NonEmptyOrAbrupt {
         val result = StringBuilder(strings[0].value)
         var i = 0
         for (string in strings) {

@@ -10,9 +10,9 @@ class ModuleNode(override val elements: List<StatementNode>): StatementListNode 
     override val range = Range(0, elements.lastOrNull()?.range?.end ?: 0)
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
-    override fun evaluate(): NormalOrAbrupt {
+    override fun evaluate(): NonEmptyOrAbrupt {
         val res = evaluateStatements(this)
-        if (res is Completion.WideNormal<*> && res.value == null) return normalNull
-        return res
+        if (res is MaybeEmpty && res.value == null) return normalNull
+        return res as NonEmptyOrAbrupt
     }
 }

@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 sealed class CallNode(
@@ -12,7 +12,7 @@ sealed class CallNode(
     override val range = callee.range..arguments.range
     override fun toString() =
         stringifyLikeDataClass(::callee, ::arguments, ::range)
-    override fun evaluate(): NonEmptyNormalOrAbrupt {
+    override fun evaluate(): NonEmptyOrAbrupt {
         val ref = callee.evaluate()
             .orReturn { return it }
         val func = getValue(ref)

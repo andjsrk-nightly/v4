@@ -4,6 +4,7 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
+import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.isAnonymous
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
@@ -14,7 +15,7 @@ class ObjectLiteralNode(
     override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
-    override fun evaluate(): NonEmptyNormalOrAbrupt {
+    override fun evaluate(): NonEmptyOrAbrupt {
         val obj = ObjectType.createNormal()
         elements.forEach {
             evaluatePropertyDefinition(obj, it)
@@ -46,7 +47,18 @@ class ObjectLiteralNode(
                 copyDataProperties(obj, value)
                     .orReturn { return it }
             }
-            else -> TODO()
+            is NonSpreadNode -> neverHappens()
+            is ObjectMethodNode -> {
+                val method = property.evaluate()
+                    .orReturn { return it }
+                obj.defineMethodProperty(method.name!!, method)
+            }
+            is ObjectGetterNode -> {
+                TODO()
+            }
+            is ObjectSetterNode -> {
+                TODO()
+            }
         }
         return empty
     }

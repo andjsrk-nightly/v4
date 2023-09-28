@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.neverHappens
 
@@ -28,14 +28,14 @@ internal val generatorKind: GeneratorKind get() {
 }
 
 @EsSpec("Yield")
-internal fun commonYield(value: LanguageType): NonEmptyNormalOrAbrupt {
+internal fun commonYield(value: LanguageType): NonEmptyOrAbrupt {
     val kind = generatorKind
     if (kind == GeneratorKind.ASYNC) TODO()
     return syncYield(createIteratorResult(value, false))
 }
 
 @EsSpec("GeneratorYield")
-internal fun syncYield(iteratorResult: ObjectType): NonEmptyNormalOrAbrupt {
+internal fun syncYield(iteratorResult: ObjectType): NonEmptyOrAbrupt {
     val generator = runningExecutionContext.generator ?: neverHappens()
     require(generator is SyncGeneratorType)
     generator.state = SyncGeneratorState.SUSPENDED_YIELD

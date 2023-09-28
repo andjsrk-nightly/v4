@@ -4,8 +4,7 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.*
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.parse.node.ConciseBodyNode
-import io.github.andjsrk.v4.parse.node.UniqueFormalParametersNode
+import io.github.andjsrk.v4.parse.node.*
 
 @EsSpec("function object")
 @EsSpec("OrdinaryFunctionCreate")
@@ -31,8 +30,8 @@ class OrdinaryFunctionType(
             .instancePrototype
     },
 ) {
-    override val isArrow = thisMode == ThisMode.ARROW
-    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
+    override val isMethod = thisMode == ThisMode.METHOD
+    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrAbrupt {
         val calleeContext = prepareForOrdinaryCall()
         bindThisInCall(calleeContext, thisArg)
         val res = evaluateBody(args)
@@ -43,26 +42,25 @@ class OrdinaryFunctionType(
         return normalNull
     }
     @EsSpec("PrepareForOrdinaryCall")
-    internal fun prepareForOrdinaryCall(): ExecutionContext {
+    private fun prepareForOrdinaryCall(): ExecutionContext {
         val calleeContext = ExecutionContext(realm, FunctionEnvironment.from(this), this)
         executionContextStack.addTop(calleeContext)
         return calleeContext
     }
     @EsSpec("OrdinaryCallBindThis")
     fun bindThisInCall(calleeContext: ExecutionContext, thisArg: LanguageType?) {
-        if (thisMode == ThisMode.ARROW) return
+        if (!isMethod) return
         val localEnv = calleeContext.lexicalEnvironment
         require(localEnv is FunctionEnvironment)
         localEnv.bindThisValue(thisArg)
     }
     @EsSpec("EvaluateBody")
-    fun evaluateBody(args: List<LanguageType>): NormalOrAbrupt =
-        if (this.isArrow) evaluateConciseBody(args)
-        else evaluateMethodBody(args)
+    fun evaluateBody(args: List<LanguageType>): MaybeEmptyOrAbrupt =
+        if (isMethod) evaluateMethodBody(args)
+        else evaluateConciseBody(args)
     @EsSpec("EvaluateConciseBody")
-    @EsSpec("EvaluateFunctionBody")
-    @EsSpec("EvaluateGeneratorBody")
-    fun evaluateConciseBody(args: List<LanguageType>): NormalOrAbrupt {
+    @EsSpec("EvaluateAsyncConciseBody")
+    fun evaluateConciseBody(args: List<LanguageType>): MaybeEmptyOrAbrupt {
         return when {
             this.isAsync && this.isGenerator -> TODO()
             this.isAsync -> TODO()
@@ -81,7 +79,20 @@ class OrdinaryFunctionType(
             }
         }
     }
-    fun evaluateMethodBody(args: List<LanguageType>): NormalOrAbrupt {
-        TODO()
+    @EsSpec("EvaluateFunctionBody")
+    @EsSpec("EvaluateAsyncFunctionBody")
+    @EsSpec("EvaluateGeneratorBody")
+    @EsSpec("EvaluateAsyncGeneratorBody")
+    fun evaluateMethodBody(args: List<LanguageType>): MaybeEmptyOrAbrupt {
+        return when {
+            isAsync && isGenerator -> TODO()
+            isAsync -> TODO()
+            isGenerator -> TODO()
+            else -> {
+                instantiateFunctionDeclaration(this, args)
+                    .orReturn { return it }
+                evaluateStatements(body as BlockNode)
+            }
+        }
     }
 }

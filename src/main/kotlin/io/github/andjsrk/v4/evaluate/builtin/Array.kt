@@ -59,7 +59,7 @@ internal val any = method("any") fn@ { thisArg, args ->
             .languageValue
             .toNormal()
     val res = arr.array.anyIndexed { i, it ->
-        callback.callPredicate(it, i, arr) { return@fn it }
+        callback.callCollectionPredicate(it, i, arr) { return@fn it }
     }
     res
         .languageValue
@@ -117,7 +117,7 @@ internal val arrayEvery = method("every", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     arr.array.forEachIndexed { i, it ->
-        val passed = callback.callPredicate(it, i, arr) { return@fn it }
+        val passed = callback.callCollectionPredicate(it, i, arr) { return@fn it }
         if (!passed) return@fn BooleanType.FALSE.toNormal()
     }
     BooleanType.TRUE
@@ -129,7 +129,7 @@ private val immutableArrayFilter = method("filter", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val res = arr.array.filterIndexed { i, it ->
-        callback.callPredicate(it, i, arr) { return@fn it }
+        callback.callCollectionPredicate(it, i, arr) { return@fn it }
     }
     ImmutableArrayType.from(res)
         .toNormal()
@@ -142,7 +142,7 @@ internal val arrayFirst = method("first") fn@ { thisArg, args ->
         ?.requireToBe<FunctionType> { return@fn it }
         ?: return@fn arr.array.firstOrNull().normalizeToNormal()
     val found = arr.array.firstIndexed { i, it ->
-        callback.callPredicate(it, i, arr) { return@fn it }
+        callback.callCollectionPredicate(it, i, arr) { return@fn it }
     }
     found.normalizeToNormal()
 }
@@ -168,7 +168,7 @@ internal val arrayFirstIndex = method("firstIndex") fn@ { thisArg, args ->
             .languageValue
             .toNormal()
     val index = arr.array.indexOfFirstIndexed { i, it ->
-        callback.callPredicate(it, i, arr) { return@fn it }
+        callback.callCollectionPredicate(it, i, arr) { return@fn it }
     }
     index
         .languageValue
@@ -290,7 +290,7 @@ internal val arrayLast = method("last") fn@ { thisArg, args ->
         ?.requireToBe<FunctionType> { return@fn it }
         ?: return@fn arr.array.lastOrNull().normalizeToNormal()
     val found = arr.array.asReversed().firstIndexed { i, it ->
-        callback.callPredicate(it, arr.array.lastIndex - i, arr) { return@fn it }
+        callback.callCollectionPredicate(it, arr.array.lastIndex - i, arr) { return@fn it }
     }
     found.normalizeToNormal()
 }
@@ -300,7 +300,7 @@ internal val arrayLastIndex = method("lastIndex") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val index = arr.array.asReversed().indexOfFirstIndexed { i, it ->
-        callback.callPredicate(it, arr.array.lastIndex - i, arr) { return@fn it }
+        callback.callCollectionPredicate(it, arr.array.lastIndex - i, arr) { return@fn it }
     }
     index
         .languageValue

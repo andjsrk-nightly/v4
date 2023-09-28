@@ -5,10 +5,10 @@ import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Function
 import io.github.andjsrk.v4.evaluate.builtin.sealedData
 import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 
 sealed class FunctionType(
-    val name: PropertyKey?,
+    var name: PropertyKey?,
     requiredParameterCount: UInt,
     val env: DeclarativeEnvironment,
     lazyPrototype: Lazy<PrototypeObjectType> = lazy { Function.instancePrototype },
@@ -19,15 +19,10 @@ sealed class FunctionType(
     ),
 ) {
     val realm = runningExecutionContext.realm
-    abstract val isArrow: Boolean
+    abstract val isMethod: Boolean
     @EsSpec("Call") // the method implements Call rather than [[Call]] since additional type check is no needed
-    abstract fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt
+    abstract fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrAbrupt
 }
-
-internal inline fun <reified R: LanguageType> FunctionType.callAndRequireToBe(thisArg: LanguageType?, args: List<LanguageType>, rtn: AbruptReturnLambda) =
-    call(thisArg, args)
-        .orReturn(rtn)
-        .requireToBe<R>(rtn)
 
 internal inline fun FunctionType.callCollectionCallback(
     element: LanguageType,
@@ -38,7 +33,7 @@ internal inline fun FunctionType.callCollectionCallback(
     call(null, listOf(element, index.languageValue, collection))
         .orReturn(rtn)
 
-internal inline fun FunctionType.callPredicate(
+internal inline fun FunctionType.callCollectionPredicate(
     element: LanguageType,
     index: Int,
     array: ArrayType,

@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.evaluate.type.Completion
 @EsSpec("LoopContinues")
 fun continueLoop(completion: Completion<*>) =
     when (completion) {
-        is Completion.WideNormal<*> -> true
+        is Completion.WideNormal -> true
         !is Completion.Continue -> false
         // TODO: label
         else -> true

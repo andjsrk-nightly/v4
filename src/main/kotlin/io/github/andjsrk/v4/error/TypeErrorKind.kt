@@ -174,6 +174,7 @@ enum class TypeErrorKind(override val message: String): ErrorKind {
     SYMBOL_ASYNC_ITERATOR_INVALID("Result of the Symbol.asyncIterator method is not an object"),
     SYMBOL_KEY_FOR("% is not a symbol"),
     SYMBOL_TO_NUMBER("Cannot convert a symbol to a number"),
+    THIS_CANNOT_BE_ACCESSED_IN_GLOBAL("'this' cannot be accessed in global scope"),
     THISARG_NOT_PROVIDED("'this' argument is not provided on a method that depends on 'this'"),
     THROW_METHOD_MISSING("The iterator does not provide a 'throw' method."),
     TOP_LEVEL_AWAIT_STALLED("Top-level await promise never resolved"),

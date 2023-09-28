@@ -35,10 +35,16 @@ open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
         binding.value = value
         return empty
     }
-    override fun getValue(name: String): NonEmptyNormalOrAbrupt {
+    override fun getBindingValue(name: String): NonEmptyOrAbrupt {
         assert(name in bindings)
         val binding = bindings[name] ?: neverHappens()
         if (binding.not { isInitialized }) return throwError(ReferenceErrorKind.ACCESSED_UNINITIALIZED_VARIABLE, name)
         return binding.value!!.toNormal()
     }
+    @EsSpec("HasThisBinding")
+    open fun hasThisBinding() =
+        false
+    @EsSpec("GetThisBinding")
+    open fun getThisBinding(): NonEmptyOrAbrupt =
+        throw NotImplementedError()
 }

@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.AsyncGeneratorState
 import io.github.andjsrk.v4.evaluate.builtin.AsyncGenerator
 import io.github.andjsrk.v4.evaluate.runningExecutionContext
-import io.github.andjsrk.v4.evaluate.type.NormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.MaybeEmptyOrAbrupt
 
 class AsyncGeneratorType(
     override val brand: String? = null,
@@ -12,7 +12,7 @@ class AsyncGeneratorType(
     override var context = runningExecutionContext
     override var state: AsyncGeneratorState? = null // [[AsyncGeneratorState]]
     @EsSpec("AsyncGeneratorStart")
-    override fun start(result: Sequence<NormalOrAbrupt>) {
+    override fun start(result: Sequence<MaybeEmptyOrAbrupt>) {
         TODO()
     }
 }

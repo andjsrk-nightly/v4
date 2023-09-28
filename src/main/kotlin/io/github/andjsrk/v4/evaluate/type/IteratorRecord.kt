@@ -16,7 +16,7 @@ class IteratorRecord(
     /**
      * NOTE: The method may return [empty] to represent there is no remaining element.
      */
-    fun next(value: LanguageType? = null): NormalOrAbrupt {
+    fun next(value: LanguageType? = null): MaybeEmptyOrAbrupt {
         val res = nextMethod.call(sourceObject, if (value == null) emptyList() else listOf(value))
             .orReturn { return it }
             .requireToBe<ObjectType> { return it }
@@ -39,10 +39,10 @@ class IteratorRecord(
                     } else it
                 }
         completion.orReturn { return it }
-        res.orReturn { return it }
+        res.orReturn { return it } // just ignore, do not require anything to the language value (the original requires it to be an object)
         return completion
     }
-    fun toSequence(): Sequence<NonEmptyNormalOrAbrupt> =
+    fun toSequence(): Sequence<NonEmptyOrAbrupt> =
         sequence {
             while (true) {
                 val value = next()

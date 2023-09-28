@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyWideOrAbrupt
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class TaggedTemplateNode(
@@ -12,7 +12,7 @@ class TaggedTemplateNode(
     override val range = callee.range..template.range
     override fun toString() =
         stringifyLikeDataClass(::callee, ::template, ::range)
-    override fun evaluate(): NonEmptyOrAbrupt {
+    override fun evaluate(): NonEmptyWideOrAbrupt {
         val funcRef = callee.evaluate().orReturn { return it }
         val func = getValue(funcRef).orReturn { return it }
         val args = evaluateTaggedArguments(template)

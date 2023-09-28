@@ -66,7 +66,7 @@ private val mutableArrayFilter = method("filter", 1u) fn@ { thisArg, args ->
     withUnsafeModification({ return@fn it }) {
         while (i < arr.array.size) {
             val value = arr.array[i]
-            val passed = callback.callPredicate(value, i, arr) { return@fn it }
+            val passed = callback.callCollectionPredicate(value, i, arr) { return@fn it }
             if (!passed) {
                 arr.array.removeAt(i)
                 continue // skip i += 1, because original element on the index is no longer available

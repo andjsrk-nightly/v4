@@ -1,6 +1,8 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.error.TypeErrorKind
+import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.lang.FunctionType
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
@@ -17,6 +19,14 @@ class FunctionEnvironment(
         thisValue = value
         initialized = true
         return empty
+    }
+    override fun hasThisBinding() =
+        function.isMethod
+    override fun getThisBinding(): NonEmptyOrAbrupt {
+        assert(function.isMethod)
+        if (!initialized) TODO()
+        val thisValue = thisValue ?: return throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
+        return thisValue.toNormal()
     }
 
     companion object {

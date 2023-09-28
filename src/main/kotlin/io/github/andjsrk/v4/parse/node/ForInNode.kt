@@ -18,11 +18,9 @@ class ForInNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::declaration, ::target, ::body, ::range)
-    override fun evaluateLoop(): NonEmptyNormalOrAbrupt {
+    override fun evaluateLoop(): NonEmptyOrAbrupt {
         val iter = evaluateHead()
             .orReturn { return it }
-            .toSequence()
-            .iterator()
         return evaluateBody(iter)
     }
     private fun evaluateHead(): MaybeAbrupt<IteratorRecord> {
@@ -42,11 +40,12 @@ class ForInNode(
         return IteratorRecord.from(targetValue)
     }
     @EsSpec("ForIn/OfBodyEvaluation")
-    private fun evaluateBody(iterator: Iterator<NonEmptyNormalOrAbrupt>): NonEmptyNormalOrAbrupt {
+    private fun evaluateBody(iterRec: IteratorRecord): NonEmptyOrAbrupt {
         val oldEnv = runningExecutionContext.lexicalEnvironment
         var res: LanguageType = NullType
+        val iter = iterRec.toSequence().iterator()
         while (true) {
-            val nextValue = iterator.next()
+            val nextValue = iter.next()
                 .orReturn { return it }
             val iteratorEnv = DeclarativeEnvironment(oldEnv)
             declaration.instantiateIn(iteratorEnv)
@@ -54,20 +53,18 @@ class ForInNode(
             declaration.binding.initializeBy(nextValue, iteratorEnv)
                 .orReturn {
                     runningExecutionContext.lexicalEnvironment = oldEnv
-                    // TODO: Perform step 6.i.iv.2 (IteratorClose)
-                    return it
+                    return iterRec.close(it)
                 }
             val stmtRes = body.evaluate()
             runningExecutionContext.lexicalEnvironment = oldEnv
             if (!continueLoop(stmtRes)) {
                 require(stmtRes is Completion.Abrupt)
                 val abrupt = updateEmpty(stmtRes, res)
-                // TODO: Perform step 6.l.ii.4 (IteratorClose)
-                return abrupt
+                return iterRec.close(abrupt)
             }
             val stmtResValue = stmtRes.value as LanguageType? // we can sure that the completion is either a normal completion or a continue completion
             if (stmtResValue != null) res = stmtResValue
-            if (iterator.not { hasNext() }) return res.toNormal()
+            if (iter.not { hasNext() }) return res.toNormal()
         }
     }
 }

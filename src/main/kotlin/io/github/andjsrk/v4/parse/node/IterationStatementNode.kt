@@ -6,11 +6,11 @@ import io.github.andjsrk.v4.evaluate.type.*
 sealed interface IterationStatementNode: StatementNode, NonAtomicNode {
     val body: StatementNode
     @EsSpec("LabelledEvaluation")
-    override fun evaluate(): NonEmptyNormalOrAbrupt {
+    override fun evaluate(): NonEmptyOrAbrupt {
         val res = evaluateLoop()
         if (res is Completion.Break) return res.value.normalizeToNormal()
         return res
     }
     @EsSpec("LoopEvaluation")
-    fun evaluateLoop(): NonEmptyNormalOrAbrupt
+    fun evaluateLoop(): NonEmptyOrAbrupt
 }

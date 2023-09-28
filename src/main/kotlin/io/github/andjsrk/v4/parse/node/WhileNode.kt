@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
@@ -17,7 +17,7 @@ class WhileNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::test, ::body, ::atLeastOnce, ::range)
-    override fun evaluateLoop(): NonEmptyNormalOrAbrupt {
+    override fun evaluateLoop(): NonEmptyOrAbrupt {
         var res: LanguageType = NullType
         if (atLeastOnce) res = body.evaluate().returnIfShouldNotContinue(res) { return it }
         while (true) {

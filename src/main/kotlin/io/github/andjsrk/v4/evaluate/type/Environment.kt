@@ -16,5 +16,5 @@ sealed class Environment(var outer: Environment?): Record {
     @EsSpec("SetMutableBinding")
     abstract fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt
     @EsSpec("GetBindingValue")
-    abstract fun getValue(name: String): NonEmptyNormalOrAbrupt
+    abstract fun getBindingValue(name: String): NonEmptyOrAbrupt
 }

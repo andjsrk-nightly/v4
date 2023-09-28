@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.MaybeEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.empty
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
@@ -14,7 +14,7 @@ class IfStatementNode(
     startRange: Range,
 ): IfNode<StatementNode>(test, then, `else`), StatementNode {
     override val range = startRange..(`else` ?: then).range
-    override fun evaluate(): NormalOrAbrupt {
+    override fun evaluate(): MaybeEmptyOrAbrupt {
         val testVal = test.evaluateValue()
             .orReturn { return it }
             .requireToBe<BooleanType> { return it }

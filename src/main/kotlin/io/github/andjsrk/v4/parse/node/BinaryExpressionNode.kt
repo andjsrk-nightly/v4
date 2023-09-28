@@ -17,7 +17,7 @@ class BinaryExpressionNode(
     override val range = left.range..right.range
     override fun toString() =
         stringifyLikeDataClass(::left, ::right, ::operation, ::range)
-    override fun evaluate(): NonEmptyNormalOrAbrupt {
+    override fun evaluate(): NonEmptyOrAbrupt {
         if (operation.isAssignLike) {
             // TODO: destructuring assignment
 
@@ -48,7 +48,7 @@ class BinaryExpressionNode(
  *
  * Note that [other] is not a [LanguageType] because right side needs to be evaluated conditionally for some operations.
  */
-internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode): NonEmptyNormalOrAbrupt {
+internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode): NonEmptyOrAbrupt {
     assert(operation.not { isAssignLike })
 
     val left = this

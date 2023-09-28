@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.ClassType
 
 class NewExpressionNode(
@@ -11,7 +11,7 @@ class NewExpressionNode(
     startRange: Range,
 ): CallNode(callee, arguments) {
     override val range = startRange..arguments.range
-    override fun evaluate(): NonEmptyNormalOrAbrupt {
+    override fun evaluate(): NonEmptyOrAbrupt {
         val calleeValue = callee.evaluateValue()
             .orReturn { return it }
         val args = arguments.evaluate()

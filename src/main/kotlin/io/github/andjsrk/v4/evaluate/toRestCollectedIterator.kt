@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.error.TypeErrorKind
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.neverHappens
@@ -16,7 +16,7 @@ import io.github.andjsrk.v4.parse.stringValue
  * - non-rest element: collect the element as it is
  * - rest element: collect the remaining elements as an array
  */
-fun Iterator<NonEmptyNormalOrAbrupt>.toRestCollectedArrayIterator(bindingElements: List<MaybeRestNode>) =
+fun Iterator<NonEmptyOrAbrupt>.toRestCollectedArrayIterator(bindingElements: List<MaybeRestNode>) =
     iterator {
         for (elem in bindingElements) {
             when (elem) {
@@ -44,7 +44,7 @@ fun Iterator<NonEmptyNormalOrAbrupt>.toRestCollectedArrayIterator(bindingElement
  * - non-rest element: collect the value of the property
  * - rest element: collect the remaining own enumerable properties as an object
  */
-fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNode>): Iterator<NonEmptyNormalOrAbrupt> {
+fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNode>): Iterator<NonEmptyOrAbrupt> {
     val nonRestKeys = mutableSetOf<PropertyKey>()
     return bindingElements
         .asSequence()
@@ -74,11 +74,11 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
         .iterator()
 }
 
-fun Iterator<NonEmptyNormalOrAbrupt>.nextOrDefault(
+fun Iterator<NonEmptyOrAbrupt>.nextOrDefault(
     element: NonRestNode,
     expectedCount: Int,
     index: Int,
-): NonEmptyNormalOrAbrupt {
+): NonEmptyOrAbrupt {
     val value = when {
         hasNext() ->
             next()

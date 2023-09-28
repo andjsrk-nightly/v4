@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.stringValue
 
-fun List<MaybeRestNode>.initializeBy(valuesIterator: Iterator<NonEmptyNormalOrAbrupt>, env: Environment?): EmptyOrAbrupt {
+fun List<MaybeRestNode>.initializeBy(valuesIterator: Iterator<NonEmptyOrAbrupt>, env: Environment?): EmptyOrAbrupt {
     for ((i, element) in this.withIndex()) {
         when (element) {
             is RestNode -> {

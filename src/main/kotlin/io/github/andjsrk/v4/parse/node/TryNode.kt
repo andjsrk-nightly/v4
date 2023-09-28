@@ -19,7 +19,7 @@ class TryNode(
     override val range = startRange..(finallyBody ?: catch!!.body).range
     override fun toString() =
         stringifyLikeDataClass(::tryBody, ::catch, ::finallyBody, ::range)
-    override fun evaluate(): NormalOrAbrupt {
+    override fun evaluate(): MaybeEmptyOrAbrupt {
         val tryRes = tryBody.evaluate()
         val catchRes = catch?.run {
             if (tryRes is Completion.Throw) evaluateCatch(tryRes.value)
@@ -29,7 +29,7 @@ class TryNode(
         return updateEmpty(finallyRes ?: catchRes ?: tryRes, NullType)
     }
     @EsSpec("CatchClauseEvaluation")
-    private fun evaluateCatch(thrown: LanguageType): NormalOrAbrupt {
+    private fun evaluateCatch(thrown: LanguageType): MaybeEmptyOrAbrupt {
         requireNotNull(catch)
         val oldEnv = runningExecutionContext.lexicalEnvironment
         if (catch.binding != null) {

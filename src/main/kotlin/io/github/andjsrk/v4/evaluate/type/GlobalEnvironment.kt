@@ -22,9 +22,9 @@ class GlobalEnvironment(global: ObjectType): Environment(null) {
         ifHasBinding(name) {
             it.setMutableBinding(name, value)
         }
-    override fun getValue(name: String) =
+    override fun getBindingValue(name: String) =
         ifHasBinding(name) {
-            it.getValue(name)
+            it.getBindingValue(name)
         }
     private inline fun <R: AbstractType?> ifHasBinding(name: String, task: (Environment) -> Completion<R>) =
         if (declarative.hasBinding(name)) task(declarative)

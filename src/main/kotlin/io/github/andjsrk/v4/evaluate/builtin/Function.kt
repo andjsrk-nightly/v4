@@ -1,17 +1,21 @@
 package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.error.TypeErrorKind
-import io.github.andjsrk.v4.evaluate.requireToBe
-import io.github.andjsrk.v4.evaluate.throwError
-import io.github.andjsrk.v4.evaluate.type.getter
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
-import io.github.andjsrk.v4.evaluate.type.lang.FunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.constructor
-import io.github.andjsrk.v4.evaluate.type.normalizeToNormal
+import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.type.*
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
-private val functionNameGetter = getter("name") fn@ {
-    val func = it.requireToBe<FunctionType> { return@fn it }
+private val functionNameGetter = getter("name") fn@ { thisArg ->
+    val func = thisArg.requireToBe<FunctionType> { return@fn it }
     func.name.normalizeToNormal()
+}
+private val functionNameSetter = setter("name") fn@ { thisArg, value ->
+    val func = thisArg.requireToBe<FunctionType> { return@fn it }
+    val name = value
+        .normalizeNull()
+        ?.requireToBePropertyKey { return@fn it }
+    func.name = name
+    empty
 }
 
 val Function = BuiltinClassType(
@@ -19,7 +23,7 @@ val Function = BuiltinClassType(
     Object,
     mutableMapOf(),
     mutableMapOf(
-        "name".accessor(getter=functionNameGetter),
+        "name".accessor(getter=functionNameGetter, setter= functionNameSetter),
         // TODO
     ),
     constructor { _, _ ->

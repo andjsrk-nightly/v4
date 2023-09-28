@@ -11,16 +11,16 @@ class SyncGeneratorType(
 ): GeneratorType<SyncGeneratorState>(lazy { Generator.instancePrototype }) {
     override var context = runningExecutionContext
     override var state: SyncGeneratorState? = null // [[GeneratorState]]
-    var complete: Sequence<NormalOrAbrupt>? = null
+    var complete: Sequence<MaybeEmptyOrAbrupt>? = null
     @EsSpec("GeneratorStart")
-    override fun start(result: Sequence<NormalOrAbrupt>) {
+    override fun start(result: Sequence<MaybeEmptyOrAbrupt>) {
         val genContext = runningExecutionContext
         genContext.generator = this
         complete = sequence {
             val acGenContext = runningExecutionContext
             val acGenerator = acGenContext.generator as SyncGeneratorType? ?: neverHappens()
             val iter = result.iterator()
-            var lastComp: NormalOrAbrupt = empty
+            var lastComp: MaybeEmptyOrAbrupt = empty
             while (iter.hasNext()) {
                 val comp = iter.next()
                 lastComp = comp

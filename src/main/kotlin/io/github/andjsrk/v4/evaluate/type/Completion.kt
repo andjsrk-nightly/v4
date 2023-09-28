@@ -8,10 +8,11 @@ import io.github.andjsrk.v4.evaluate.type.lang.NullType
 typealias MaybeAbrupt<NormalV> = Completion<NormalV>
 typealias Empty = Completion.Normal<Nothing?>
 typealias EmptyOrAbrupt = MaybeAbrupt<Nothing?>
-typealias NonEmptyOrAbrupt = MaybeAbrupt<AbstractType>
-typealias NormalOrAbrupt = MaybeAbrupt<LanguageType?>
-typealias NonEmptyNormal = Completion.Normal<LanguageType>
-typealias NonEmptyNormalOrAbrupt = MaybeAbrupt<LanguageType>
+typealias NonEmptyWideOrAbrupt = MaybeAbrupt<AbstractType>
+typealias MaybeEmpty = Completion.Normal<LanguageType?>
+typealias MaybeEmptyOrAbrupt = MaybeAbrupt<LanguageType?>
+typealias NonEmpty = Completion.Normal<LanguageType>
+typealias NonEmptyOrAbrupt = MaybeAbrupt<LanguageType>
 
 @EsSpec("Completion Record")
 sealed interface Completion<out V: AbstractType?>: Record {
@@ -55,15 +56,15 @@ sealed interface Completion<out V: AbstractType?>: Record {
     data class Break(override val value: LanguageType?, override val target: String?): IterationStop
 }
 
-internal inline val empty get() = Completion.Normal.empty
-internal inline val normalNull get() = Completion.Normal.`null`
+inline val empty get() = Completion.Normal.empty
+inline val normalNull get() = Completion.Normal.`null`
 
 /**
  * Returns [normalNull] if the value is `null`, a normal completion that contains the value otherwise.
  */
-internal fun LanguageType?.normalizeToNormal() =
+inline fun LanguageType?.normalizeToNormal(): NonEmpty =
     this?.toNormal() ?: normalNull
-internal fun <T: LanguageType> T.toNormal() =
+inline fun <T: LanguageType> T.toNormal() =
     Completion.Normal(this)
-internal fun <T: AbstractType> T.toWideNormal() =
+inline fun <T: AbstractType> T.toWideNormal() =
     Completion.WideNormal(this)

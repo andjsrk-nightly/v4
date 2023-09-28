@@ -4,9 +4,9 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.FunctionEnvironment
-import io.github.andjsrk.v4.evaluate.type.NonEmptyNormalOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 
-private typealias BuiltinFunctionBehavior = (thisArg: LanguageType?, args: List<LanguageType>) -> NonEmptyNormalOrAbrupt
+private typealias BuiltinFunctionBehavior = (thisArg: LanguageType?, args: List<LanguageType>) -> NonEmptyOrAbrupt
 
 @EsSpec("CreateBuiltinFunction")
 class BuiltinFunctionType(
@@ -19,8 +19,8 @@ class BuiltinFunctionType(
         requiredParameterCount: UInt = 0u,
         behavior: BuiltinFunctionBehavior,
     ): this(name.languageValue, requiredParameterCount, behavior)
-    override val isArrow = false
-    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyNormalOrAbrupt {
+    override val isMethod = true
+    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrAbrupt {
         val calleeContext = ExecutionContext(realm, FunctionEnvironment.from(this, thisArg), this)
         executionContextStack.addTop(calleeContext)
         val res = behavior(thisArg, args)
@@ -29,7 +29,7 @@ class BuiltinFunctionType(
     }
 }
 
-private typealias BuiltinMethodBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyNormalOrAbrupt
+private typealias BuiltinMethodBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyOrAbrupt
 internal inline fun method(
     name: PropertyKey,
     requiredParamCount: UInt = 0u,
@@ -51,7 +51,7 @@ internal inline fun method(
 internal inline fun functionWithoutThis(
     name: String,
     requiredParamCount: UInt = 0u,
-    crossinline behavior: (args: List<LanguageType>) -> NonEmptyNormalOrAbrupt,
+    crossinline behavior: (args: List<LanguageType>) -> NonEmptyOrAbrupt,
 ) =
     BuiltinFunctionType(name, requiredParamCount) { _, args ->
         behavior(args)

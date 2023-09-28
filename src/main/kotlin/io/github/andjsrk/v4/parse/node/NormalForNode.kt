@@ -18,7 +18,7 @@ class NormalForNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::init, ::test, ::update, ::body, ::range)
-    override fun evaluateLoop(): NonEmptyNormalOrAbrupt {
+    override fun evaluateLoop(): NonEmptyOrAbrupt {
         var bindingNames = emptyList<String>()
         val oldEnv = runningExecutionContext.lexicalEnvironment
         if (init != null) {
@@ -38,7 +38,7 @@ class NormalForNode(
         return body
     }
     @EsSpec("ForBodyEvaluation")
-    private fun evaluateBody(bindingNames: List<String>): NonEmptyNormalOrAbrupt {
+    private fun evaluateBody(bindingNames: List<String>): NonEmptyOrAbrupt {
         var res: LanguageType = NullType
         runningExecutionContext.lexicalEnvironment.coverBindingsPerIteration(bindingNames)
         while (true) {
@@ -63,7 +63,7 @@ private fun DeclarativeEnvironment.coverBindingsPerIteration(bindingNames: List<
     val currIterationEnv = DeclarativeEnvironment(outer)
     for (name in bindingNames) {
         currIterationEnv.createMutableBinding(name)
-        val lastValue = lastIterationEnv.getValue(name)
+        val lastValue = lastIterationEnv.getBindingValue(name)
             .unwrap()
         currIterationEnv.initializeBinding(name, lastValue)
     }

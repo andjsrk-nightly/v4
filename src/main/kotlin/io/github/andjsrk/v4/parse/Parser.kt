@@ -218,10 +218,10 @@ class Parser(sourceText: String) {
         return ObjectMethodNode(name, parameters, body, isAsync, isGenerator, startRange)
             .withDuplicateNameCheck()
     }
-    private fun <N: HasParameters> N?.withDuplicateNameCheck() =
+    private fun <N: FunctionNode> N?.withDuplicateNameCheck() =
         this?.takeIf {
             val names = when {
-                this is NonSpecialMethodNode ->
+                this is MethodNode ->
                     parameters.boundNames() + body.lexicallyDeclaredNames()
                 this is ArrowFunctionNode && body is BlockNode ->
                     parameters.boundNames() + body.lexicallyDeclaredNames()
@@ -278,12 +278,12 @@ class Parser(sourceText: String) {
                     when {
                         isGetter -> {
                             if (params.elements.isNotEmpty()) return reportError(SyntaxErrorKind.BAD_GETTER_ARITY, params.range)
-                            ObjectGetterNode(actualName, method.body, name.range)
+                            ObjectGetterNode(actualName, params, method.body, name.range)
                         }
                         isSetter -> {
                             val param = params.elements.singleOrNull() ?: return reportError(SyntaxErrorKind.BAD_SETTER_ARITY, params.range)
                             if (param !is NonRestNode) return reportError(SyntaxErrorKind.BAD_SETTER_REST_PARAMETER, params.range)
-                            ObjectSetterNode(actualName, param, method.body, name.range)
+                            ObjectSetterNode(actualName, params, method.body, name.range)
                         }
                         else -> neverHappens()
                     }
@@ -546,8 +546,8 @@ class Parser(sourceText: String) {
             else -> parseMethodLike(name).run {
                 when (this) {
                     // transform object elements to class elements
-                    is ObjectGetterNode -> ClassGetterNode(name, body, isStatic, startRange)
-                    is ObjectSetterNode -> ClassSetterNode(name, parameter, body, isStatic, startRange)
+                    is ObjectGetterNode -> ClassGetterNode(name, parameters, body, isStatic, startRange)
+                    is ObjectSetterNode -> ClassSetterNode(name, parameters, body, isStatic, startRange)
                     is ObjectMethodNode -> {
                         val actualName = this.name
                         if (actualName is IdentifierNode && actualName.isKeyword(CONSTRUCTOR)) {

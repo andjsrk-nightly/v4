@@ -54,10 +54,24 @@ class ObjectLiteralNode(
                 obj.defineMethodProperty(method.name!!, method)
             }
             is ObjectGetterNode -> {
-                TODO()
+                val getter = property.evaluate()
+                    .orReturn { return it }
+                val name = getter.name!!
+                val existingDesc = obj._getOwnProperty(name)
+                obj.properties[name] = when (existingDesc) {
+                    null, is DataProperty -> AccessorProperty(get=getter)
+                    is AccessorProperty -> existingDesc.apply { get = getter }
+                }
             }
             is ObjectSetterNode -> {
-                TODO()
+                val setter = property.evaluate()
+                    .orReturn { return it }
+                val name = setter.name!!
+                val existingDesc = obj._getOwnProperty(name)
+                obj.properties[name] = when (existingDesc) {
+                    null, is DataProperty -> AccessorProperty(set=setter)
+                    is AccessorProperty -> existingDesc.apply { set = setter }
+                }
             }
         }
         return empty

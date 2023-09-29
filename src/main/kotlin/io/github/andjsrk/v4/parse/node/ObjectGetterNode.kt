@@ -5,6 +5,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ObjectGetterNode(
     override val name: ObjectLiteralKeyNode,
+    override val parameters: UniqueFormalParametersNode,
     override val body: BlockNode,
     startRange: Range,
 ): GetterNode, ObjectElementNode {
@@ -12,5 +13,4 @@ class ObjectGetterNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::name, ::body, ::range)
-    override fun evaluate() = TODO()
 }

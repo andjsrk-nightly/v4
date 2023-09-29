@@ -6,7 +6,7 @@ class ConstructorNode(
     override val name: ObjectLiteralKeyNode,
     override val parameters: UniqueFormalParametersNode,
     override val body: BlockNode,
-): ClassElementNode, NonSpecialMethodNode {
+): ClassElementNode, MethodNode {
     override val childNodes get() = listOf(name, parameters, body)
     override val range = name.range..body.range
     override fun toString() =

@@ -98,7 +98,7 @@ open class ObjectType(
                 }
             }
             is AccessorProperty -> {
-                val setter = ownDesc.set ?: return throwError(TypeErrorKind.NO_SETTER)
+                val setter = ownDesc.set ?: return throwError(TypeErrorKind.NO_SETTER, key.display())
                 setter.call(receiver, listOf(value))
                     .orReturn { return it }
             }
@@ -134,7 +134,7 @@ open class ObjectType(
     inline fun createDataPropertyOrThrow(key: PropertyKey, value: LanguageType) =
         _defineOwnProperty(key, DataProperty(value))
     @EsSpec("CreateNonEnumerableDataPropertyOrThrow")
-    fun createNonEnumerablePropertyOrThrow(key: PropertyKey, value: LanguageType) =
+    fun createNonEnumerableDataPropertyOrThrow(key: PropertyKey, value: LanguageType) =
         definePropertyOrThrow(key, DataProperty(value, enumerable=false))
     @EsSpec("DefinePropertyOrThrow")
     inline fun definePropertyOrThrow(key: PropertyKey, descriptor: Property) =

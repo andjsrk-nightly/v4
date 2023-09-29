@@ -48,7 +48,8 @@ private fun ObjectType.initializeErrorCause(options: ObjectType?): EmptyOrAbrupt
     if (options.hasProperty("cause".languageValue)) {
         val cause = options.get("cause".languageValue)
             .orReturn { return it }
-        createNonEnumerablePropertyOrThrow("cause".languageValue, cause)
+        createNonEnumerableDataPropertyOrThrow("cause".languageValue, cause)
+            .unwrap()
     }
     return empty
 }

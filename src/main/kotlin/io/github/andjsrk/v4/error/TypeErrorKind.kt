@@ -88,7 +88,7 @@ enum class TypeErrorKind(override val message: String): ErrorKind {
     MAPPER_FUNCTION_NON_CALLABLE("flatMap mapper function is not callable"),
     METHOD_INVOKED_ON_WRONG_TYPE("Method invoked on an object that is not %."),
     NO_ACCESS("no access"),
-    NO_SETTER("Cannot set property % of % which has only a getter"),
+    NO_SETTER("Cannot set property % which has only a getter"),
     NON_CALLABLE_IN_INSTANCE_OF_CHECK("Right-hand side of 'instanceof' is not callable"),
     NON_COERCIBLE("Cannot destructure '%' as it is %."),
     NON_COERCIBLE_WITH_PROPERTY("Cannot destructure property '%' of '%' as it is %."),

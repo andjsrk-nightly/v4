@@ -5,6 +5,7 @@ import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ClassGetterNode(
     override val name: ObjectLiteralKeyNode,
+    override val parameters: UniqueFormalParametersNode,
     override val body: BlockNode,
     override val isStatic: Boolean,
     startRange: Range,

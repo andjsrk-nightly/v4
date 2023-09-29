@@ -106,9 +106,9 @@ internal fun Node.lexicallyScopedDeclarations(): List<DeclarationNode> =
 @EsSpec("HasDirectSuper")
 internal fun NonAtomicNode.findDirectSuperCall() =
     when (this) {
-        is NonSpecialMethodNode -> listOf(parameters, body)
         is GetterNode -> listOf(body)
         is SetterNode -> listOf(parameter, body)
+        is MethodNode -> listOf(parameters, body)
         else -> childNodes
     }
         .mapAsSequence { it?.find(SuperCallNode::class) }
@@ -116,9 +116,9 @@ internal fun NonAtomicNode.findDirectSuperCall() =
 
 internal fun MethodNode.findDirectSuper() =
     when (this) {
-        is NonSpecialMethodNode -> listOf(parameters, body)
         is GetterNode -> listOf(body)
         is SetterNode -> listOf(parameter, body)
+        is MethodNode -> listOf(parameters, body)
     }
         .mapAsSequence { it.find(SuperNode::class) }
         .foldElvis()

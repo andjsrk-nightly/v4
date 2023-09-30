@@ -26,8 +26,8 @@ private val log = functionWithoutThis("log", 1u) fn@ { args ->
 
 @EsSpec("global object")
 val global = ObjectType(properties=mutableMapOf(
-    sealedData(::assert),
-    sealedData(::log),
+    sealedMethod(assert),
+    sealedMethod(log),
 
     // 19.3 (Constructor Properties)
     sealedData(::Array),
@@ -51,4 +51,5 @@ val global = ObjectType(properties=mutableMapOf(
 ))
     .apply {
         _defineOwnProperty("global".languageValue, DataProperty.sealed(this))
+            .unwrap()
     }

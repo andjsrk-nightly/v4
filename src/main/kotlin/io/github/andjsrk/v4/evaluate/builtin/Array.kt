@@ -492,10 +492,16 @@ private val immutableArraySet = method("set", 2u) fn@ { thisArg, args ->
     new.toNormal()
 }
 
-private val immutableArrayIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, args ->
+@EsSpec("Array.prototype.values")
+private val immutableArrayValues = method("values") fn@ { thisArg, _ ->
     val arr = thisArg.requireToBe<ImmutableArrayType> { return@fn it }
     createIteratorObjectFromSequence(arr.array.asSequence())
         .toNormal()
+}
+
+@EsSpec("Array.prototype[@@iterator]")
+private val immutableArrayIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, _ ->
+    immutableArrayValues.call(thisArg, emptyList())
 }
 
 /**

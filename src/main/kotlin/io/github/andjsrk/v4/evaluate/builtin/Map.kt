@@ -105,7 +105,7 @@ private val mapIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, _
 }
 
 @EsSpec("Map.prototype.size")
-private val mapSizeGetter = getter("size") fn@ { thisArg ->
+private val mapCountGetter = getter("count") fn@ { thisArg ->
     val map = thisArg.requireToBe<MapType> { return@fn it }
     map.map.size
         .languageValue
@@ -128,7 +128,7 @@ val Map = BuiltinClassType(
         sealedMethod(mapSet),
         sealedMethod(mapValues),
         sealedMethod(mapIterator),
-        "size".accessor(getter=mapSizeGetter),
+        "count".accessor(getter=mapCountGetter),
     ),
     constructor ctor@ { _, args ->
         val source = args.getOptional(0)

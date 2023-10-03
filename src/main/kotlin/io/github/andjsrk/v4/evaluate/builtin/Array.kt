@@ -508,7 +508,7 @@ private val immutableArrayIterator = method(SymbolType.WellKnown.iterator) fn@ {
  * See [23.1.4.1 length](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-properties-of-array-instances-length).
  */
 @EsSpec("-")
-internal val arrayLengthGetter = getter("length") fn@ { thisArg ->
+internal val arrayCountGetter = getter("count") fn@ { thisArg ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     arr.array.size
         .languageValue
@@ -556,7 +556,7 @@ val Array: BuiltinClassType = BuiltinClassType(
         sealedMethod(immutableArraySort),
         sealedMethod(immutableArraySet),
         sealedMethod(immutableArrayIterator),
-        "length".accessor(getter=arrayLengthGetter),
+        "count".accessor(getter=arrayCountGetter),
     ),
     constructor ctor@ { _, args ->
         val size = args.getOptional(0)

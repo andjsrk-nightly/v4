@@ -73,7 +73,7 @@ private val setIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, _
 }
 
 @EsSpec("Set.prototype.size")
-private val setSizeGetter = getter("size") fn@ { thisArg ->
+private val setCountGetter = getter("count") fn@ { thisArg ->
     val set = thisArg.requireToBe<SetType> { return@fn it }
     set.set.size
         .languageValue
@@ -93,7 +93,7 @@ val Set = BuiltinClassType(
         sealedMethod(setHas),
         sealedMethod(setValues),
         sealedMethod(setIterator),
-        "size".accessor(getter=setSizeGetter),
+        "count".accessor(getter=setCountGetter),
     ),
     constructor ctor@ { _, args ->
         val source = args.getOptional(0)

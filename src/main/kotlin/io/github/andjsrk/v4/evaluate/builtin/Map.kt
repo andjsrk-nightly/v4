@@ -100,18 +100,19 @@ private val mapValues = method("values") fn@ { thisArg, _ ->
 }
 
 @EsSpec("Map.prototype[@@iterator]")
-val mapIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, _ ->
+private val mapIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, _ ->
     mapEntries.call(thisArg, emptyList())
 }
 
 @EsSpec("Map.prototype.size")
-val mapSizeGetter = getter("size") fn@ { thisArg ->
+private val mapSizeGetter = getter("size") fn@ { thisArg ->
     val map = thisArg.requireToBe<MapType> { return@fn it }
     map.map.size
         .languageValue
         .toNormal()
 }
 
+@EsSpec("%Map%")
 val Map = BuiltinClassType(
     "Map",
     Object,

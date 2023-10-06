@@ -15,14 +15,14 @@ private val mapClear = method("clear") fn@ { thisArg, _ ->
 }
 
 @EsSpec("Map.prototype.delete")
-private val mapDelete = method("delete", 1u) fn@ { thisArg, args ->
+private val mapRemove = method("remove", 1u) fn@ { thisArg, args ->
     val map = thisArg.requireToBe<MapType> { return@fn it }
     val key = args[0]
-    var deleted = false
+    var removed = false
     withUnsafeModification({ return@fn it }) {
-        deleted = map.map.entries.removeIf { (k) -> sameValue(k, key) }
+        removed = map.map.entries.removeIf { (k) -> sameValue(k, key) }
     }
-    deleted
+    removed
         .languageValue
         .toNormal()
 }
@@ -119,7 +119,7 @@ val Map = BuiltinClassType(
     mutableMapOf(),
     mutableMapOf(
         sealedMethod(mapClear),
-        sealedMethod(mapDelete),
+        sealedMethod(mapRemove),
         sealedMethod(mapEntries),
         sealedMethod(mapForEach),
         sealedMethod(mapGet),

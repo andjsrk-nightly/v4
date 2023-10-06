@@ -27,14 +27,14 @@ private val setClear = method("clear") fn@ { thisArg, _ ->
 }
 
 @EsSpec("Set.prototype.delete")
-private val setDelete = method("delete", 1u) fn@ { thisArg, args ->
+private val setRemove = method("remove", 1u) fn@ { thisArg, args ->
     val set = thisArg.requireToBe<SetType> { return@fn it }
     val value = args[0]
-    var deleted = false
+    var removed = false
     withUnsafeModification({ return@fn it }) {
-        deleted = set.set.removeIf { sameValue(it, value) }
+        removed = set.set.removeIf { sameValue(it, value) }
     }
-    deleted
+    removed
         .languageValue
         .toNormal()
 }
@@ -88,7 +88,7 @@ val Set = BuiltinClassType(
     mutableMapOf(
         sealedMethod(setAdd),
         sealedMethod(setClear),
-        sealedMethod(setDelete),
+        sealedMethod(setRemove),
         sealedMethod(setForEach),
         sealedMethod(setHas),
         sealedMethod(setValues),

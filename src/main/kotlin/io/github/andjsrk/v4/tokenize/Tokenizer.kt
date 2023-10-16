@@ -495,10 +495,10 @@ internal class Tokenizer(sourceText: String) {
                             '&' -> {
                                 advance()
                                 when (curr) {
-                                    '>' -> {
-                                        advance()
-                                        build(THEN)
-                                    }
+                                    // '>' -> {
+                                    //     advance()
+                                    //     build(THEN)
+                                    // }
                                     '=' -> {
                                         advance()
                                         build(ASSIGN_AND)

@@ -103,10 +103,8 @@ private fun MutableList<LanguageType>.addFlattenedAt(
         return
     }
 
-    if (source.array.isNotEmpty()) {
-        source.array.forEach {
-            addFlattenedAt(index, it, depth - 1)
-        }
+    source.array.forEach {
+        addFlattenedAt(index, it, depth - 1)
     }
 }
 

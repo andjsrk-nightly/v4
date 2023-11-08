@@ -192,13 +192,21 @@ private val immutableArrayFlat = method("flat") fn@ { thisArg, args ->
         ?.requireToBeUnsignedIntOrPositiveInfinity { return@fn it }
         ?: 1
     val res = mutableListOf<LanguageType>()
-    arr.array.forEach { addFlattened(res, it, depth) }
+    arr.array.forEach {
+        res.addFlattened(it, depth)
+    }
     ImmutableArrayType.from(res)
         .toNormal()
 }
-private fun addFlattened(target: MutableList<LanguageType>, source: LanguageType, depth: Int) {
-    if (source is ArrayType && depth != 0) source.array.forEach { addFlattened(target, it, depth - 1) }
-    else target += source
+private fun MutableList<LanguageType>.addFlattened(source: LanguageType, depth: Int) {
+    if (source !is ArrayType || depth == 0) {
+        this += source
+        return
+    }
+
+    source.array.forEach {
+        addFlattened(it, depth - 1)
+    }
 }
 
 @EsSpec("Array.prototype.flatMap")

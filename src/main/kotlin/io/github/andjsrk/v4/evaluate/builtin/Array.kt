@@ -189,7 +189,7 @@ private val immutableArrayFlat = method("flat") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val depth = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
-        ?.requireToBeUnsignedInt { return@fn it }
+        ?.requireToBeUnsignedIntOrPositiveInfinity { return@fn it }
         ?: 1
     val res = mutableListOf<LanguageType>()
     arr.array.forEach { addFlattened(res, it, depth) }
@@ -197,7 +197,7 @@ private val immutableArrayFlat = method("flat") fn@ { thisArg, args ->
         .toNormal()
 }
 private fun addFlattened(target: MutableList<LanguageType>, source: LanguageType, depth: Int) {
-    if (source is ArrayType && depth > 0) source.array.forEach { addFlattened(target, it, depth - 1) }
+    if (source is ArrayType && depth != 0) source.array.forEach { addFlattened(target, it, depth - 1) }
     else target += source
 }
 

@@ -337,6 +337,15 @@ internal inline fun NumberType.requireToBeIntWithin(range: NamedRange, descripti
 
 internal inline fun NumberType.requireToBeUnsignedInt(rtn: AbruptReturnLambda) =
     requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
+/**
+ * Note that the function returns `-1` if the number is [NumberType.POSITIVE_INFINITY].
+ */
+internal inline fun NumberType.requireToBeUnsignedIntOrPositiveInfinity(rtn: AbruptReturnLambda): Int {
+    if (this.isPositiveInfinity) return -1
+    return this.requireToBeIntegerWithin(NamedRange.unsignedInteger.range)
+        ?.toInt()
+        ?: rtn(unexpectedNumberRange("The number", "an unsigned integer or positive infinity"))
+}
 internal inline fun NumberType.requireToBeRadix(rtn: AbruptReturnLambda) =
     requireToBeIntWithin(NamedRange.radix, rtn=rtn)
 internal inline fun NumberType.requireToBeIndex(rtn: AbruptReturnLambda) =

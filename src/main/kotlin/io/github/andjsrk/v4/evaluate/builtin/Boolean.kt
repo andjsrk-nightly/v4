@@ -11,13 +11,18 @@ import java.math.BigInteger
 @EsSpec("Boolean(value)")
 private val booleanFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val value = args[0]
-    when (value) {
+    if (value is ObjectType) throwError(TypeErrorKind.BOOLEAN_FROM_INVALID_VALUE, generalizedDescriptionOf(value))
+    else isTruthyInJs.call(null, args)
+}
+
+private val isTruthyInJs = functionWithoutThis("isTruthyInJs", 1u) fn@ { args ->
+    when (val value = args[0]) {
         NullType -> false
         is StringType -> value.value.isNotEmpty()
         is NumberType -> value.not { isZero } && value.not { isNaN }
         is BooleanType -> return@fn value.toNormal()
         is BigIntType -> value.value != BigInteger.ZERO
-        is ObjectType -> return@fn throwError(TypeErrorKind.BOOLEAN_FROM_INVALID_VALUE, generalizedDescriptionOf(value))
+        is ObjectType -> true
         is SymbolType -> return@fn throwError(TypeErrorKind.BOOLEAN_FROM_INVALID_VALUE, generalizedDescriptionOf(value))
     }
         .languageValue
@@ -36,6 +41,7 @@ val Boolean = BuiltinClassType(
     Object,
     mutableMapOf(
         sealedMethod(booleanFrom),
+        sealedMethod(isTruthyInJs),
     ),
     mutableMapOf(
         sealedMethod(booleanToString),

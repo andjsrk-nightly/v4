@@ -407,7 +407,7 @@ internal class EvaluatorTest {
         evaluationOf("""
             true || 0
         """).shouldBeNormalAnd<BooleanType> {
-            // 0 will not be evaluated, so it is just `true`
+            // 0 will not be evaluated, so it is just `true` instead of an error
             assertTrue(value)
         }
 

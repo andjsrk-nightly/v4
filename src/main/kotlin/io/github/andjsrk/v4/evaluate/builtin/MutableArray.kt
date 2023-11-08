@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.Ref
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
@@ -81,37 +82,44 @@ private val mutableArrayFlat = method("flat") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val depth = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
-        ?.requireToBeUnsignedInt { return@fn it }
+        ?.requireToBeUnsignedIntOrPositiveInfinity { return@fn it }
         ?: 1
-    arr.array.asReversed().forEachIndexed { i, it ->
-        arr.array.addFlattenedAt(i, listOf(it), depth)
+    val i = Ref(0)
+    while (i.value < arr.array.size) {
+        val elem = arr.array[i.value]
+        arr.array.removeAt(i.value)
+        arr.array.addFlattenedAt(i, elem, depth)
     }
     arr.toNormal()
 }
-private fun MutableList<LanguageType>.addFlattenedAt(index: Int, flattened: List<LanguageType>, depth: Int) {
-    if (depth <= 0) {
-        val first = flattened.firstOrNull() // might be null if the value is []
-        val rest = flattened.carefulSubList(1)
-        if (first != null) this[index] = first
-        this.addAll(index + 1, rest)
-    } else {
-        addFlattenedAt(index, flattened.flatMap(::flatCallback), depth - 1)
+private fun MutableList<LanguageType>.addFlattenedAt(
+    index: Ref<Int>,
+    source: LanguageType,
+    depth: Int,
+) {
+    if (source !is ArrayType/* we are not interested in non array values */ || depth == 0) {
+        add(index.value, source)
+        index.value++
+        return
+    }
+
+    if (source.array.isNotEmpty()) {
+        source.array.forEach {
+            addFlattenedAt(index, it, depth - 1)
+        }
     }
 }
-private fun List<LanguageType>.carefulSubList(start: Int, end: Int = size) =
-    subList(start.coerceAtMost(size), end.coerceAtMost(size))
 
 private val mutableArrayFlatMap = method("flatMap", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
-    var i = 0
-    while (i < arr.array.size) {
-        val value = arr.array[i]
-        val res = callback.call(null, listOf(value, i.languageValue, arr))
+    val i = Ref(0)
+    while (i.value < arr.array.size) {
+        val value = arr.array[i.value]
+        val res = callback.call(null, listOf(value, i.value.languageValue, arr))
             .orReturn { return@fn it }
-        val items = flatCallback(res)
-        arr.array.addFlattenedAt(i, items, 1)
-        i += items.size
+        arr.array.removeAt(i.value)
+        arr.array.addFlattenedAt(i, res, 1)
     }
     arr.toNormal()
 }

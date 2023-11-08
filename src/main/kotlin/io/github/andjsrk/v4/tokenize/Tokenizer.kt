@@ -548,7 +548,7 @@ internal class Tokenizer(sourceText: String) {
                     NUMBER -> return getNumberToken()
                     WHITE_SPACE -> skipWhiteSpaceOrLineTerminator()
                     ILLEGAL -> return (
-                        if (curr.isEndOfInput) return build(if (hasError) ILLEGAL else EOS)
+                        if (curr.isEndOfInput) build(if (hasError) ILLEGAL else EOS)
                         else {
                             advance()
                             build()

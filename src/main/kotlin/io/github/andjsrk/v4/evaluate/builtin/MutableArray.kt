@@ -86,8 +86,7 @@ private val mutableArrayFlat = method("flat") fn@ { thisArg, args ->
         ?: 1
     val i = Ref(0)
     while (i.value < arr.array.size) {
-        val elem = arr.array[i.value]
-        arr.array.removeAt(i.value)
+        val elem = arr.array.removeAt(i.value)
         arr.array.addFlattenedAt(i, elem, depth)
     }
     arr.toNormal()

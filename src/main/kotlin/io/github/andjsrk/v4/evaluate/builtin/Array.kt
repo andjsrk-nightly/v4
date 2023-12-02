@@ -567,18 +567,12 @@ val Array: BuiltinClassType = BuiltinClassType(
         "count".accessor(getter=arrayCountGetter),
     ),
     constructor ctor@ { _, args ->
-        val size = args.getOptional(0)
+        val count = args.getOptional(0)
             ?.requireToBe<NumberType> { return@ctor it }
             ?.requireToBeUnsignedInt { return@ctor it }
             ?: 0
-        val mapFn = args.getOptional(1)
-            ?.requireToBe<FunctionType> { return@ctor it }
         val arr = ImmutableArrayType(
-            List(size) { i ->
-                mapFn?.call(null, listOf(i.languageValue))
-                    ?.orReturn { return@ctor it }
-                    ?: NullType
-            }
+            List(count) { NullType }
         )
         arr.toNormal()
     },

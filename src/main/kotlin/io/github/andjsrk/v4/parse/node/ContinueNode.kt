@@ -4,8 +4,7 @@ import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class ContinueNode(startRange: Range, semicolonRange: Range?): StatementNode {
-    override val range = startRange.extendCarefully(semicolonRange)
+class ContinueNode(override val range: Range): ExpressionNode {
     override fun toString() =
         stringifyLikeDataClass(::range)
     override fun evaluate() =

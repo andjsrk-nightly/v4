@@ -940,6 +940,39 @@ class Parser(sourceText: String) {
                 }
             }
     /**
+     * Parses [ContinueStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ContinueStatement), as an expression.
+     */
+    @Careful
+    private fun parseContinue(): ContinueNode? {
+        val ctx = parseCtxs.top
+        val continueTokenRange = takeIfMatchesKeyword(CONTINUE)?.range ?: return null
+        if (ctx.not { allowIterationFlowControlSyntax }) return reportError(SyntaxErrorKind.ILLEGAL_CONTINUE, continueTokenRange)
+        return ContinueNode(continueTokenRange)
+    }
+    /**
+     * Parses [BreakStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-BreakStatement), as an expression.
+     */
+    @Careful
+    private fun parseBreak(): BreakNode? {
+        val ctx = parseCtxs.top
+        val breakTokenRange = takeIfMatchesKeyword(BREAK)?.range ?: return null
+        if (ctx.not { allowIterationFlowControlSyntax }) return reportError(SyntaxErrorKind.ILLEGAL_BREAK, breakTokenRange)
+        return BreakNode(breakTokenRange)
+    }
+    /**
+     * Parses [ReturnStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ReturnStatement), as an expression.
+     */
+    @Careful
+    private fun parseReturn(): ReturnNode? {
+        val ctx = parseCtxs.top
+        val returnTokenRange = takeIfMatchesKeyword(RETURN)?.range ?: return null
+        if (ctx.not { allowReturn }) return reportError(SyntaxErrorKind.ILLEGAL_RETURN, returnTokenRange)
+        val hasNoExpression = currToken.type == SEMICOLON || currToken.type.isAsiJob || currToken.isPrevLineTerminator
+        if (hasNoExpression) return ReturnNode(null, returnTokenRange)
+        val expr = parseAssignment() ?: return null
+        return ReturnNode(expr, returnTokenRange)
+    }
+    /**
      * Parses [UnaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-UnaryExpression).
      */
     @Careful
@@ -953,7 +986,13 @@ class Parser(sourceText: String) {
                 MINUS -> UnaryOperationType.MINUS
                 NOT -> UnaryOperationType.NOT
                 BITWISE_NOT -> UnaryOperationType.BITWISE_NOT
-                else -> return parseUpdate()
+                else -> return listOf(
+                    ::parseContinue,
+                    ::parseBreak,
+                    ::parseReturn,
+                    ::parseUpdate,
+                )
+                    .foldElvisIfHasNoError()
             }
         }
         val operationToken = advance()
@@ -1123,6 +1162,7 @@ class Parser(sourceText: String) {
      *
      * IfExpression :
      *   `if` `(` Expression `)` AssignmentExpression `else` AssignmentExpression
+     *   ShortCircuitExpression
      */
     @Careful
     private fun parseIfExpression(): ExpressionNode? {
@@ -1473,50 +1513,13 @@ class Parser(sourceText: String) {
      */
     @Careful
     private fun parseIterationStatement(): IterationStatementNode? {
-        return withParseContext({ copy(allowIterationFlowControlStatement=true) }) {
+        return withParseContext({ copy(allowIterationFlowControlSyntax=true) }) {
             listOf(
                 ::parseFor,
                 ::parseWhile,
             )
                 .foldElvisIfHasNoError()
         }
-    }
-    /**
-     * Parses [ContinueStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ContinueStatement).
-     */
-    @Careful
-    private fun parseContinue(): ContinueNode? {
-        val ctx = parseCtxs.top
-        val continueTokenRange = takeIfMatchesKeyword(CONTINUE)?.range ?: return null
-        if (ctx.not { allowIterationFlowControlStatement }) return reportError(SyntaxErrorKind.ILLEGAL_CONTINUE, continueTokenRange)
-        return ContinueNode(continueTokenRange, takeOptionalSemicolonRange())
-    }
-    /**
-     * Parses [BreakStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-BreakStatement).
-     */
-    @Careful
-    private fun parseBreak(): BreakNode? {
-        val ctx = parseCtxs.top
-        val breakTokenRange = takeIfMatchesKeyword(BREAK)?.range ?: return null
-        if (ctx.not { allowIterationFlowControlStatement }) return reportError(SyntaxErrorKind.ILLEGAL_BREAK, breakTokenRange)
-        return BreakNode(breakTokenRange, takeOptionalSemicolonRange())
-    }
-    /**
-     * Parses [ReturnStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#prod-ReturnStatement).
-     */
-    @Careful
-    private fun parseReturn(): ReturnNode? {
-        val ctx = parseCtxs.top
-        val returnTokenRange = takeIfMatchesKeyword(RETURN)?.range ?: return null
-        if (ctx.not { allowReturn }) return reportError(SyntaxErrorKind.ILLEGAL_RETURN, returnTokenRange)
-        val isCurrSemicolon = currToken.type == SEMICOLON
-        if (isCurrSemicolon || currToken.type.isAsiJob || currToken.isPrevLineTerminator) return ReturnNode(
-            null,
-            returnTokenRange,
-            isCurrSemicolon.thenTake { advance().range },
-        )
-        val expr = parseAssignment() ?: return null
-        return ReturnNode(expr, returnTokenRange, takeOptionalSemicolonRange())
     }
     /**
      * Parses [TryStatement](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-try-statement).
@@ -1556,9 +1559,6 @@ class Parser(sourceText: String) {
             IDENTIFIER -> listOf(
                 ::parseIfStatement,
                 ::parseIterationStatement,
-                ::parseContinue,
-                ::parseBreak,
-                ::parseReturn,
                 ::parseTry,
                 ::parseExpressionStatement,
             )

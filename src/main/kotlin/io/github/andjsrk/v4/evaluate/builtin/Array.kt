@@ -34,7 +34,7 @@ private val immutableArrayAddAt = method("addAt", 1u) fn@ { thisArg, args ->
         .requireToBeIndexWithin(size + 1) { return@fn it }
     val values = args.subList(1, args.size)
     val new = ImmutableArrayType.from(
-        arr.array.subList(0, index) + values + arr.array.subList(index + 1, size)
+        arr.array.subList(0, index) + values + arr.array.subList(index, size)
     )
     new.toNormal()
 }

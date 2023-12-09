@@ -1,7 +1,6 @@
 package io.github.andjsrk.v4.evaluate.builtin
 
-import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.Ref
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
@@ -24,7 +23,7 @@ private val mutableArrayAddAt = method("addAt", 1u) fn@ { thisArg, args ->
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
         .requireToBeIndexWithin(arr.array.size + 1/* allow length */) { return@fn it }
-    val values = args.subList(1, args.size)
+    val values = args.subList(1)
     withUnsafeModification({ return@fn it }) {
         arr.array.addAll(index, values)
     }

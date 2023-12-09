@@ -6,6 +6,7 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.subList
 
 private val immutableArrayFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val arrayLike = args[0]
@@ -32,7 +33,7 @@ private val immutableArrayAddAt = method("addAt", 1u) fn@ { thisArg, args ->
     val index = args[0]
         .requireToBe<NumberType> { return@fn it }
         .requireToBeIndexWithin(size + 1) { return@fn it }
-    val values = args.subList(1, args.size)
+    val values = args.subList(1)
     val new = ImmutableArrayType.from(
         arr.array.subList(0, index) + values + arr.array.subList(index, size)
     )
@@ -241,7 +242,7 @@ internal val arrayIncludes = method("includes", 1u) fn@ { thisArg, args ->
         ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeUnsignedInt { return@fn it }
         ?: 0
-    val res = arr.array.subList(startIndex, arr.array.size).any {
+    val res = arr.array.subList(startIndex).any {
         sameValue(it, value, NumberType::internallyEqual)
     }
     res
@@ -257,7 +258,7 @@ internal val arrayIndexOf = method("indexOf", 1u) fn@ { thisArg, args ->
         ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeUnsignedInt { return@fn it }
         ?: 0
-    val index = arr.array.subList(startIndex, arr.array.size)
+    val index = arr.array.subList(startIndex)
         .indexOfFirst { sameValue(it, value, NumberType::internallyEqual) }
     index
         .languageValue
@@ -495,7 +496,7 @@ private val immutableArraySet = method("set", 2u) fn@ { thisArg, args ->
         .resolveRelativeIndexOrReturn(arr.array.size) { return@fn it }
     val value = args[1]
     val before = arr.array.subList(0, index)
-    val after = arr.array.subList(index + 1, arr.array.size)
+    val after = arr.array.subList(index + 1)
     val new = ImmutableArrayType.from(before + listOf(value) + after)
     new.toNormal()
 }

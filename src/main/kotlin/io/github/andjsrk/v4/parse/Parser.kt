@@ -1702,7 +1702,7 @@ class Parser(sourceText: String) {
      * Parses [ImportDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#prod-ImportDeclaration).
      *
      * modified to:
-     * ```
+     *
      * ImportDeclaration :
      *   `import` ModuleSpecifier `;`
      *   `import` ModuleSpecifier ImportTail `;`
@@ -1710,7 +1710,6 @@ class Parser(sourceText: String) {
      * ImportTail :
      *   `as` BindingIdentifier
      *   `with` NamedImports
-     * ```
      */
     @Careful
     private fun parseImportDeclaration(): ImportDeclarationNode? {
@@ -1750,7 +1749,7 @@ class Parser(sourceText: String) {
      * Parses [ExportDeclaration](https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#prod-ExportDeclaration).
      *
      * modified to:
-     * ```
+     *
      * ExportDeclaration :
      *   `export` ModuleSpecifier ReExportTail `;`
      *   `export` NamedExports `;`
@@ -1759,7 +1758,6 @@ class Parser(sourceText: String) {
      * ReExportTail :
      *   `*`
      *   `with` NamedExports
-     * ```
      */
     @Careful
     private fun parseExportDeclaration(): ExportDeclarationNode? {

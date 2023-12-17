@@ -406,7 +406,7 @@ internal class ParserTest {
             a?.b.c``
         """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.TAGGED_TEMPLATE_OPTIONAL_CHAIN)
 
-        // modified to
+        // modified to:
         // CallExpression [no LineTerminator here] TemplateLiteral
         """
             a

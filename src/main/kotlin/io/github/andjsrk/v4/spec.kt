@@ -16,25 +16,19 @@ val Char.isLineTerminator get() =
 
 /**
  * modified to:
- * ```
+ *
  * IdentifierChar ::
- *   any code point in general categories
- *       “Uppercase_Letter” (“Lu”),
- *       “Lowercase_Letter” (“Ll”),
- *       “Titlecase_Letter” (“Lt”),
- *       “Modifier_Letter” (“Lm”),
- *       “Other_Letter” (“Lo”)
+ *   AsciiLetter
  *   `_`
  *   `$`
  *
  * IdentifierName ::
  *   IdentifierChar
  *   IdentifierName IdentifierChar
- * ```
  */
 @EsSpec("IdentifierName")
 val Char.isIdentifierChar get() =
-    this.isLetter() || this == '_' || this == '$'
+    this in 'a'..'z' || this in 'A'..'Z' || this == '_' || this == '$'
 
 @EsSpec("NumericLiteralSeparator")
 val Char.isNumericLiteralSeparator get() =

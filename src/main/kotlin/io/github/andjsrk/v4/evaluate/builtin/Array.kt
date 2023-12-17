@@ -85,18 +85,6 @@ internal val arrayAt = method("at", 1u) fn@ { thisArg, args ->
     arr.array.getOrNull(index).normalizeToNormal()
 }
 
-@EsSpec("Array.prototype.concat")
-private val immutableArrayConcatenate = method("concatenate") fn@ { thisArg, args ->
-    val arr = thisArg.requireToBe<ArrayType> { return@fn it }
-    val res = arr.array.toMutableList()
-    for (item in args) {
-        if (item is ArrayType) res.addAll(item.array)
-        else res.add(item)
-    }
-    ImmutableArrayType.from(res)
-        .toNormal()
-}
-
 @EsSpec("Array.prototype.copyWithin")
 private val copyWithin = method("copyWithin") fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
@@ -539,7 +527,6 @@ val Array: BuiltinClassType = BuiltinClassType(
         sealedMethod(immutableArrayAddLast),
         sealedMethod(any),
         sealedMethod(arrayAt),
-        sealedMethod(immutableArrayConcatenate),
         sealedMethod(immutableArrayEntries),
         sealedMethod(arrayEvery),
         sealedMethod(immutableArrayFilter),

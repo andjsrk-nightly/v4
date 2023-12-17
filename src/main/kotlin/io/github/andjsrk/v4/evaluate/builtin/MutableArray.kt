@@ -48,17 +48,6 @@ private val mutableArrayAddLast = method("addLast") fn@ { thisArg, args ->
     arr.toNormal()
 }
 
-private val mutableArrayConcatenate = method("concatenate") fn@ { thisArg, args ->
-    val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
-    withUnsafeModification({ return@fn it }) {
-        args.forEach {
-            if (it is ArrayType) arr.array.addAll(it.array)
-            else arr.array.add(it)
-        }
-    }
-    arr.toNormal()
-}
-
 private val mutableArrayFilter = method("filter", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
@@ -230,7 +219,6 @@ val MutableArray = BuiltinClassType(
         sealedMethod(mutableArrayAddLast),
         sealedMethod(any),
         sealedMethod(arrayAt),
-        sealedMethod(mutableArrayConcatenate),
         sealedMethod(arrayEvery),
         sealedMethod(mutableArrayFilter),
         sealedMethod(arrayFirst),

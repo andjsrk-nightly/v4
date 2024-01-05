@@ -1,7 +1,8 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
+    java
     kotlin("jvm") version "1.9.10"
+    application
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "io.github.andjsrk"
@@ -13,16 +14,28 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    implementation(kotlin("stdlib"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 }
 
-tasks.test {
-    useJUnitPlatform()
+application {
+    mainClass.set("$group.$name.MainKt")
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
-tasks.withType<Test> {
-    environment("TEST", true)
+
+tasks {
+    jar {
+        dependsOn(shadowJar)
+    }
+    test {
+        useJUnitPlatform()
+    }
+    withType<Test> {
+        environment("TEST", true)
+    }
 }

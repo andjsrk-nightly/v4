@@ -12,5 +12,6 @@ class NamedSingleExportDeclarationNode(
     override val range = startRange..declaration.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::declaration, ::range)
-    override fun evaluate() = TODO()
+    override fun evaluate() =
+        declaration.evaluate()
 }

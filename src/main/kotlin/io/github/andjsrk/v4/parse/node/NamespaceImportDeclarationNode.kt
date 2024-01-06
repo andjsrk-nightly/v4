@@ -13,5 +13,4 @@ class NamespaceImportDeclarationNode(
     override val range = startRange..binding.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::moduleSpecifier, ::binding, ::range)
-    override fun evaluate() = TODO()
 }

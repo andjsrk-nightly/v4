@@ -5,11 +5,11 @@ import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.parse.Parser
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.isDirectory
-import kotlin.io.path.readText
 import kotlin.system.exitProcess
 
-const val extension = ".ss"
+const val languageExtension = ".ss"
 
 fun main(args: Array<String>) {
     val entryPointPath = args.getOrNull(0) ?: return enterReplMode()
@@ -38,32 +38,32 @@ private inline fun getCwd() =
 
 fun runFile(path: String) {
     val cwd = getCwd()
-    var entryPointContent = cwd.resolve(path).let {
+    val (entryPointPath, entryPointContent) = cwd.resolve(path).let {
         if (it.isDirectory()) TODO("Treating a directory as an entry point is not implemented yet")
-        else it.readTextOrNull()
-            ?: cwd.resolve("$path$extension").readTextOrNull()
+        else it.readTextThenPair()
+            ?: cwd.resolve("$path$languageExtension").readTextThenPair()
             ?: entryPointNotFound(path)
     }
     initializeRealm()
-    val module = when (val moduleOrErr = parseModule(entryPointContent, runningExecutionContext.realm)) {
+    val moduleOrErr = parseModule(
+        entryPointContent,
+        runningExecutionContext.realm,
+        entryPointPath.absolutePathString(),
+    )
+    val module = when (moduleOrErr) {
         is Valid -> moduleOrErr.value
         is Invalid -> {
             eprintln(moduleOrErr.value)
             exitProcess(1)
         }
     }
+    module.loadRequestedModules()
+    module.link()
+        .orReturn(::exitWithThrow)
     module.initializeEnvironment()
         .orReturn(::exitWithThrow)
-    module.executeModule()
-        .orReturn(::exitWithThrow)
+    module.evaluate()
 }
-
-private inline fun Path.readTextOrNull() =
-    try {
-        readText()
-    } catch (e: NoSuchFileException) {
-        null
-    }
 
 private inline fun entryPointNotFound(path: String): Nothing =
     throw NoSuchFileException(path)
@@ -72,6 +72,3 @@ private fun exitWithThrow(abrupt: Completion.Abrupt): Nothing {
     eprintln(abrupt.value!!.display())
     exitProcess(1)
 }
-
-private fun eprintln(value: Any?) =
-    System.err.println(value)

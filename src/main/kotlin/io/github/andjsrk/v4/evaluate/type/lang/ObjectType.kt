@@ -35,7 +35,7 @@ open class ObjectType(
         return true
     }
     @EsSpec("[[GetOwnProperty]]")
-    fun _getOwnProperty(key: PropertyKey) =
+    open fun _getOwnProperty(key: PropertyKey) =
         properties[key]
     @EsSpec("[[DefineOwnProperty]]")
     fun _defineOwnProperty(key: PropertyKey, descriptor: Property): EmptyOrAbrupt {
@@ -66,7 +66,7 @@ open class ObjectType(
     fun _hasProperty(key: PropertyKey): Boolean =
         hasOwnProperty(key) || prototype?._hasProperty(key) ?: false
     @EsSpec("[[Get]]")
-    fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyOrAbrupt {
+    open fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyOrAbrupt {
         val descriptor = _getOwnProperty(key)
         if (descriptor == null) {
             val proto = prototype ?: return normalNull
@@ -78,7 +78,7 @@ open class ObjectType(
         return getter.call(receiver, emptyList())
     }
     @EsSpec("[[Set]]")
-    fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): MaybeAbrupt<BooleanType?> {
+    open fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): MaybeAbrupt<BooleanType?> {
         when (val ownDesc = _getOwnProperty(key)) {
             null -> {
                 val parent = prototype
@@ -106,7 +106,7 @@ open class ObjectType(
         return empty
     }
     @EsSpec("[[Delete]]")
-    fun _delete(key: PropertyKey): EmptyOrAbrupt {
+    open fun _delete(key: PropertyKey): EmptyOrAbrupt {
         val desc = _getOwnProperty(key) ?: return empty
         if (desc.not { configurable }) return throwError(TypeErrorKind.CANNOT_DELETE_PROPERTY)
         properties.remove(key)

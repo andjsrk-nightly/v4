@@ -4,6 +4,7 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
+import io.github.andjsrk.v4.evaluate.type.lang.PromiseType
 import io.github.andjsrk.v4.parse.node.ModuleNode
 
 @EsSpec("Source Text Module Record")
@@ -19,12 +20,25 @@ class SourceTextModule(
     val localExportEntries: List<ExportEntry>,
     val indirectExportEntries: List<ExportEntry>,
     val starExportEntries: List<ExportEntry>,
-): CyclicModule(realm, requestedModules) {
+    absolutePath: String,
+): CyclicModule(realm, requestedModules, absolutePath) {
     var context: ExecutionContext? = null
     var importMeta: ObjectType? = null
-    @EsSpec("ResolveExport")
+    override fun getExportedNames(exportStarSet: MutableSet<SourceTextModule>): List<String> {
+        if (this in exportStarSet) return emptyList()
+        exportStarSet += this
+        val exportedNames = mutableListOf<String>()
+        for (entry in localExportEntries) exportedNames += entry.exportName!!
+        for (entry in indirectExportEntries) exportedNames += entry.exportName!!
+        for (entry in starExportEntries) {
+            val requestedModule = getImportedModule(entry.sourceModule!!)
+            val starNames = requestedModule.getExportedNames(exportStarSet)
+            for (name in starNames) exportedNames += name
+        }
+        return exportedNames
+    }
     override fun resolveExport(exportName: String, resolveSet: MutableList<Pair<Module, String>>): ExportResolveResult? {
-        assert(status != ModuleStatus.NEW)
+        assert(status != Status.NEW)
         val resolve = this to exportName
         if (resolveSet.any { it == resolve }) return null // circular import
         resolveSet += resolve
@@ -52,8 +66,7 @@ class SourceTextModule(
         }
         return starResolution
     }
-    @EsSpec("InitializeEnvironment")
-    fun initializeEnvironment(): EmptyOrAbrupt {
+    override fun initializeEnvironment(): EmptyOrAbrupt {
         for (entry in indirectExportEntries) {
             val resolution = resolveExport(entry.exportName!!)
             if (resolution == null || resolution !is ExportResolveResult.ResolvedBinding) return throwError(SyntaxErrorKind.AMBIGUOUS_EXPORT, TODO())
@@ -61,7 +74,12 @@ class SourceTextModule(
         }
         // TODO: implement step 1
         environment = ModuleEnvironment(realm.globalEnv)
-        // TODO: implement step 7
+        for (ie in importEntries) {
+            val importedModule = getImportedModule(ie.sourceModule)
+            if (ie is NamespaceImportEntry) {
+                val namespace = ie.localName
+            }
+        }
         val moduleContext = ExecutionContext(realm, environment)
         context = moduleContext
         executionContextStack.addTop(moduleContext)
@@ -69,11 +87,16 @@ class SourceTextModule(
         executionContextStack.removeTop()
         return empty
     }
-    @EsSpec("ExecuteModule")
-    fun executeModule(): EmptyOrAbrupt {
-        executionContextStack.addTop(ExecutionContext(realm, environment))
-        val res = node.evaluate()
-        executionContextStack.removeTop()
-        return if (res is Completion.Abrupt) res else empty
+    override fun execute(capability: PromiseType.Capability?): EmptyOrAbrupt {
+        if (hasTopLevelAwait) {
+            requireNotNull(capability)
+            capability.asyncBlockStart(node, ExecutionContext(realm, environment))
+        } else {
+            executionContextStack.addTop(ExecutionContext(realm, environment))
+            val res = node.evaluate()
+            executionContextStack.removeTop()
+            if (res is Completion.Abrupt) return res
+        }
+        return empty
     }
 }

@@ -608,12 +608,10 @@ private fun checkStringReplaceNewArg(value: LanguageType) =
         else -> unexpectedType(value, StringType::class, FunctionType::class)
     }
 private fun checkSplitLimitArg(limit: LanguageType?): MaybeAbrupt<GeneralSpecValue<Int>> {
-    return GeneralSpecValue(
-        limit
-            .requireToBe<NumberType> { return it }
-            .requireToBeUnsignedInt { return it }
-    )
-        .toWideNormal()
+    return limit
+        .requireToBe<NumberType> { return it }
+        .requireToBeUnsignedInt { return it }
+        .toGeneralWideNormal()
 }
 
 private inline fun NumberType.requireToBeIndexWithinString(string: String, name: String = "startIndex", rtn: AbruptReturnLambda): Int {

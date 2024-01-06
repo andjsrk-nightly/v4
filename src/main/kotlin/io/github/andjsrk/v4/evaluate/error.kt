@@ -7,6 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
 internal fun error(kind: ErrorKind, vararg args: String): ObjectType {
     val errorClass = when (kind) {
+        is BasicErrorKind -> Error
         is RangeErrorKind -> RangeError
         is ReferenceErrorKind -> ReferenceError
         is SyntaxErrorKind -> SyntaxError

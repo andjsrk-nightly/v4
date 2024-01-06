@@ -68,3 +68,5 @@ inline fun <T: LanguageType> T.toNormal() =
     Completion.Normal(this)
 inline fun <T: AbstractType> T.toWideNormal() =
     Completion.WideNormal(this)
+inline fun <T> T.toGeneralWideNormal() =
+    GeneralSpecValue(this).toWideNormal()

@@ -7,9 +7,17 @@ import io.github.andjsrk.v4.neverHappens
 
 internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
     val hasValueField = hasOwnProperty("value".languageValue)
+        .orReturn { return it }
+        .value
     val hasWritableField = hasOwnProperty("writable".languageValue)
+        .orReturn { return it }
+        .value
     val hasGetField = hasOwnProperty("get".languageValue)
+        .orReturn { return it }
+        .value
     val hasSetField = hasOwnProperty("set".languageValue)
+        .orReturn { return it }
+        .value
 
     val isData = hasValueField || hasWritableField
     val isAccessor = hasGetField || hasSetField

@@ -4,7 +4,6 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.not
 
 class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environment(outer) {
     override fun hasBinding(name: String) =
@@ -22,13 +21,19 @@ class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environm
     override fun initializeBinding(name: String, value: LanguageType) =
         setMutableBinding(name, value)
     override fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt {
-        if (`object`.not { hasProperty(name.languageValue) }) return throwError(ReferenceErrorKind.NOT_DEFINED, name)
+        val has = `object`.hasProperty(name.languageValue)
+            .orReturn { return it }
+            .value
+        if (!has) return throwError(ReferenceErrorKind.NOT_DEFINED, name)
         `object`.set(name.languageValue, value)
             .orReturn { return it }
         return empty
     }
     override fun getBindingValue(name: String): NonEmptyOrAbrupt {
-        if (`object`.not { hasProperty(name.languageValue) }) return throwError(ReferenceErrorKind.NOT_DEFINED, name)
+        val has = `object`.hasProperty(name.languageValue)
+            .orReturn { return it }
+            .value
+        if (!has) return throwError(ReferenceErrorKind.NOT_DEFINED, name)
         return `object`.get(name.languageValue)
     }
 }

@@ -3,7 +3,7 @@ package io.github.andjsrk.v4
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.parse.*
 
-fun parseModule(sourceText: String, realm: Realm): MaybeError<SourceTextModule, Error> {
+fun parseModule(sourceText: String, realm: Realm, sourceAbsolutePath: String): MaybeError<SourceTextModule, Error> {
     val parser = Parser(sourceText)
     val module = parser.parseModule()
     assert((module == null) == parser.hasError)
@@ -22,8 +22,10 @@ fun parseModule(sourceText: String, realm: Realm): MaybeError<SourceTextModule, 
                     localExportEntries += entry
                     continue
                 }
-                val importEntry = importEntries.find { it.localName == entry.localName } ?: neverHappens()
-                when (importEntry) {
+                when (
+                    val importEntry = importEntries.find { it.localName == entry.localName }
+                        ?: neverHappens()
+                ) {
                     is NamespaceImportEntry -> localExportEntries += entry
                     is NormalImportEntry ->
                         indirectExportEntries += ExportEntry(
@@ -39,5 +41,16 @@ fun parseModule(sourceText: String, realm: Realm): MaybeError<SourceTextModule, 
         }
     }
 
-    return Valid(SourceTextModule(module, realm, requestedModules, importEntries, localExportEntries, indirectExportEntries, starExportEntries))
+    return Valid(
+        SourceTextModule(
+            module,
+            realm,
+            requestedModules,
+            importEntries,
+            localExportEntries,
+            indirectExportEntries,
+            starExportEntries,
+            sourceAbsolutePath,
+        )
+    )
 }

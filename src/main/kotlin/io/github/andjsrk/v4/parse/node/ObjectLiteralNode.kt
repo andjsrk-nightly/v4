@@ -58,6 +58,7 @@ class ObjectLiteralNode(
                     .orReturn { return it }
                 val name = getter.name!!
                 val existingDesc = obj._getOwnProperty(name)
+                    .orReturn { return it }
                 obj.properties[name] = when (existingDesc) {
                     null, is DataProperty -> AccessorProperty(get=getter)
                     is AccessorProperty -> existingDesc.apply { get = getter }
@@ -68,6 +69,7 @@ class ObjectLiteralNode(
                     .orReturn { return it }
                 val name = setter.name!!
                 val existingDesc = obj._getOwnProperty(name)
+                    .orReturn { return it }
                 obj.properties[name] = when (existingDesc) {
                     null, is DataProperty -> AccessorProperty(set=setter)
                     is AccessorProperty -> existingDesc.apply { set = setter }

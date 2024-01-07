@@ -1206,7 +1206,7 @@ internal class ParserTest {
     fun testExportDeclaration() {
         """
             export let a = 0
-        """.shouldBeValidStatementAnd<NamedSingleExportDeclarationNode> {
+        """.shouldBeValidStatementAnd<DeclarationExportDeclarationNode> {
             assertIs<NormalLexicalDeclarationNode>(declaration)
         }
 

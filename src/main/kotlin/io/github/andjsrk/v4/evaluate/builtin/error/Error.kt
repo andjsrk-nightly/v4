@@ -45,7 +45,10 @@ private tailrec fun ObjectType.findName(): PropertyKey? {
 @EsSpec("InstallErrorCause")
 private fun ObjectType.initializeErrorCause(options: ObjectType?): EmptyOrAbrupt {
     if (options == null) return empty
-    if (options.hasProperty("cause".languageValue)) {
+    val hasCause = options.hasProperty("cause".languageValue)
+        .orReturn { return it }
+        .value
+    if (hasCause) {
         val cause = options.get("cause".languageValue)
             .orReturn { return it }
         createNonEnumerableDataPropertyOrThrow("cause".languageValue, cause)

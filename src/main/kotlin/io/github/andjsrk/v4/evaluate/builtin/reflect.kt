@@ -59,6 +59,7 @@ private val getOwnPropertyDescriptor = functionWithoutThis("getOwnPropertyDescri
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val key = args[1].requireToBe<PropertyKey> { return@fn it }
     val desc = obj._getOwnProperty(key)
+        .orReturn { return@fn it }
     desc?.toDescriptorObject().normalizeToNormal()
 }
 
@@ -98,7 +99,9 @@ private val getPrototype = functionWithoutThis("getPrototype", 1u) fn@ { args ->
 private val isEnumerableProperty = functionWithoutThis("isEnumerableProperty", 2u) fn@{ args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val key = args[1].requireToBe<PropertyKey> { return@fn it }
-    val desc = obj._getOwnProperty(key) ?: return@fn BooleanType.FALSE.toNormal()
+    val desc = obj._getOwnProperty(key)
+        .orReturn { return@fn it }
+        ?: return@fn BooleanType.FALSE.toNormal()
     desc.enumerable
         .languageValue
         .toNormal()

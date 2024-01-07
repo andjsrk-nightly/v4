@@ -9,13 +9,17 @@ import io.github.andjsrk.v4.not
 class ModuleEnvironment(outer: Environment?): DeclarativeEnvironment(outer) {
     override fun getBindingValue(name: String): NonEmptyOrAbrupt {
         val binding = bindings[name]
-        assert(binding != null)
         requireNotNull(binding)
-        // TODO: implement step 3
+        if (binding.isIndirect) {
+            val targetEnv = binding.module!!.environment
+                ?: return throwError(TODO())
+            return targetEnv.getBindingValue(binding.exportedLocalName!!)
+        }
         if (binding.not { isInitialized }) return throwError(ReferenceErrorKind.ACCESSED_UNINITIALIZED_VARIABLE, name)
         return binding.value!!.toNormal()
     }
-    fun createImportBinding(name: String, module: SourceTextModule, ) {
-        TODO()
+    fun createImportBinding(name: String, module: Module, bindingName: String) {
+        assert(name !in bindings)
+        bindings[name] = Binding(false, null, true, module, bindingName)
     }
 }

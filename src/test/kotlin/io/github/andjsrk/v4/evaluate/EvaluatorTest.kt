@@ -759,7 +759,7 @@ private fun ArrayType.at(index: Int) =
 private fun ObjectType.dataPropertyNamed(name: String) =
     properties[name.languageValue].assertType<DataProperty>()
 private fun SourceTextModule.variableNamed(name: String): Binding {
-    val binding = environment.bindings[name]
+    val binding = environment!!.bindings[name]
     assertNotNull(binding)
     return binding
 }
@@ -792,7 +792,7 @@ private inline fun <reified Value: LanguageType> EvaluationResult.shouldBeThrowA
     }
 private fun evaluationOf(code: String): EvaluationResult {
     initializeRealm()
-    return when (val moduleOrError = parseModule(code.trimIndent(), runningExecutionContext.realm)) {
+    return when (val moduleOrError = parseModule(code.trimIndent(), runningExecutionContext.realm, "")) {
         is Valid -> {
             val module = moduleOrError.value
             val res = run {
@@ -806,7 +806,7 @@ private fun evaluationOf(code: String): EvaluationResult {
     }
 }
 /**
- * @see SourceTextModule.executeModule
+ * @see SourceTextModule.execute
  */
 private fun SourceTextModule.executeModuleWithoutIgnoringValue(): MaybeEmptyOrAbrupt {
     executionContextStack.addTop(ExecutionContext(realm, environment))

@@ -3,7 +3,7 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
-class NamedSingleExportDeclarationNode(
+class DeclarationExportDeclarationNode(
     val declaration: DeclarationNode,
     startRange: Range,
     semicolonRange: Range?,
@@ -12,5 +12,6 @@ class NamedSingleExportDeclarationNode(
     override val range = startRange..declaration.range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::declaration, ::range)
-    override fun evaluate() = TODO()
+    override fun evaluate() =
+        declaration.evaluate()
 }

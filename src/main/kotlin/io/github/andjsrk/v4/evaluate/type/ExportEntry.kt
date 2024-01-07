@@ -3,7 +3,7 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.EsSpec
 
 @EsSpec("ExportEntry Record")
-class ExportEntry(
+data class ExportEntry(
     /**
      * See [`[[ModuleRequest]]`](https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#exportentry-record).
      */

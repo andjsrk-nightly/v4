@@ -4,6 +4,8 @@ package io.github.andjsrk.v4.evaluate.type.lang
 value class BooleanType private constructor(override val value: Boolean): PrimitiveLanguageType {
     operator fun not() =
         BooleanType.from(!value)
+    infix fun or(other: BooleanType) =
+        BooleanType.from(value || other.value)
 
     companion object {
         val TRUE = BooleanType(true)

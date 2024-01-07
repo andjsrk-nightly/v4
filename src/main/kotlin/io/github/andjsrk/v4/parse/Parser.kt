@@ -1773,7 +1773,7 @@ class Parser(sourceText: String) {
                 }
                 else -> {
                     val declaration = parseDeclaration() ?: return reportUnexpectedToken()
-                    NamedSingleExportDeclarationNode(declaration, startRange, declaration.range)
+                    DeclarationExportDeclarationNode(declaration, startRange, declaration.range)
                 }
             }
         }

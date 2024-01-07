@@ -2,14 +2,14 @@ package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.orReturn
-import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
-import io.github.andjsrk.v4.evaluate.type.lang.PromiseType
+import io.github.andjsrk.v4.evaluate.type.lang.*
 import kotlin.math.min
 
 abstract class Module(
     val realm: Realm,
 ): Record {
     var environment: ModuleEnvironment? = null
+    @JvmField
     var namespaceObject: ObjectType? = null
     @EsSpec("GetExportedNames")
     abstract fun getExportedNames(exportStarSet: MutableSet<SourceTextModule> = mutableSetOf()): List<String>
@@ -21,15 +21,12 @@ abstract class Module(
     abstract fun execute(capability: PromiseType.Capability? = null): EmptyOrAbrupt
     abstract fun link(): EmptyOrAbrupt
 
-    fun getNamespace(): ObjectType {
+    @EsSpec("GetModuleNamespace")
+    fun getNamespaceObject(): ObjectType {
         if (namespaceObject == null) {
             val names = getExportedNames()
-            val unambiguousNames = mutableSetOf<String>()
-            for (name in names) {
-                val resolution = resolveExport(name)
-                if (resolution is ExportResolveResult.ResolvedBinding) unambiguousNames += name
-            }
-            namespaceObject =
+            val unambiguousNames = names.filter { resolveExport(it) is ExportResolveResult.ResolvedBinding }
+            namespaceObject = ModuleNamespaceObjectType(this, unambiguousNames)
         }
         return namespaceObject!!
     }
@@ -74,7 +71,10 @@ abstract class Module(
         if (pendingAsyncDependencies > 0 || hasTopLevelAwait) {
             asyncEvaluation = true
             if (pendingAsyncDependencies == 0) executeAsync()
-        } else execute()
+        } else {
+            execute()
+                .orReturn { return it }
+        }
         assert(dfsAncestorIndex!! <= dfsIndex!!)
         if (dfsAncestorIndex == dfsIndex) {
             var done = false

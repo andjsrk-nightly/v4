@@ -64,9 +64,9 @@ inline val normalNull get() = Completion.Normal.`null`
  */
 inline fun LanguageType?.normalizeToNormal(): NonEmpty =
     this?.toNormal() ?: normalNull
-inline fun <T: LanguageType> T.toNormal() =
+inline fun <T: LanguageType?> T.toNormal() =
     Completion.Normal(this)
-inline fun <T: AbstractType> T.toWideNormal() =
+inline fun <T: AbstractType?> T.toWideNormal() =
     Completion.WideNormal(this)
 inline fun <T> T.toGeneralWideNormal() =
     GeneralSpecValue(this).toWideNormal()

@@ -65,7 +65,10 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
                     val key = elem.key.toPropertyKey()
                         .orReturn { return@map it }
                     nonRestKeys += key
-                    if (!hasProperty(key) && elem.default == null) throwError(TypeErrorKind.REQUIRED_PROPERTY_NOT_FOUND, key.display())
+                    val hasKey = hasProperty(key)
+                        .orReturn { return@map it }
+                        .value
+                    if (!hasKey && elem.default == null) throwError(TypeErrorKind.REQUIRED_PROPERTY_NOT_FOUND, key.display())
                     else getProperty(key)
                 }
                 is NonRestNode -> neverHappens()

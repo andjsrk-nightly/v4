@@ -16,6 +16,7 @@ internal fun copyDataProperties(
     for (key in keys) {
         if (key in exclude) continue
         val desc = source.getOwnProperty(key)
+            .orReturn { return it }
         if (desc != null && desc.enumerable) {
             val value = source.getProperty(key)
                 .orReturn { return it }

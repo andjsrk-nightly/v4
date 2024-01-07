@@ -118,7 +118,7 @@ internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode
                         .orReturn { return it }
                 return (stringLeft + stringRight).toNormal()
             }
-            // numeric values will be handled on below
+            // numeric values will be handled below
         }
         BinaryOpType.EQ ->
             return equal(left, right)
@@ -131,8 +131,6 @@ internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode
         BinaryOpType.IN -> {
             val key = left.requireToBePropertyKey { return it }
             return right.hasProperty(key)
-                .languageValue
-                .toNormal()
         }
         BinaryOpType.INSTANCEOF -> {
             if (right !is ClassType) return throwError(TypeErrorKind.INSTANCEOF_RHS_IS_NOT_CLASS)

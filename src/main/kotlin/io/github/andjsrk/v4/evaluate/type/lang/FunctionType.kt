@@ -19,6 +19,7 @@ sealed class FunctionType(
     ),
 ) {
     val realm = runningExecutionContext.realm
+    val module = getActiveModule()
     abstract val isMethod: Boolean
     @EsSpec("Call") // the method implements Call rather than [[Call]] since additional type check is no needed
     abstract fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrAbrupt

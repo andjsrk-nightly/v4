@@ -2,6 +2,8 @@ package io.github.andjsrk.v4
 
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
+import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.normalNull
 import io.github.andjsrk.v4.parse.Parser
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -58,12 +60,28 @@ fun runFile(path: String) {
         }
     }
     module.loadRequestedModules()
+        .onRejected {
+            eprintln("failed to load modules requested by '${module.absolutePathWithoutExtension}': ${it.display()}")
+        }
     module.link()
         .orReturn(::exitWithThrow)
     module.initializeEnvironment()
         .orReturn(::exitWithThrow)
     module.evaluate()
+        .onRejected {
+            eprintln("failed to evaluate module '${module.absolutePathWithoutExtension}': ${it.display()}")
+        }
+    runJobs()
 }
+
+private fun PromiseType.onRejected(callback: (reason: LanguageType) -> Unit) =
+    also {
+        then(null, BuiltinFunctionType(requiredParameterCount=1u) { _, args ->
+            val reason = args[0]
+            callback(reason)
+            normalNull
+        }, PromiseType.Capability.new())
+    }
 
 private inline fun entryPointNotFound(path: String): Nothing =
     throw NoSuchFileException(path)

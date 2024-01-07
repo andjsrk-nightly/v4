@@ -14,6 +14,7 @@ fun List<MaybeRestNode>.initializeBy(valuesIterator: Iterator<NonEmptyOrAbrupt>,
                 when (val binding = element.binding) {
                     is IdentifierNode -> {
                         val ref = resolveBinding(binding.stringValue, env)
+                            .orReturn { return it }
                         val value = valuesIterator.next()
                             .orReturn { return it }
                         ref.putOrInitializeBinding(value, env)
@@ -57,6 +58,7 @@ fun BindingElementNode.initializeBy(value: LanguageType, env: Environment?): Emp
     return when (this) {
         is IdentifierNode -> {
             val ref = resolveBinding(stringValue, env)
+                .orReturn { return it }
             ref.putOrInitializeBinding(value, env)
         }
         is ArrayBindingPatternNode -> {

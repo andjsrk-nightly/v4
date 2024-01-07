@@ -39,9 +39,8 @@ class SourceTextModule(
     }
     override fun resolveExport(exportName: String, resolveSet: MutableList<Pair<Module, String>>): ExportResolveResult? {
         assert(status != Status.NEW)
-        val resolve = this to exportName
-        if (resolveSet.any { it == resolve }) return null // circular import
-        resolveSet += resolve
+        if (resolveSet.any { (mod, name) -> mod == this && name == exportName }) return null // circular import
+        resolveSet += this to exportName
         for (entry in localExportEntries) {
             if (exportName == entry.exportName) return ExportResolveResult.ResolvedBinding(this, entry.localName!!)
         }
@@ -69,21 +68,37 @@ class SourceTextModule(
     override fun initializeEnvironment(): EmptyOrAbrupt {
         for (entry in indirectExportEntries) {
             val resolution = resolveExport(entry.exportName!!)
-            if (resolution == null || resolution !is ExportResolveResult.ResolvedBinding) return throwError(SyntaxErrorKind.AMBIGUOUS_EXPORT, TODO())
-            TODO()
-        }
-        // TODO: implement step 1
-        environment = ModuleEnvironment(realm.globalEnv)
-        for (ie in importEntries) {
-            val importedModule = getImportedModule(ie.sourceModule)
-            if (ie is NamespaceImportEntry) {
-                val namespace = ie.localName
+                ?: return throwError(TODO())
+            if (resolution is ExportResolveResult.Ambiguous) {
+                return throwError(SyntaxErrorKind.AMBIGUOUS_EXPORT, entry.sourceModule!!, entry.exportName)
             }
         }
-        val moduleContext = ExecutionContext(realm, environment)
+        val env = ModuleEnvironment(realm.globalEnv)
+        environment = env
+        for (entry in importEntries) {
+            val importedModule = getImportedModule(entry.sourceModule)
+            when (entry) {
+                is NamespaceImportEntry -> {
+                    val namespaceObj = importedModule.getNamespaceObject()
+                    env.createImmutableBinding(entry.localName)
+                    env.initializeBinding(entry.localName, namespaceObj)
+                }
+                is NormalImportEntry -> {
+                    val resolution = importedModule.resolveExport(entry.importName)
+                        ?: return throwError(SyntaxErrorKind.UNRESOLVABLE_EXPORT, entry.sourceModule, entry.importName)
+                    when (resolution) {
+                        is ExportResolveResult.Ambiguous ->
+                            return throwError(SyntaxErrorKind.AMBIGUOUS_EXPORT, entry.sourceModule, entry.importName)
+                        is ExportResolveResult.ResolvedBinding ->
+                            env.createImportBinding(entry.localName, resolution.module, resolution.bindingName)
+                    }
+                }
+            }
+        }
+        val moduleContext = ExecutionContext(realm, env)
         context = moduleContext
         executionContextStack.addTop(moduleContext)
-        instantiateBlockDeclaration(node, environment)
+        instantiateBlockDeclaration(node, env)
         executionContextStack.removeTop()
         return empty
     }

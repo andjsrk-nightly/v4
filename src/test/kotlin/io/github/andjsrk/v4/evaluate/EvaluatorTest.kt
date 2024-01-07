@@ -759,7 +759,7 @@ private fun ArrayType.at(index: Int) =
 private fun ObjectType.dataPropertyNamed(name: String) =
     properties[name.languageValue].assertType<DataProperty>()
 private fun SourceTextModule.variableNamed(name: String): Binding {
-    val binding = environment.bindings[name]
+    val binding = environment!!.bindings[name]
     assertNotNull(binding)
     return binding
 }

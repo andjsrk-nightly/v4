@@ -69,7 +69,7 @@ internal fun Node.boundNames(): List<IdentifierNode> =
         is ImportOrExportSpecifierNode -> alias.boundNames()
         is NamedImportDeclarationNode -> specifiers.flatMap { it.boundNames() }
         is NamespaceImportDeclarationNode -> binding.boundNames()
-        is NamedSingleExportDeclarationNode -> declaration.boundNames()
+        is DeclarationExportDeclarationNode -> declaration.boundNames()
         else -> emptyList()
     }
 internal fun Node.boundStringNames() =
@@ -96,7 +96,7 @@ internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
 @EsSpec("LexicallyScopedDeclarations")
 internal fun Node.lexicallyScopedDeclarations(): List<DeclarationNode> =
     when (this) {
-        is NamedSingleExportDeclarationNode -> listOf(declaration)
+        is DeclarationExportDeclarationNode -> listOf(declaration)
         is ImportDeclarationNode, is ExportDeclarationNode -> emptyList()
         is DeclarationNode -> listOf(this)
         is StatementListNode -> elements.flatMap { it.lexicallyScopedDeclarations() }
@@ -156,7 +156,7 @@ internal fun ModuleNode.exportedNames() =
         .filterIsInstance<ExportDeclarationNode>()
         .flatMap {
             when (it) {
-                is NamedSingleExportDeclarationNode -> it.boundNames()
+                is DeclarationExportDeclarationNode -> it.boundNames()
                 is NamedExportDeclarationNode -> it.specifiers.flatMap { it.boundNames() }
                 else -> emptyList()
             }
@@ -188,9 +188,14 @@ internal fun Node.exportEntries(sourceModule: String?): List<ExportEntry> =
                 else null to name.value
             listOf(ExportEntry(sourceModule, alias.value, localName, importName))
         }
-        is AllReExportDeclarationNode -> listOf(ExportEntry(sourceModule, null, null, null))
+        is AllReExportDeclarationNode ->
+            listOf(ExportEntry(sourceModule, null, null, null))
         is NamedExportDeclarationNode ->
             specifiers.flatMap { it.exportEntries(sourceModule) }
+        is DeclarationExportDeclarationNode ->
+            declaration.boundStringNames().map {
+                ExportEntry(null, it, it, null)
+            }
         else -> emptyList()
     }
 

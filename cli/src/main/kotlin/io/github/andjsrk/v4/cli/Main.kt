@@ -1,5 +1,6 @@
-package io.github.andjsrk.v4
+package io.github.andjsrk.v4.cli
 
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.lang.*
@@ -28,7 +29,6 @@ fun enterReplMode() {
         val parser = Parser(line)
         // parses a Module instead of a ModuleItem because the input may be multiple statements
         val module = parser.parseModule() ?: return eprintln(parser.error)
-        instantiateBlockDeclaration(module, runningExecutionContext.lexicalEnvironment)
         val result = module.evaluate()
             .orReturn(::exitWithThrow)
         println(result.display())

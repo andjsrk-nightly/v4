@@ -1,41 +1,33 @@
 plugins {
     java
     kotlin("jvm") version "1.9.10"
-    application
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "io.github.andjsrk"
 version = "1.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
+allprojects {
+    apply(plugin="org.jetbrains.kotlin.jvm")
 
-dependencies {
-    testImplementation(kotlin("test"))
-    implementation(kotlin("stdlib"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
-}
+    repositories {
+        mavenCentral()
+    }
 
-application {
-    mainClass.set("$group.$name.MainKt")
-}
+    dependencies {
+        implementation(kotlin("stdlib"))
+    }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
     }
 }
 
-tasks {
-    jar {
-        dependsOn(shadowJar)
-    }
-    test {
-        useJUnitPlatform()
-    }
-    withType<Test> {
-        environment("TEST", true)
-    }
+subprojects {
+    apply(plugin="com.github.johnrengelman.shadow")
+
+    group = rootProject.group
+    version = rootProject.version
 }

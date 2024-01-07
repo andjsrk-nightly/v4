@@ -5,10 +5,10 @@ import io.github.andjsrk.v4.Stack
 import io.github.andjsrk.v4.evaluate.type.Module
 
 @EsSpec("execution context stack")
-internal val executionContextStack = Stack<ExecutionContext>()
+val executionContextStack = Stack<ExecutionContext>()
 
 @EsSpec("running execution context")
-internal inline val runningExecutionContext get() =
+inline val runningExecutionContext get() =
     executionContextStack.top
 
 @EsSpec("GetActiveScriptOrModule")

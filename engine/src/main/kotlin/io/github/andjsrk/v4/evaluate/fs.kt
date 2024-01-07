@@ -2,10 +2,11 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.error.BasicErrorKind
 import io.github.andjsrk.v4.evaluate.type.toGeneralWideNormal
-import io.github.andjsrk.v4.languageExtension
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.*
+
+const val languageExtension = ".ss"
 
 fun Path.resolveAndRead() =
     if (isDirectory()) TODO()

@@ -7,14 +7,14 @@ import io.github.andjsrk.v4.neverHappens
 /**
  * Indicates a lambda that returns an abrupt completion, which will be used on inline functions.
  */
-internal typealias AbruptReturnLambda = (Completion.Abrupt) -> Nothing
+typealias AbruptReturnLambda = (Completion.Abrupt) -> Nothing
 
 // ? OperationName()
 /**
  * Runs [rtn] if the completion is [Completion.Abrupt], returns [Completion.value] otherwise.
  */
 @EsSpec("ReturnIfAbrupt")
-internal inline fun <V: AbstractType?> MaybeAbrupt<V>.orReturn(rtn: AbruptReturnLambda) =
+inline fun <V: AbstractType?> MaybeAbrupt<V>.orReturn(rtn: AbruptReturnLambda) =
     when (this) {
         is Completion.WideNormal<V> -> value
         is Completion.Abrupt -> rtn(this)
@@ -24,5 +24,5 @@ internal inline fun <V: AbstractType?> MaybeAbrupt<V>.orReturn(rtn: AbruptReturn
 /**
  * Returns [Completion.Normal.value] assuming the completion is a normal completion.
  */
-internal fun <V: AbstractType?> MaybeAbrupt<V>.unwrap() =
+fun <V: AbstractType?> MaybeAbrupt<V>.unwrap() =
     this.orReturn { neverHappens() }

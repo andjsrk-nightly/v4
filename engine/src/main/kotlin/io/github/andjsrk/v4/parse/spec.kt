@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.parse.node.*
 import kotlin.reflect.KClass
 
 @EsSpec("IsAnonymousFunctionDefinition")
-internal val ExpressionNode.isAnonymous get(): Boolean =
+val ExpressionNode.isAnonymous get(): Boolean =
     when (this) {
         is ParenthesizedExpressionNode -> expression.isAnonymous
         is ArrowFunctionNode, is MethodExpressionNode -> true
@@ -18,7 +18,7 @@ internal val ExpressionNode.isAnonymous get(): Boolean =
 /**
  * A convenient way to find a node that is matched by [Contains](https://tc39.es/ecma262/multipage/syntax-directed-operations.html#sec-static-semantics-contains).
  */
-internal fun <N: Node> Node.find(symbol: KClass<N>, predicate: (N) -> Boolean = { true }): N? {
+fun <N: Node> Node.find(symbol: KClass<N>, predicate: (N) -> Boolean = { true }): N? {
     val baseCondition = lazy { this::class == symbol && predicate(this as N) }
 
     return when (this) {
@@ -44,7 +44,7 @@ internal fun <N: Node> Node.find(symbol: KClass<N>, predicate: (N) -> Boolean = 
  * @see find
  */
 @EsSpec("ComputedPropertyContains")
-internal fun <N: Node> Node.computedPropertyFind(symbol: KClass<N>, predicate: (N) -> Boolean): N? =
+fun <N: Node> Node.computedPropertyFind(symbol: KClass<N>, predicate: (N) -> Boolean): N? =
     when (this) {
         is ComputedPropertyKeyNode -> find(symbol, predicate)
         is MethodNode -> name.computedPropertyFind(symbol, predicate)
@@ -57,7 +57,7 @@ internal fun <N: Node> Node.computedPropertyFind(symbol: KClass<N>, predicate: (
     }
 
 @EsSpec("BoundNames")
-internal fun Node.boundNames(): List<IdentifierNode> =
+fun Node.boundNames(): List<IdentifierNode> =
     when (this) {
         is IdentifierNode -> listOf(this)
         is LexicalDeclarationWithoutInitializerNode -> binding.boundNames()
@@ -72,11 +72,11 @@ internal fun Node.boundNames(): List<IdentifierNode> =
         is DeclarationExportDeclarationNode -> declaration.boundNames()
         else -> emptyList()
     }
-internal fun Node.boundStringNames() =
+fun Node.boundStringNames() =
     boundNames().map { it.value }
 
 @EsSpec("IsConstantDeclaration")
-internal val DeclarationNode.isConstant get() =
+val DeclarationNode.isConstant get() =
     when (this) {
         is LexicalDeclarationNode -> kind == LexicalDeclarationKind.LET
         is ClassDeclarationNode -> true
@@ -84,7 +84,7 @@ internal val DeclarationNode.isConstant get() =
     }
 
 @EsSpec("LexicallyDeclaredNames")
-internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
+fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
     when (this) {
         is DeclarationNode -> boundNames()
         is StatementListNode -> elements.flatMap { it.lexicallyDeclaredNames() }
@@ -94,7 +94,7 @@ internal fun Node.lexicallyDeclaredNames(): List<IdentifierNode> =
     }
 
 @EsSpec("LexicallyScopedDeclarations")
-internal fun Node.lexicallyScopedDeclarations(): List<DeclarationNode> =
+fun Node.lexicallyScopedDeclarations(): List<DeclarationNode> =
     when (this) {
         is DeclarationExportDeclarationNode -> listOf(declaration)
         is ImportDeclarationNode, is ExportDeclarationNode -> emptyList()
@@ -104,7 +104,7 @@ internal fun Node.lexicallyScopedDeclarations(): List<DeclarationNode> =
     }
 
 @EsSpec("HasDirectSuper")
-internal fun NonAtomicNode.findDirectSuperCall() =
+fun NonAtomicNode.findDirectSuperCall() =
     when (this) {
         is GetterNode -> listOf(body)
         is SetterNode -> listOf(parameter, body)
@@ -114,7 +114,7 @@ internal fun NonAtomicNode.findDirectSuperCall() =
         .mapAsSequence { it?.find(SuperCallNode::class) }
         .foldElvis()
 
-internal fun MethodNode.findDirectSuper() =
+fun MethodNode.findDirectSuper() =
     when (this) {
         is GetterNode -> listOf(body)
         is SetterNode -> listOf(parameter, body)
@@ -124,7 +124,7 @@ internal fun MethodNode.findDirectSuper() =
         .foldElvis()
 
 @EsSpec("AssignmentTargetType")
-internal fun ExpressionNode.isAssignmentTarget(): Boolean =
+fun ExpressionNode.isAssignmentTarget(): Boolean =
     when (this) {
         is IdentifierNode -> true
         is SuperPropertyNode -> true
@@ -137,7 +137,7 @@ internal fun ExpressionNode.isAssignmentTarget(): Boolean =
  * @return [ObjectLiteralKeyNode] but not [ComputedPropertyKeyNode]
  */
 @EsSpec("PropName")
-internal fun Node.propName(): ObjectLiteralKeyNode? =
+fun Node.propName(): ObjectLiteralKeyNode? =
     when (this) {
         is PropertyNode -> key
         is MethodNode -> name
@@ -147,11 +147,11 @@ internal fun Node.propName(): ObjectLiteralKeyNode? =
         ?.takeIf { it !is ComputedPropertyKeyNode }
 
 @EsSpec("StringValue")
-internal val IdentifierNode.stringValue get() =
+val IdentifierNode.stringValue get() =
     value.languageValue
 
 @EsSpec("ExportedNames")
-internal fun ModuleNode.exportedNames() =
+fun ModuleNode.exportedNames() =
     elements.asSequence()
         .filterIsInstance<ExportDeclarationNode>()
         .flatMap {
@@ -164,7 +164,7 @@ internal fun ModuleNode.exportedNames() =
         .toList()
 
 @EsSpec("ImportEntriesForModule")
-internal fun Node.importEntries(sourceModule: String): List<ImportEntry> =
+fun Node.importEntries(sourceModule: String): List<ImportEntry> =
     when (this) {
         is ImportOrExportSpecifierNode -> listOf(NormalImportEntry(sourceModule, name.value, alias.value))
         is NamedImportDeclarationNode -> specifiers.flatMap { it.importEntries(sourceModule) }
@@ -173,14 +173,14 @@ internal fun Node.importEntries(sourceModule: String): List<ImportEntry> =
     }
 
 @EsSpec("ImportEntries")
-internal fun ModuleNode.importEntries() =
+fun ModuleNode.importEntries() =
     elements.asSequence()
         .filterIsInstance<ImportDeclarationNode>()
         .flatMap { it.importEntries(it.moduleSpecifier.value) }
         .toList()
 
 @EsSpec("ExportEntriesForModule")
-internal fun Node.exportEntries(sourceModule: String?): List<ExportEntry> =
+fun Node.exportEntries(sourceModule: String?): List<ExportEntry> =
     when (this) {
         is ImportOrExportSpecifierNode -> {
             val (localName, importName) =
@@ -200,14 +200,14 @@ internal fun Node.exportEntries(sourceModule: String?): List<ExportEntry> =
     }
 
 @EsSpec("ExportEntries")
-internal fun ModuleNode.exportEntries() =
+fun ModuleNode.exportEntries() =
     elements.asSequence()
         .filterIsInstance<ExportDeclarationNode>()
         .flatMap { it.exportEntries((it as? ExportDeclarationWithModuleSpecifierNode)?.moduleSpecifier?.value) }
         .toList()
 
 @EsSpec("ModuleRequests")
-internal fun ModuleNode.moduleRequests() =
+fun ModuleNode.moduleRequests() =
     elements.flatMap {
         when (it) {
             is ImportDeclarationNode -> listOf(it.moduleSpecifier.value)

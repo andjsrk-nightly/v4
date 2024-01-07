@@ -90,7 +90,6 @@ abstract class CyclicModule(
                 } else {
                     loadImportedModule(requested, state)
                         .orReturn {
-                            eprintln(it)
                             println(it.value?.display())
                             exitProcess(1)
                         }
@@ -107,7 +106,7 @@ abstract class CyclicModule(
         val module = when (val moduleOrErr = parseModule(sourceText, realm, actualPath.absolutePathString())) {
             is Valid -> moduleOrErr.value
             is Invalid -> {
-                eprintln(moduleOrErr.value)
+                println(moduleOrErr.value)
                 exitProcess(1)
             }
         }

@@ -2,6 +2,7 @@ package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.languageValue
+import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
 @EsSpec("Property Descriptor")
@@ -9,6 +10,7 @@ sealed class Property: AbstractType {
     abstract var enumerable: Boolean
     abstract var configurable: Boolean
     abstract fun clone(): Property
+    abstract fun getValue(thisValue: LanguageType): NonEmptyOrAbrupt
     abstract fun toDescriptorObject(): ObjectType
     protected fun toDescriptorObject(obj: ObjectType): ObjectType {
         return obj.apply {

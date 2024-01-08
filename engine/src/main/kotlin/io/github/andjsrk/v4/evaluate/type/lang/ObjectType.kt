@@ -56,11 +56,7 @@ open class ObjectType(
         _throwIfNotCompatiblePropertyDescriptor(current, key)
             .orReturn { return it }
 
-        properties[key] = when (descriptor) {
-            is AccessorProperty -> descriptor.copy()
-            is DataProperty -> descriptor.copy()
-        }
-
+        properties[key] = descriptor.clone()
         return empty
     }
     @EsSpec("[[HasProperty]]")
@@ -75,16 +71,13 @@ open class ObjectType(
     }
     @EsSpec("[[Get]]")
     open fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyOrAbrupt {
-        val descriptor = _getOwnProperty(key)
+        val desc = _getOwnProperty(key)
             .orReturn { return it }
-        if (descriptor == null) {
-            val proto = prototype ?: return normalNull
-            return proto._get(key, receiver)
-        }
-        if (descriptor is DataProperty) return descriptor.value.toNormal()
-        require(descriptor is AccessorProperty)
-        val getter = descriptor.get ?: return normalNull
-        return getter.call(receiver, emptyList())
+            ?: run {
+                val proto = prototype ?: return normalNull
+                return proto._get(key, receiver)
+            }
+        return desc.getValue(receiver)
     }
     @EsSpec("[[Set]]")
     open fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): MaybeAbrupt<BooleanType?> {
@@ -176,32 +169,16 @@ open class ObjectType(
     @EsSpec("SetIntegrityLevel")
     fun setImmutabilityLevel(level: ObjectImmutabilityLevel): EmptyOrAbrupt {
         val keys = _ownPropertyKeys()
-        when (level) {
-            ObjectImmutabilityLevel.SEALED -> {
-                for (key in keys) {
-                    val desc = _getOwnProperty(key)
-                        .orReturn { return it }!!
-                        .clone()
-                        .apply {
-                            configurable = false
-                        }
-                    definePropertyOrThrow(key, desc)
-                        .orReturn { return it }
+        for (key in keys) {
+            val desc = _getOwnProperty(key)
+                .orReturn { return it }!!
+                .clone()
+                .apply {
+                    configurable = false
+                    if (level == ObjectImmutabilityLevel.FROZEN && this is DataProperty) writable = false
                 }
-            }
-            ObjectImmutabilityLevel.FROZEN -> {
-                for (key in keys) {
-                    val desc = _getOwnProperty(key)
-                        .orReturn { return it }!!
-                        .clone()
-                        .apply {
-                            configurable = false
-                            if (this is DataProperty) writable = false
-                        }
-                    definePropertyOrThrow(key, desc)
-                        .orReturn { return it }
-                }
-            }
+            definePropertyOrThrow(key, desc)
+                .orReturn { return it }
         }
         return empty
     }
@@ -212,8 +189,8 @@ open class ObjectType(
             val desc = _getOwnProperty(key)
                 .orReturn { return it }!!
             if (desc.configurable) return false.toGeneralWideNormal()
-            if (level == ObjectImmutabilityLevel.FROZEN && desc is DataProperty) {
-                if (desc.writable) return false.toGeneralWideNormal()
+            if (level == ObjectImmutabilityLevel.FROZEN && desc is DataProperty && desc.writable) {
+                return false.toGeneralWideNormal()
             }
         }
         return true.toGeneralWideNormal()

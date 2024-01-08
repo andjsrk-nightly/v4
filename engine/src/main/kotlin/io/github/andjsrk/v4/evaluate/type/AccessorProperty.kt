@@ -24,6 +24,8 @@ data class AccessorProperty(
         configurable ?: CONFIGURABLE_DEFAULT,
     )
     override fun clone() = copy()
+    override fun getValue(thisValue: LanguageType) =
+        get?.call(thisValue, emptyList()) ?: normalNull
     override fun toDescriptorObject(): ObjectType {
         val obj = ObjectType.createNormal()
         obj.createDataProperty("get".languageValue, get ?: NullType)
@@ -32,12 +34,12 @@ data class AccessorProperty(
     }
 }
 
-internal inline fun getter(name: String, crossinline block: (thisArg: LanguageType) -> NonEmptyOrAbrupt) =
+inline fun getter(name: String, crossinline block: (thisArg: LanguageType) -> NonEmptyOrAbrupt) =
     BuiltinFunctionType(name, 0u) fn@ { thisArg, _ ->
         if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
         block(thisArg)
     }
-internal inline fun setter(name: String, crossinline block: (thisArg: LanguageType, value: LanguageType) -> EmptyOrAbrupt) =
+inline fun setter(name: String, crossinline block: (thisArg: LanguageType, value: LanguageType) -> EmptyOrAbrupt) =
     BuiltinFunctionType(name, 1u) fn@ { thisArg, args ->
         if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
         block(thisArg, args[0])

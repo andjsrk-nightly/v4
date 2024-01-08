@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.StringType
 
 @EsSpec("GetIdentifierReference")
-internal fun getIdentifierReference(env: Environment?, name: StringType): MaybeAbrupt<Reference> {
+fun getIdentifierReference(env: Environment?, name: StringType): MaybeAbrupt<Reference> {
     if (env == null) return Reference(null, name).toWideNormal()
 
     val hasBinding = env.hasBinding(name.value)

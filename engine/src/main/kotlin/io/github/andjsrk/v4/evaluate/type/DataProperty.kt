@@ -23,6 +23,8 @@ data class DataProperty(
         configurable ?: CONFIGURABLE_DEFAULT,
     )
     override fun clone() = copy()
+    override fun getValue(thisValue: LanguageType) =
+        value.toNormal()
     override fun toDescriptorObject(): ObjectType {
         val obj = ObjectType.createNormal().apply {
             createDataProperty("value".languageValue, value)

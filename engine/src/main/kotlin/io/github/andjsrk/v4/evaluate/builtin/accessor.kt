@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.AccessorProperty
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinFunctionType
 import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
 
-internal inline fun PropertyKey.accessor(
+inline fun PropertyKey.accessor(
     getter: BuiltinFunctionType? = null,
     setter: BuiltinFunctionType? = null,
     enumerable: Boolean? = null,
@@ -13,7 +13,7 @@ internal inline fun PropertyKey.accessor(
 ) =
     this to AccessorProperty(getter, setter, enumerable, configurable)
 
-internal inline fun String.accessor(
+inline fun String.accessor(
     getter: BuiltinFunctionType? = null,
     setter: BuiltinFunctionType? = null,
     enumerable: Boolean? = null,

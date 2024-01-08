@@ -25,9 +25,9 @@ val global = ObjectType(properties=mutableMapOf(
     sealedData(::TypeError),
 
     // 19.4 (Other Properties)
-    sealedData(::json),
-    sealedData(::math),
-    sealedData(::reflect),
+    sealedData(::Json),
+    sealedData(::Math),
+    sealedData(::Reflect),
 ))
     .apply {
         _defineOwnProperty("global".languageValue, DataProperty.sealed(this))

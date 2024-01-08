@@ -156,7 +156,7 @@ val stringify = functionWithoutThis("stringify", 1u) fn@ { args ->
 }
 
 @EsSpec("%JSON%")
-val json = ObjectType(properties=mutableMapOf(
+val Json = ObjectType(properties=mutableMapOf(
     sealedMethod(parse),
     sealedMethod(stringify),
 ))

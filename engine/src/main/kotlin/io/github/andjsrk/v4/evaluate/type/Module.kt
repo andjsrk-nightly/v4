@@ -5,12 +5,21 @@ import io.github.andjsrk.v4.evaluate.orReturn
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import kotlin.math.min
 
-abstract class Module(
-    val realm: Realm,
-): Record {
+abstract class Module(val realm: Realm): Record {
     var environment: ModuleEnvironment? = null
-    @JvmField
-    var namespaceObject: ObjectType? = null
+    private var initializedNamespaceObject = false
+    var namespaceObject = ObjectType() // dummy initial value for fitting the type
+        @EsSpec("GetModuleNamespace")
+        get() {
+            if (!initializedNamespaceObject) {
+                val names = getExportedNames()
+                val unambiguousNames = names.filter { resolveExport(it) is ExportResolveResult.ResolvedBinding }
+                field = ModuleNamespaceObjectType(this, unambiguousNames)
+                initializedNamespaceObject = true
+            }
+            return field
+        }
+        private set
     @EsSpec("GetExportedNames")
     abstract fun getExportedNames(exportStarSet: MutableSet<SourceTextModule> = mutableSetOf()): List<String>
     @EsSpec("ResolveExport")
@@ -21,15 +30,6 @@ abstract class Module(
     abstract fun execute(capability: PromiseType.Capability? = null): EmptyOrAbrupt
     abstract fun link(): EmptyOrAbrupt
 
-    @EsSpec("GetModuleNamespace")
-    fun getNamespaceObject(): ObjectType {
-        if (namespaceObject == null) {
-            val names = getExportedNames()
-            val unambiguousNames = names.filter { resolveExport(it) is ExportResolveResult.ResolvedBinding }
-            namespaceObject = ModuleNamespaceObjectType(this, unambiguousNames)
-        }
-        return namespaceObject!!
-    }
     @EsSpec("InnerModuleEvaluation")
     fun innerModuleEvaluation(stack: Stack<CyclicModule>, index: Int): MaybeAbrupt<GeneralSpecValue<Int>> {
         var index = index // intentionally shadows the parameter to change its value

@@ -30,7 +30,7 @@ class BuiltinFunctionType(
 }
 
 private typealias BuiltinMethodBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyOrAbrupt
-internal inline fun method(
+inline fun method(
     name: PropertyKey,
     requiredParamCount: UInt = 0u,
     crossinline behavior: BuiltinMethodBehavior,
@@ -39,7 +39,7 @@ internal inline fun method(
         if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
         behavior(thisArg, args)
     }
-internal inline fun method(
+inline fun method(
     name: String,
     requiredParamCount: UInt = 0u,
     crossinline behavior: BuiltinMethodBehavior,
@@ -48,7 +48,7 @@ internal inline fun method(
         if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
         behavior(thisArg, args)
     }
-internal inline fun functionWithoutThis(
+inline fun functionWithoutThis(
     name: String,
     requiredParamCount: UInt = 0u,
     crossinline behavior: (args: List<LanguageType>) -> NonEmptyOrAbrupt,
@@ -57,5 +57,5 @@ internal inline fun functionWithoutThis(
         behavior(args)
     }
 
-internal fun List<LanguageType>.getOptional(index: Int) =
+fun List<LanguageType>.getOptional(index: Int) =
     getOrNull(index)?.normalizeNull()

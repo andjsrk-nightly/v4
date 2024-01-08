@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.parse.lexicallyScopedDeclarations
 import io.github.andjsrk.v4.parse.node.StatementListNode
 
 @EsSpec("BlockDeclarationInstantiation")
-internal fun instantiateBlockDeclaration(node: StatementListNode, env: DeclarativeEnvironment) {
+fun instantiateBlockDeclaration(node: StatementListNode, env: DeclarativeEnvironment) {
     node.lexicallyScopedDeclarations().forEach {
         it.instantiateIn(env)
     }

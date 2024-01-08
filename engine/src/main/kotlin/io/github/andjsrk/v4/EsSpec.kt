@@ -8,7 +8,15 @@ package io.github.andjsrk.v4
  * If it is not searchable, the value should be `"-"`(because annotation parameter cannot be nullable)
  * and KDoc that describes what the target indicating is in specification is needed.
  */
-@Target(AnnotationTarget.CLASS, AnnotationTarget.CONSTRUCTOR, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
+@Target(
+    AnnotationTarget.CLASS,
+    AnnotationTarget.CONSTRUCTOR,
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY_SETTER,
+    AnnotationTarget.FIELD,
+)
 @Retention(AnnotationRetention.SOURCE)
 @Repeatable
 annotation class EsSpec(val specName: String)

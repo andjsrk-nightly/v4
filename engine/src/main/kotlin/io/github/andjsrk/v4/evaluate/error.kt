@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.builtin.error.*
 import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
 import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
-internal fun error(kind: ErrorKind, vararg args: String): ObjectType {
+fun error(kind: ErrorKind, vararg args: String): ObjectType {
     val errorClass = when (kind) {
         is BasicErrorKind -> Error
         is RangeErrorKind -> RangeError
@@ -24,7 +24,7 @@ internal fun error(kind: ErrorKind, vararg args: String): ObjectType {
 /**
  * Returns an instance of `%Error%`(or its subclasses).
  */
-internal fun error(errorClass: BuiltinClassType, message: String): ObjectType {
+fun error(errorClass: BuiltinClassType, message: String): ObjectType {
     assert(errorClass.isNativeError)
     return errorClass.construct(listOf(message.languageValue))
         .unwrap()

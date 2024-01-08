@@ -3,7 +3,7 @@ package io.github.andjsrk.v4
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.parse.*
 
-fun parseModule(sourceText: String, realm: Realm, sourceAbsolutePath: String): MaybeError<SourceTextModule, Error> {
+fun parseModule(sourceText: String, realm: Realm): MaybeError<SourceTextModule, Error> {
     val parser = Parser(sourceText)
     val module = parser.parseModule()
     assert((module == null) == parser.hasError)
@@ -50,7 +50,6 @@ fun parseModule(sourceText: String, realm: Realm, sourceAbsolutePath: String): M
             localExportEntries,
             indirectExportEntries,
             starExportEntries,
-            sourceAbsolutePath,
         )
     )
 }

@@ -1,17 +1,15 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.*
-import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.orReturn
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import io.github.andjsrk.v4.evaluate.type.lang.PromiseType
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
-import kotlin.system.exitProcess
+import io.github.andjsrk.v4.evaluate.unwrap
 
+@EsSpec("Cyclic Module Record")
 abstract class CyclicModule(
     realm: Realm,
     val requestedModules: List<String>,
-    var absolutePath: String,
 ): Module(realm) {
     var status = Status.NEW
     var evaluationError: Completion.Throw? = null
@@ -24,8 +22,6 @@ abstract class CyclicModule(
     var asyncEvaluation = false
     val asyncParentModules = mutableListOf<CyclicModule>()
     var pendingAsyncDependencies = 0
-    val absolutePathWithoutExtension get() =
-        absolutePath.removeSuffix(languageExtension)
     @EsSpec("GetImportedModule")
     fun getImportedModule(specifier: String) =
         loadedModules[specifier]!!
@@ -88,34 +84,13 @@ abstract class CyclicModule(
                 if (requested in module.loadedModules) {
                     innerModuleLoading(state, module.loadedModules.getValue(requested))
                 } else {
-                    loadImportedModule(requested, state)
-                        .orReturn {
-                            println(it.value?.display())
-                            exitProcess(1)
-                        }
+                    HostConfig.value.loadImportedModule(this, requested, state)
+                        .orReturn(HostConfig.value::onGotUncaughtAbrupt)
                 }
             }
         }
     }
-    @EsSpec("HostLoadImportedModule")
-    private fun loadImportedModule(specifier: String, state: GraphLoadingState): EmptyOrAbrupt {
-        val path = Path(absolutePath).join(specifier)
-        val (actualPath, sourceText) = path.resolveAndRead()
-            .orReturn { return it }
-            .value
-        val module = when (val moduleOrErr = parseModule(sourceText, realm, actualPath.absolutePathString())) {
-            is Valid -> moduleOrErr.value
-            is Invalid -> {
-                println(moduleOrErr.value)
-                exitProcess(1)
-            }
-        }
-        module.initializeEnvironment()
-            .orReturn { return it }
-        finishLoadingImportedModule(specifier, state, module.toWideNormal())
-        return empty
-    }
-    private fun finishLoadingImportedModule(specifier: String, payload: GraphLoadingState, result: MaybeAbrupt<Module>) {
+    fun finishLoadingImportedModule(specifier: String, payload: GraphLoadingState, result: MaybeAbrupt<Module>) {
         if (result is Completion.WideNormal) {
             if (specifier in loadedModules) assert(loadedModules[specifier] == result.value)
             else loadedModules[specifier] = result.value

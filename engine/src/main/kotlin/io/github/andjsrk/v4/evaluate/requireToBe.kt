@@ -3,7 +3,7 @@ package io.github.andjsrk.v4.evaluate
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
 
-internal inline fun <reified T: LanguageType> LanguageType?.requireToBe(rtn: AbruptReturnLambda): T {
+inline fun <reified T: LanguageType> LanguageType?.requireToBe(rtn: AbruptReturnLambda): T {
     if (this !is T) rtn(unexpectedType(this, T::class))
     return this
 }

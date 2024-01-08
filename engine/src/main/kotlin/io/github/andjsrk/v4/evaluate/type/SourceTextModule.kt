@@ -20,8 +20,7 @@ class SourceTextModule(
     val localExportEntries: List<ExportEntry>,
     val indirectExportEntries: List<ExportEntry>,
     val starExportEntries: List<ExportEntry>,
-    absolutePath: String,
-): CyclicModule(realm, requestedModules, absolutePath) {
+): CyclicModule(realm, requestedModules) {
     var context: ExecutionContext? = null
     var importMeta: ObjectType? = null
     override fun getExportedNames(exportStarSet: MutableSet<SourceTextModule>): List<String> {
@@ -79,9 +78,8 @@ class SourceTextModule(
             val importedModule = getImportedModule(entry.sourceModule)
             when (entry) {
                 is NamespaceImportEntry -> {
-                    val namespaceObj = importedModule.getNamespaceObject()
                     env.createImmutableBinding(entry.localName)
-                    env.initializeBinding(entry.localName, namespaceObj)
+                    env.initializeBinding(entry.localName, importedModule.namespaceObject)
                 }
                 is NormalImportEntry -> {
                     val resolution = importedModule.resolveExport(entry.importName)

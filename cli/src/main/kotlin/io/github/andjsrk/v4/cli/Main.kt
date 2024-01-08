@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.cli
 
-import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.Error
+import io.github.andjsrk.v4.HostConfig
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
@@ -22,7 +23,7 @@ class UncaughtAbruptException: RuntimeException()
 fun enterReplMode() {
     val config = object: DefaultHostConfig() {
         override fun onGotUncaughtAbrupt(abrupt: Completion.Abrupt): Nothing {
-            printAbrupt(abrupt)
+            eprintAbrupt(abrupt)
             throw UncaughtAbruptException()
         }
     }
@@ -65,15 +66,7 @@ fun runFile(path: String) {
         }
     })
     initializeRealm()
-    val module = when (
-        val moduleOrErr = parseModule(entryPointContent, runningExecutionContext.realm)
-    ) {
-        is Valid -> moduleOrErr.value
-        is Invalid -> {
-            eprintln(moduleOrErr.value)
-            exitProcess(1)
-        }
-    }
+    val module = parseModuleOrExit(entryPointContent, runningExecutionContext.realm)
     moduleAbsolutePaths[module] = entryPointPath.absolutePathString()
     module.loadRequestedModules()
         .onRejected {
@@ -98,9 +91,18 @@ private fun PromiseType.onRejected(callback: (reason: LanguageType) -> Unit) =
         }, PromiseType.Capability.new())
     }
 
-internal fun printAbrupt(abrupt: Completion.Abrupt) =
-    eprintln(abrupt.value!!.display())
+internal fun eprintValue(value: LanguageType) =
+    eprintln(value.display())
+internal fun eprintAbrupt(abrupt: Completion.Abrupt) =
+    eprintValue(abrupt.value!!)
 internal fun exitWithAbrupt(abrupt: Completion.Abrupt): Nothing {
-    printAbrupt(abrupt)
+    eprintAbrupt(abrupt)
     exitProcess(1)
 }
+internal fun exitWithError(error: Error): Nothing {
+    eprintValue(error.toErrorObject())
+    exitProcess(1)
+}
+
+internal fun LanguageType.display() =
+    HostConfig.value.display(this)

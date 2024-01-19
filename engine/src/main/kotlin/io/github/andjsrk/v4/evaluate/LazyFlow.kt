@@ -14,8 +14,8 @@ typealias SimpleLazyFlow<R> = LazyFlow<R, R>
 /**
  * An approximate implementation of `function*` syntax in ES.
  *
- * Note that there is `: Any` constraint on [I] and [Y] for simple implementation
- * since a support for nullable types is not needed yet.
+ * Note that [C] does not support nullable types for simple implementation
+ * since it is not needed yet.
  *
  * @see SequenceBuilderIterator
  */

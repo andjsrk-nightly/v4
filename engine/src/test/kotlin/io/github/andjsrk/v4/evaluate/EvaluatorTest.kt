@@ -752,6 +752,27 @@ internal class EvaluatorTest {
             }
         }
     }
+    @Test
+    fun testSyncGenerator() {
+        evaluationOf("""
+            let createG = gen () => {
+                for (var i = 0; ; i += 1) yield i
+            }
+            let g = createG()
+            ;[g.next(), g.next()]
+        """).shouldBeNormalAnd<ArrayType> {
+            at(0).assertTypeAnd<ObjectType> {
+                dataPropertyNamed("value").value.assertTypeAnd<NumberType> {
+                    assert(value == 0.0)
+                }
+            }
+            at(1).assertTypeAnd<ObjectType> {
+                dataPropertyNamed("value").value.assertTypeAnd<NumberType> {
+                    assert(value == 1.0)
+                }
+            }
+        }
+    }
 }
 
 private fun ArrayType.at(index: Int) =
@@ -759,7 +780,7 @@ private fun ArrayType.at(index: Int) =
 private fun ObjectType.dataPropertyNamed(name: String) =
     properties[name.languageValue].assertType<DataProperty>()
 private fun SourceTextModule.variableNamed(name: String): Binding {
-    val binding = environment!!.bindings[name]
+    val binding = env!!.bindings[name]
     assertNotNull(binding)
     return binding
 }
@@ -790,9 +811,15 @@ private inline fun <reified Value: LanguageType> EvaluationResult.shouldBeThrowA
     this.shouldBeThrowAnd {
         completion.value.assertTypeAnd<Value>(block)
     }
+private val config = object: HostConfig() {
+    override fun loadImportedModule(module: CyclicModule, specifier: String, state: GraphLoadingState) = TODO()
+    override fun onGotUncaughtAbrupt(abrupt: Completion.Abrupt) = TODO()
+    override fun display(value: LanguageType, raw: Boolean) = TODO()
+}
 private fun evaluationOf(code: String): EvaluationResult {
+    HostConfig.set(config)
     initializeRealm()
-    return when (val moduleOrError = parseModule(code.trimIndent(), runningExecutionContext.realm, "")) {
+    return when (val moduleOrError = parseModule(code.trimIndent(), runningExecutionContext.realm)) {
         is Valid -> {
             val module = moduleOrError.value
             val res = run {
@@ -809,8 +836,9 @@ private fun evaluationOf(code: String): EvaluationResult {
  * @see SourceTextModule.execute
  */
 private fun SourceTextModule.executeModuleWithoutIgnoringValue(): MaybeEmptyOrAbrupt {
-    executionContextStack.addTop(ExecutionContext(realm, environment))
+    executionContextStack.addTop(ExecutionContext(realm, env))
     val res = node.evaluate()
+        .unwrap()
     executionContextStack.removeTop()
     return res
 }

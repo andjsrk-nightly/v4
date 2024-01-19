@@ -1,7 +1,6 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 sealed class CallNode(
@@ -12,13 +11,13 @@ sealed class CallNode(
     override val range = callee.range..arguments.range
     override fun toString() =
         stringifyLikeDataClass(::callee, ::arguments, ::range)
-    override fun evaluate(): NonEmptyOrAbrupt {
-        val ref = callee.evaluate()
-            .orReturn { return it }
+    override fun evaluate() = lazyFlow f@ {
+        val ref = yieldAll(callee.evaluate())
+            .orReturn { return@f it }
         val func = getValue(ref)
-            .orReturn { return it }
-        val args = arguments.evaluate()
-            .orReturn { return it }
-        return evaluateCall(func, ref, args)
+            .orReturn { return@f it }
+        val args = yieldAll(arguments.evaluate())
+            .orReturn { return@f it }
+        evaluateCall(func, ref, args)
     }
 }

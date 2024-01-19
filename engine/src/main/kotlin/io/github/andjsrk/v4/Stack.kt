@@ -22,4 +22,7 @@ class Stack<out E>(vararg elements: E): Collection<E> {
         queue.iterator()
     override fun containsAll(elements: Collection<@UnsafeVariance E>) =
         queue.containsAll(elements)
+
+    override fun toString() =
+        queue.toString()
 }

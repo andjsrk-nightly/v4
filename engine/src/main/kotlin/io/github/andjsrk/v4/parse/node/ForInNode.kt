@@ -18,53 +18,56 @@ class ForInNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::declaration, ::target, ::body, ::range)
-    override fun evaluateLoop(): NonEmptyOrAbrupt {
-        val iter = evaluateHead()
-            .orReturn { return it }
-        return evaluateBody(iter)
+    override fun evaluateLoop() = lazyFlow f@ {
+        val iter = yieldAll(evaluateHead())
+            .orReturn { return@f it }
+        yieldAll(evaluateBody(iter))
     }
-    private fun evaluateHead(): MaybeAbrupt<IteratorRecord> {
-        val oldEnv = runningExecutionContext.lexicalEnvironment
+    private fun evaluateHead() = lazyFlow f@ {
+        val oldEnv = runningExecutionContext.lexicalEnv
         val uninitializedBoundNames = declaration.boundStringNames()
         if (uninitializedBoundNames.isNotEmpty()) {
             val newEnv = DeclarativeEnvironment(oldEnv)
             uninitializedBoundNames.forEach {
                 newEnv.createMutableBinding(it)
             }
-            runningExecutionContext.lexicalEnvironment = newEnv
+            runningExecutionContext.lexicalEnv = newEnv
         }
-        val targetValueOrAbrupt = target.evaluateValue()
-        runningExecutionContext.lexicalEnvironment = oldEnv
+        val targetValueOrAbrupt = yieldAll(target.evaluateValue())
+        runningExecutionContext.lexicalEnv = oldEnv
         val targetValue = targetValueOrAbrupt
-            .orReturn { return it }
-        return IteratorRecord.from(targetValue)
+            .orReturn { return@f it }
+        IteratorRecord.from(targetValue)
     }
     @EsSpec("ForIn/OfBodyEvaluation")
-    private fun evaluateBody(iterRec: IteratorRecord): NonEmptyOrAbrupt {
-        val oldEnv = runningExecutionContext.lexicalEnvironment
+    private fun evaluateBody(iterRec: IteratorRecord) = lazyFlow f@ {
+        val oldEnv = runningExecutionContext.lexicalEnv
         var res: LanguageType = NullType
-        val iter = iterRec.toSequence().iterator()
         while (true) {
-            val nextValue = iter.next()
-                .orReturn { return it }
+            val nextRes = iterRec.step()
+                .orReturn { return@f it }
+                ?: return@f res.toNormal()
+            val nextValue = nextRes.getValue()
+                .orReturn { return@f it }
             val iteratorEnv = DeclarativeEnvironment(oldEnv)
             declaration.instantiateIn(iteratorEnv)
-            runningExecutionContext.lexicalEnvironment = iteratorEnv
-            declaration.binding.initializeBy(nextValue, iteratorEnv)
+            runningExecutionContext.lexicalEnv = iteratorEnv
+            yieldAll(declaration.binding.initializeBy(nextValue, iteratorEnv))
                 .orReturn {
-                    runningExecutionContext.lexicalEnvironment = oldEnv
-                    return iterRec.close(it)
+                    runningExecutionContext.lexicalEnv = oldEnv
+                    return@f iterRec.close(it)
                 }
-            val stmtRes = body.evaluate()
-            runningExecutionContext.lexicalEnvironment = oldEnv
+            val stmtRes = yieldAll(body.evaluate())
+            runningExecutionContext.lexicalEnv = oldEnv
             if (!continueLoop(stmtRes)) {
                 require(stmtRes is Completion.Abrupt)
                 val abrupt = updateEmpty(stmtRes, res)
-                return iterRec.close(abrupt)
+                return@f iterRec.close(abrupt)
             }
             val stmtResValue = stmtRes.value as LanguageType? // we can sure that the completion is either a normal completion or a continue completion
             if (stmtResValue != null) res = stmtResValue
-            if (iter.not { hasNext() }) return res.toNormal()
         }
+        @CompilerFalsePositive
+        neverHappens()
     }
 }

@@ -22,12 +22,12 @@ open class UnaryExpressionNode(
     }
     override fun toString() =
         stringifyLikeDataClass(::operand, ::operation, ::range)
-    override fun evaluate(): NonEmptyOrAbrupt {
-        val value = operand.evaluateValue()
-            .orReturn { return it }
-        return when (this.operation) {
-            VOID -> return normalNull
-            THROW -> return Completion.Throw(value)
+    override fun evaluate() = lazyFlow f@ {
+        val value = yieldAll(operand.evaluateValue())
+            .orReturn { return@f it }
+        when (operation) {
+            VOID -> return@f normalNull
+            THROW -> return@f Completion.Throw(value)
             TYPEOF -> when (value) {
                 NullType -> "null"
                 is StringType -> "string"
@@ -40,17 +40,17 @@ open class UnaryExpressionNode(
                 .languageValue
             MINUS -> {
                 val number = value
-                    .requireToBe<NumericType<*>> { return it }
+                    .requireToBe<NumericType<*>> { return@f it }
                 -number
             }
             BITWISE_NOT -> {
                 val number = value
-                    .requireToBe<NumericType<*>> { return it }
-                return number.bitwiseNot()
+                    .requireToBe<NumericType<*>> { return@f it }
+                return@f number.bitwiseNot()
             }
             NOT -> {
                 val boolean = value
-                    .requireToBe<BooleanType> { return it }
+                    .requireToBe<BooleanType> { return@f it }
                 !boolean
             }
             // TODO: await expression

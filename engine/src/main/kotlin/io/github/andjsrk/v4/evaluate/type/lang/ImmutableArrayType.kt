@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.evaluate.builtin.Array
 
-class ImmutableArrayType(override val array: List<LanguageType>): ArrayType(lazy { Array.instancePrototype }) {
+data class ImmutableArrayType(override val array: List<LanguageType>): ArrayType(lazy { Array.instancePrototype }) {
     companion object {
         fun from(collection: Collection<LanguageType>) =
             ImmutableArrayType(collection.toList())

@@ -4,11 +4,11 @@ import io.github.andjsrk.v4.evaluate.type.MaybeEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.empty
 import io.github.andjsrk.v4.parse.node.StatementListNode
 
-internal fun evaluateStatements(node: StatementListNode): MaybeEmptyOrAbrupt {
-    return node.elements
+internal fun evaluateStatements(node: StatementListNode) = lazyFlow f@ {
+    node.elements
         .map {
-            it.evaluate()
-                .orReturn { return it }
+            yieldAll(it.evaluate())
+                .orReturn { return@f it }
         }
         .foldRight<_, MaybeEmptyOrAbrupt>(empty) { it, acc -> updateEmpty(acc, it) }
 }

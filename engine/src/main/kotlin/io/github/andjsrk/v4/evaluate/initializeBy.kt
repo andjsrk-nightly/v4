@@ -7,36 +7,39 @@ import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.stringValue
 
-fun List<MaybeRestNode>.initializeBy(valuesIterator: Iterator<NonEmptyOrAbrupt>, env: Environment?): EmptyOrAbrupt {
-    for ((i, element) in this.withIndex()) {
+fun List<MaybeRestNode>.initializeBy(valuesIterator: Iterator<SimpleLazyFlow<NonEmptyOrAbrupt>>, env: Environment?): LazyFlow<EmptyOrAbrupt, MaybeEmptyOrAbrupt> = lazyFlow f@ {
+    for ((i, element) in this@initializeBy.withIndex()) {
         when (element) {
             is RestNode -> {
                 when (val binding = element.binding) {
                     is IdentifierNode -> {
                         val ref = resolveBinding(binding.stringValue, env)
-                            .orReturn { return it }
-                        val value = valuesIterator.next()
-                            .orReturn { return it }
+                            .orReturn { return@f it }
+                        val value = yieldAll(valuesIterator.next())
+                            .orReturn { return@f it }
                         ref.putOrInitializeBinding(value, env)
-                            .orReturn { return it }
+                            .orReturn { return@f it }
                     }
                     is ArrayBindingPatternNode -> {
-                        val arr = valuesIterator.next()
-                            .orReturn { return it }
+                        val arr = yieldAll(valuesIterator.next())
+                            .orReturn { return@f it }
                         val iter = IteratorRecord.from(arr)
-                            .orReturn { return it }
+                            .orReturn { return@f it }
                             .toSequence()
                             .iterator()
                             .toRestCollectedArrayIterator(binding.elements)
-                        binding.elements.initializeBy(iter, env)
-                            .orReturn { return it }
+                            .map {
+                                lazyFlow { it }
+                            }
+                        yieldAll(binding.elements.initializeBy(iter, env))
+                            .orReturn { return@f it }
                     }
                     is ObjectBindingPatternNode -> {
-                        val arr = valuesIterator.next()
-                            .orReturn { return it }
+                        val arr = yieldAll(valuesIterator.next())
+                            .orReturn { return@f it }
                         val iter = arr.toRestCollectedObjectIterator(binding.elements)
-                        binding.elements.initializeBy(iter, env)
-                            .orReturn { return it }
+                        yieldAll(binding.elements.initializeBy(iter, env))
+                            .orReturn { return@f it }
                     }
                     else ->
                         @CompilerFalsePositive
@@ -44,34 +47,37 @@ fun List<MaybeRestNode>.initializeBy(valuesIterator: Iterator<NonEmptyOrAbrupt>,
                 }
             }
             is NonRestNode -> {
-                val value = valuesIterator.nextOrDefault(element, size, i)
-                    .orReturn { return it }
-                element.binding.initializeBy(value, env)
-                    .orReturn { return it }
+                val value = yieldAll(valuesIterator.nextOrDefault(element, size, i))
+                    .orReturn { return@f it }
+                yieldAll(element.binding.initializeBy(value, env))
+                    .orReturn { return@f it }
             }
         }
     }
-    return empty
+    empty
 }
 
-fun BindingElementNode.initializeBy(value: LanguageType, env: Environment?): EmptyOrAbrupt {
-    return when (this) {
+fun BindingElementNode.initializeBy(value: LanguageType, env: Environment?): SimpleLazyFlow<MaybeAbrupt<*>> = lazyFlow f@ {
+    when (this@initializeBy) {
         is IdentifierNode -> {
             val ref = resolveBinding(stringValue, env)
-                .orReturn { return it }
+                .orReturn { return@f it }
             ref.putOrInitializeBinding(value, env)
         }
         is ArrayBindingPatternNode -> {
             val valueIter = IteratorRecord.from(value)
-                .orReturn { return it }
+                .orReturn { return@f it }
                 .toSequence()
                 .iterator()
             val iter = valueIter.toRestCollectedArrayIterator(elements)
-            elements.initializeBy(iter, env)
+                .map {
+                    lazyFlow { it }
+                }
+            yieldAll(elements.initializeBy(iter, env))
         }
         is ObjectBindingPatternNode -> {
             val iter = value.toRestCollectedObjectIterator(elements)
-            elements.initializeBy(iter, env)
+            yieldAll(elements.initializeBy(iter, env))
         }
         else ->
             @CompilerFalsePositive

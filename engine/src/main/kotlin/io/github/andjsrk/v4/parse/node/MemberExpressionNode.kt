@@ -2,8 +2,9 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.*
+import io.github.andjsrk.v4.evaluate.type.Reference
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
+import io.github.andjsrk.v4.evaluate.type.toWideNormal
 import io.github.andjsrk.v4.parse.stringValue
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
@@ -18,34 +19,32 @@ class MemberExpressionNode(
     override val range = `object`.range..endRange
     override fun toString() =
         stringifyLikeDataClass(::`object`, ::property, ::isOptionalChain, ::isComputed, ::range)
-    override fun evaluate(): MaybeAbrupt<Reference> {
-        val baseRef = `object`.evaluate()
-            .orReturn { return it }
+    override fun evaluate() = lazyFlow f@ {
+        val baseRef = yieldAll(`object`.evaluate())
+            .orReturn { return@f it }
 
         if (baseRef is Reference) {
-            val isOptionalChain = baseRef.isOptionalChain || this.isOptionalChain
-            if (isOptionalChain && baseRef.base == NullType) return baseRef.toWideNormal() // continue resulting null
+            val isOptionalChain = baseRef.isOptionalChain || isOptionalChain
+            if (isOptionalChain && baseRef.base == NullType) return@f baseRef.toWideNormal() // continue resulting null
         }
 
         val base = getValue(baseRef)
-            .orReturn { return it }
+            .orReturn { return@f it }
 
-        if (this.isOptionalChain && base == NullType) {
-            return Reference(NullType, null, isOptionalChain=true)
+        if (isOptionalChain && base == NullType) {
+            return@f Reference(NullType, null, isOptionalChain=true)
                 .toWideNormal()
         }
 
-        return (
-            if (this.isComputed) {
-                val key = property.evaluateValue()
-                    .orReturn { return it }
-                    .requireToBePropertyKey { return it }
-                Reference(base, key)
-            } else {
-                require(property is IdentifierNode)
-                Reference(base, property.stringValue)
-            }
-        )
+        if (isComputed) {
+            val key = yieldAll(property.evaluateValue())
+                .orReturn { return@f it }
+                .requireToBePropertyKey { return@f it }
+            Reference(base, key)
+        } else {
+            require(property is IdentifierNode)
+            Reference(base, property.stringValue)
+        }
                 .toWideNormal()
     }
 }

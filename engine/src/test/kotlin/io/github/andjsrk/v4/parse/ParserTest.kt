@@ -494,8 +494,11 @@ internal class ParserTest {
 
         """
             throw
-            0
-        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.NEWLINE_AFTER_THROW)
+              0
+        """.shouldBeValidExpressionAnd<UnaryExpressionNode> {
+            assert(operation == UnaryOperationType.THROW)
+            assertIs<NumberLiteralNode>(operand)
+        }
 
         """
             typeof ++a
@@ -850,7 +853,7 @@ internal class ParserTest {
         """
             for (;;) continue
         """.shouldBeValidStatementAnd<NormalForNode> {
-            assertIs<ContinueNode>(body)
+            body.unwrapExprStmt<ContinueNode>()
         }
 
         """
@@ -860,7 +863,7 @@ internal class ParserTest {
         """
             for (;;) break
         """.shouldBeValidStatementAnd<NormalForNode> {
-            assertIs<BreakNode>(body)
+            body.unwrapExprStmt<BreakNode>()
         }
 
         """
@@ -876,7 +879,7 @@ internal class ParserTest {
         """.shouldBeValidStatementAnd<ExpressionStatementNode> {
             unwrapExprStmt<ArrowFunctionNode>().run {
                 body.assertTypeAnd<BlockNode> {
-                    elements[0].assertTypeAnd<ReturnNode> {
+                    elements[0].unwrapExprStmt<ReturnNode>().run {
                         assertIs<NumberLiteralNode>(expression)
                     }
                 }
@@ -891,19 +894,17 @@ internal class ParserTest {
         """.shouldBeValidStatementAnd<ExpressionStatementNode> {
             unwrapExprStmt<ArrowFunctionNode>().run {
                 body.assertTypeAnd<BlockNode> {
-                    elements[0].assertTypeAnd<ReturnNode> {
+                    elements[0].unwrapExprStmt<ReturnNode>().run {
                         assertNull(expression)
                     }
-                    elements[1].assertTypeAnd<ExpressionStatementNode> {
-                        assertIs<NumberLiteralNode>(expression)
-                    }
+                    elements[1].unwrapExprStmt<NumberLiteralNode>()
                 }
             }
         }
 
         """
             return
-        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.ILLEGAL_RETURN)
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.ILLEGAL_RETURN)
     }
     @Test
     fun testTry() {

@@ -1,8 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.orReturn
-import io.github.andjsrk.v4.evaluate.throwError
+import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 
 @EsSpec("Module Namespace Exotic Objects")
@@ -20,7 +19,9 @@ class ModuleNamespaceObjectType(val module: Module, exports: List<String>): Obje
     override fun _hasProperty(key: PropertyKey): MaybeAbrupt<BooleanType> {
         if (key is SymbolType) return super._hasProperty(key)
         require(key is StringType)
-        return BooleanType.from(key.value in exports).toNormal()
+        return (key.value in exports)
+            .languageValue
+            .toNormal()
     }
     override fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyOrAbrupt {
         if (key is SymbolType) return super._get(key, receiver)
@@ -29,7 +30,7 @@ class ModuleNamespaceObjectType(val module: Module, exports: List<String>): Obje
         val binding = module.resolveExport(key.value)
         require(binding is ExportResolveResult.ResolvedBinding)
         val targetModule = binding.module
-        val targetEnv = targetModule.environment
+        val targetEnv = targetModule.env
             ?: return throwError(TODO())
         return targetEnv.getBindingValue(binding.bindingName)
     }

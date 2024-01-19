@@ -11,7 +11,7 @@ class ModuleEnvironment(outer: Environment?): DeclarativeEnvironment(outer) {
         val binding = bindings[name]
         requireNotNull(binding)
         if (binding.isIndirect) {
-            val targetEnv = binding.module!!.environment
+            val targetEnv = binding.module!!.env
                 ?: return throwError(TODO())
             return targetEnv.getBindingValue(binding.exportedLocalName!!)
         }

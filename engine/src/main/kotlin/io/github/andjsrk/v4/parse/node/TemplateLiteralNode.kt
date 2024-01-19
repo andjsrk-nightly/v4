@@ -1,9 +1,9 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
+import io.github.andjsrk.v4.subList
 
 class TemplateLiteralNode(
     val strings: List<TemplateStringNode>,
@@ -13,22 +13,17 @@ class TemplateLiteralNode(
     override val range = strings.first().range..strings.last().range
     override fun toString() =
         stringifyLikeDataClass(::strings, ::expressions, ::range)
-    override fun evaluate(): NonEmptyOrAbrupt {
+    override fun evaluate() = lazyFlow f@ {
         val result = StringBuilder(strings[0].value)
-        var i = 0
-        for (string in strings) {
-            if (i == 0) {
-                // the first string is already taken, so skip it
-                i++
-                continue
-            }
-            val value = expressions[i].evaluateValue().orReturn { return it }
-            val stringValue = stringify(value)
-            result.append(stringValue)
-            result.append(string)
-            i++
+        strings.subList(1).forEachIndexed { i, string ->
+            val value = yieldAll(expressions[i].evaluateValue())
+                .orReturn { return@f it }
+            val stringified = stringify(value)
+                .orReturn { return@f it }
+            result.append(stringified.value)
+            result.append(string.value)
         }
-        return result.toString()
+        result.toString()
             .languageValue
             .toNormal()
     }

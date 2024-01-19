@@ -11,8 +11,8 @@ class ExecutionContext(
     var generator: GeneratorType<*>? = null,
     val module: Module? = null,
 ) {
-    lateinit var lexicalEnvironment: DeclarativeEnvironment
+    lateinit var lexicalEnv: DeclarativeEnvironment
     init {
-        if (env != null) lexicalEnvironment = env
+        if (env != null) lexicalEnv = env
     }
 }

@@ -2,7 +2,6 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.EmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.empty
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import io.github.andjsrk.v4.parse.*
@@ -17,7 +16,7 @@ class NormalLexicalDeclarationNode(
     override val range = startRange..bindings.last().range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::kind, ::bindings, ::range)
-    override fun evaluate(): EmptyOrAbrupt {
+    override fun evaluate() = lazyFlow f@ {
         for (binding in bindings) {
             val bindingElement = binding.element
             val name = (bindingElement as? IdentifierNode)?.stringValue
@@ -25,13 +24,13 @@ class NormalLexicalDeclarationNode(
                 when {
                     value == null -> NullType
                     name != null && value.isAnonymous -> value.evaluateWithName(name)
-                    else -> value.evaluateValue()
-                        .orReturn { return it }
+                    else -> yieldAll(value.evaluateValue())
+                        .orReturn { return@f it }
                 }
             }
-            bindingElement.initializeBy(value, runningExecutionContext.lexicalEnvironment)
-                .orReturn { return it }
+            yieldAll(bindingElement.initializeBy(value, runningExecutionContext.lexicalEnv))
+                .orReturn { return@f it }
         }
-        return empty
+        empty
     }
 }

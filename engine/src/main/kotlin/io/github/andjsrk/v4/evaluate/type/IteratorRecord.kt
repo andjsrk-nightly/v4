@@ -4,7 +4,6 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.not
 
 class IteratorRecord(
     val sourceObject: ObjectType, // [[Iterator]]
@@ -13,20 +12,22 @@ class IteratorRecord(
 ): Record {
     var done: Boolean = done
         private set
-    /**
-     * NOTE: The method may return [empty] to represent there is no remaining element.
-     */
-    fun next(value: LanguageType? = null): MaybeEmptyOrAbrupt {
-        val res = nextMethod.call(sourceObject, if (value == null) emptyList() else listOf(value))
+    @EsSpec("IteratorNext")
+    fun next(value: LanguageType? = null): MaybeAbrupt<IteratorResult> {
+        return nextMethod.call(sourceObject, if (value == null) emptyList() else listOf(value))
             .orReturn { return it }
             .requireToBe<ObjectType> { return it }
             .asIteratorResult()
+            .toWideNormal()
+    }
+    @EsSpec("IteratorStep")
+    fun step(): MaybeAbrupt<IteratorResult?> {
+        val rawRes = next()
+        val res = rawRes.orReturn { return it }
         val done = res.getDone()
             .orReturn { return it }
             .value
-        if (this.not { done }) this.done = done
-        if (done) return empty
-        return res.getValue()
+        return if (done) empty else rawRes
     }
     @EsSpec("IteratorClose")
     fun <V: AbstractType?> close(completion: MaybeAbrupt<V>): MaybeAbrupt<V> {
@@ -45,13 +46,13 @@ class IteratorRecord(
     fun toSequence(): Sequence<NonEmptyOrAbrupt> =
         sequence {
             while (true) {
-                val value = next()
+                val value = step()
                     .orReturn {
                         yield(close(it))
                         return@sequence
                     }
                     ?: break
-                yield(value.toNormal())
+                yield(value.getValue())
             }
             close(empty)
         }

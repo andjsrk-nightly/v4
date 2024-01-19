@@ -12,5 +12,5 @@ fun initializeRealm() {
     realm.setGlobalObject(null)
     realm.setDefaultGlobalBindings()
     HostConfig.value.applyGlobalProperties(realm.globalObject)
-    newContext.lexicalEnvironment = ModuleEnvironment(GlobalEnvironment(realm.globalObject))
+    newContext.lexicalEnv = ModuleEnvironment(GlobalEnvironment(realm.globalObject))
 }

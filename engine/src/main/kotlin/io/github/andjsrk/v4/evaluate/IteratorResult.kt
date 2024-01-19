@@ -1,12 +1,11 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
-import io.github.andjsrk.v4.evaluate.type.toNormal
 
-class IteratorResult(val source: ObjectType) {
+class IteratorResult(val source: ObjectType): AbstractType {
     @EsSpec("IteratorComplete")
     fun getDone(): MaybeAbrupt<BooleanType> {
         return source.get("done".languageValue)

@@ -1,11 +1,10 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.normalNull
+import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.neverHappens
-
-internal const val GENERATOR_FUNCTION_NOT_SUPPORTED_YET = "Generator functions are not supported yet."
 
 enum class GeneratorKind {
     NON_GENERATOR,
@@ -28,17 +27,17 @@ internal val generatorKind: GeneratorKind get() {
 }
 
 @EsSpec("Yield")
-internal fun commonYield(value: LanguageType): NonEmptyOrAbrupt {
-    val kind = generatorKind
-    if (kind == GeneratorKind.ASYNC) TODO()
-    return syncYield(createIteratorResult(value, false))
-}
+internal fun commonYield(value: LanguageType) =
+    when (generatorKind) {
+        GeneratorKind.ASYNC -> TODO()
+        else -> syncYield(createIteratorResult(value, false))
+    }
 
 @EsSpec("GeneratorYield")
-internal fun syncYield(iteratorResult: ObjectType): NonEmptyOrAbrupt {
+internal fun syncYield(iteratorResult: ObjectType) = lazyFlow {
     val generator = runningExecutionContext.generator ?: neverHappens()
     require(generator is SyncGeneratorType)
     generator.state = SyncGeneratorState.SUSPENDED_YIELD
     executionContextStack.removeTop()
-    TODO()
+    yield(iteratorResult.toNormal()) ?: normalNull
 }

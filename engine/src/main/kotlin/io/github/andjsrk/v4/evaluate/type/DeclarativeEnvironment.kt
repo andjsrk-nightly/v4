@@ -3,15 +3,16 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
+import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.throwError
-import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 @EsSpec("Declarative Environment Record")
 open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
     val bindings = mutableMapOf<String, Binding>()
     override fun hasBinding(name: String) =
-        BooleanType.from(name in bindings)
+        (name in bindings)
+            .languageValue
             .toNormal()
     override fun createMutableBinding(name: String): Empty {
         assert(name !in bindings)

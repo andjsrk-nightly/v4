@@ -6,7 +6,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 import kotlin.math.min
 
 abstract class Module(val realm: Realm): Record {
-    var environment: ModuleEnvironment? = null
+    var env: ModuleEnvironment? = null
     private var initializedNamespaceObject = false
     var namespaceObject = ObjectType() // dummy initial value for fitting the type
         @EsSpec("GetModuleNamespace")

@@ -3,8 +3,9 @@ package io.github.andjsrk.v4.parse.node
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.*
+import io.github.andjsrk.v4.evaluate.type.Reference
 import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.parse.*
 import io.github.andjsrk.v4.BinaryOperationType as BinaryOpType
 
@@ -17,29 +18,32 @@ class BinaryExpressionNode(
     override val range = left.range..right.range
     override fun toString() =
         stringifyLikeDataClass(::left, ::right, ::operation, ::range)
-    override fun evaluate(): NonEmptyOrAbrupt {
+    override fun evaluate() = lazyFlow f@ {
         if (operation.isAssignLike) {
             // TODO: destructuring assignment
 
-            val lref = left.evaluate().orReturn { return it } as Reference
+            val lref = yieldAll(left.evaluate())
+                .orReturn { return@f it } as Reference
             val rval =
                 if (operation == BinaryOpType.ASSIGN) {
                     if (left is IdentifierNode && right.isAnonymous) right.evaluateWithName(left.stringValue)
-                    else right.evaluateValue().orReturn { return it }
+                    else yieldAll(right.evaluateValue())
+                        .orReturn { return@f it }
                 } else {
-                    val lval = getValue(lref).orReturn { return it }
-                    lval.operate(operation.toNonAssign(), right)
-                        .orReturn { return it }
+                    val lval = getValue(lref)
+                        .orReturn { return@f it }
+                    yieldAll(lval.operate(operation.toNonAssign(), right))
+                        .orReturn { return@f it }
                 }
             lref.putValue(rval)
-                .orReturn { return it }
-            return rval.toNormal()
+                .orReturn { return@f it }
+            return@f rval.toNormal()
         }
 
-        val lval = left.evaluateValue()
-            .orReturn { return it }
+        val lval = yieldAll(left.evaluateValue())
+            .orReturn { return@f it }
 
-        return lval.operate(operation, right)
+        yieldAll(lval.operate(operation, right))
     }
 }
 
@@ -48,10 +52,10 @@ class BinaryExpressionNode(
  *
  * Note that [other] is not a [LanguageType] because right side needs to be evaluated conditionally for some operations.
  */
-internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode): NonEmptyOrAbrupt {
+internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode) = lazyFlow f@ {
     assert(operation.not { isAssignLike })
 
-    val left = this
+    val left = this@operate
 
     when (operation) {
         BinaryOpType.AND -> {
@@ -63,48 +67,48 @@ internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode
             //   evaluate right side
             //   require right side to be a Boolean
             //   return right side
-            val booleanLeft = left.requireToBe<BooleanType> { return it }
-            if (!booleanLeft.value) return BooleanType.FALSE.toNormal()
-            val right = other.evaluateValue()
-                .orReturn { return it }
-                .requireToBe<BooleanType> { return it }
-            return right.toNormal()
+            val booleanLeft = left.requireToBe<BooleanType> { return@f it }
+            if (!booleanLeft.value) return@f BooleanType.FALSE.toNormal()
+            val right = yieldAll(other.evaluateValue())
+                .orReturn { return@f it }
+                .requireToBe<BooleanType> { return@f it }
+            return@f right.toNormal()
         }
         BinaryOpType.THEN -> {
-            val booleanLeft = left.requireToBe<BooleanType> { return it }
-            if (!booleanLeft.value) return BooleanType.FALSE.toNormal()
-            return other.evaluateValue()
+            val booleanLeft = left.requireToBe<BooleanType> { return@f it }
+            if (!booleanLeft.value) return@f BooleanType.FALSE.toNormal()
+            return@f yieldAll(other.evaluateValue())
         }
         BinaryOpType.OR -> {
-            val booleanLeft = left.requireToBe<BooleanType> { return it }
-            if (booleanLeft.value) return BooleanType.TRUE.toNormal()
-            val right = other.evaluateValue()
-                .orReturn { return it }
-                .requireToBe<BooleanType> { return it }
-            return right.toNormal()
+            val booleanLeft = left.requireToBe<BooleanType> { return@f it }
+            if (booleanLeft.value) return@f BooleanType.TRUE.toNormal()
+            val right = yieldAll(other.evaluateValue())
+                .orReturn { return@f it }
+                .requireToBe<BooleanType> { return@f it }
+            return@f right.toNormal()
         }
-        BinaryOpType.COALESCE -> return (
-            if (left == NullType) other.evaluateValue()
+        BinaryOpType.COALESCE -> return@f (
+            if (left == NullType) yieldAll(other.evaluateValue())
             else left.toNormal()
         )
         else -> {}
     }
 
-    val right = other.evaluateValue()
-        .orReturn { return it }
+    val right = yieldAll(other.evaluateValue())
+        .orReturn { return@f it }
 
     when (operation) {
-        BinaryOpType.LT -> return left.lessThan(right)
-        BinaryOpType.GT -> return right.lessThan(left)
+        BinaryOpType.LT -> return@f left.lessThan(right)
+        BinaryOpType.GT -> return@f right.lessThan(left)
         BinaryOpType.LT_EQ -> {
             val greater = right.lessThan(left)
-                .orReturn { return it }
-            return (!greater).toNormal()
+                .orReturn { return@f it }
+            return@f (!greater).toNormal()
         }
         BinaryOpType.GT_EQ -> {
             val less = left.lessThan(right)
-                .orReturn { return it }
-            return (!less).toNormal()
+                .orReturn { return@f it }
+            return@f (!less).toNormal()
         }
         BinaryOpType.PLUS -> {
             val leftAsString = left as? StringType
@@ -112,42 +116,42 @@ internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode
             if (leftAsString != null || rightAsString != null) {
                 val stringLeft = leftAsString
                     ?: stringify(left)
-                        .orReturn { return it }
+                        .orReturn { return@f it }
                 val stringRight = rightAsString
                     ?: stringify(right)
-                        .orReturn { return it }
-                return (stringLeft + stringRight).toNormal()
+                        .orReturn { return@f it }
+                return@f (stringLeft + stringRight).toNormal()
             }
             // numeric values will be handled below
         }
         BinaryOpType.EQ ->
-            return equal(left, right)
+            return@f equal(left, right)
                 .languageValue
                 .toNormal()
         BinaryOpType.NOT_EQ ->
-            return not { equal(left, right) }
+            return@f not { equal(left, right) }
                 .languageValue
                 .toNormal()
         BinaryOpType.IN -> {
-            val key = left.requireToBePropertyKey { return it }
-            return right.hasProperty(key)
+            val key = left.requireToBePropertyKey { return@f it }
+            return@f right.hasProperty(key)
         }
-        BinaryOpType.INSTANCEOF -> {
-            if (right !is ClassType) return throwError(TypeErrorKind.INSTANCEOF_RHS_IS_NOT_CLASS)
+        BinaryOpType.INSTANCEOF -> return@f when {
+            right !is ClassType -> throwError(TypeErrorKind.INSTANCEOF_RHS_IS_NOT_CLASS)
             // there is no @@hasInstance
-            if (left !is ObjectType) return BooleanType.FALSE.toNormal()
-            return left.isInstanceOf(right)
+            left !is ObjectType -> BooleanType.FALSE.toNormal()
+            else -> left.isInstanceOf(right)
                 .languageValue
                 .toNormal()
         }
         else -> {}
     }
 
-    val numericLeft = left.requireToBe<NumericType<*>> { return it }
-    val numericRight = right.requireToBe<NumericType<*>> { return it }
-    if (left::class != right::class) return throwError(TypeErrorKind.BIGINT_MIXED_TYPES)
+    val numericLeft = left.requireToBe<NumericType<*>> { return@f it }
+    val numericRight = right.requireToBe<NumericType<*>> { return@f it }
+    if (left::class != right::class) return@f throwError(TypeErrorKind.BIGINT_MIXED_TYPES)
 
-    return (
+    return@f (
         @CompilerFalsePositive
         @Suppress("TYPE_MISMATCH")
         when (operation) {

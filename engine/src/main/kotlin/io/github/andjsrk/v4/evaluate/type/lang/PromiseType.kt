@@ -90,9 +90,9 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
     ): Record {
         @EsSpec("AsyncBlockStart")
         fun asyncBlockStart(body: StatementListNode, asyncContext: ExecutionContext) {
-            val closure = {
+            val closure = lazyFlow {
                 val acAsyncContext = runningExecutionContext
-                val result = evaluateStatements(body)
+                val result = yieldAll(evaluateStatements(body))
                 executionContextStack.removeTop()
                 when (result) {
                     is Completion.Normal -> resolve.call(null, listOf(NullType))
@@ -101,6 +101,7 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
                     else -> neverHappens()
                 }
                     .unwrap()
+                    .toNormal()
             }
             // TODO: implement step 4
             executionContextStack.addTop(asyncContext)

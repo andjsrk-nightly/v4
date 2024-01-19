@@ -15,21 +15,21 @@ fun Iterator<NonEmptyOrAbrupt>.toLanguageValueList(): MaybeAbrupt<ListType<Langu
         .toWideNormal()
 }
 
-fun List<MaybeSpreadNode>.toLanguageValueList(): MaybeAbrupt<ListType<LanguageType>> {
+fun List<MaybeSpreadNode>.toLanguageValueList() = lazyFlow f@ {
     val values = flatMap { elem ->
-        val value = elem.expression.evaluateValue()
-            .orReturn { return it }
+        val value = yieldAll(elem.expression.evaluateValue())
+            .orReturn { return@f it }
         when (elem) {
             is NonSpreadNode -> listOf(value)
             is SpreadNode ->
                 IteratorRecord.from(value)
-                    .orReturn { return it }
+                    .orReturn { return@f it }
                     .toSequence()
                     .iterator()
                     .toLanguageValueList()
-                    .orReturn { return it }
+                    .orReturn { return@f it }
         }
     }
-    return ListType(values)
+    ListType(values)
         .toWideNormal()
 }

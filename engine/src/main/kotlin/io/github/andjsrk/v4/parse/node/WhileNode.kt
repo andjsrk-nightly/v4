@@ -1,8 +1,7 @@
 package io.github.andjsrk.v4.parse.node
 
-import io.github.andjsrk.v4.Range
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
@@ -17,14 +16,21 @@ class WhileNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::test, ::body, ::atLeastOnce, ::range)
-    override fun evaluateLoop(): NonEmptyOrAbrupt {
+    override fun evaluateLoop() = lazyFlow f@ {
         var res: LanguageType = NullType
-        if (atLeastOnce) res = body.evaluate().returnIfShouldNotContinue(res) { return it }
-        while (true) {
-            val testVal = test.evaluateValue().orReturn { return it }
-                .requireToBe<BooleanType> { return it }
-            if (!testVal.value) return res.toNormal()
-            res = body.evaluate().returnIfShouldNotContinue(res) { return it }
+        if (atLeastOnce) {
+            res = yieldAll(body.evaluate())
+                .returnIfShouldNotContinue(res) { return@f it }
         }
+        while (true) {
+            val testVal = yieldAll(test.evaluateValue())
+                .orReturn { return@f it }
+                .requireToBe<BooleanType> { return@f it }
+            if (!testVal.value) return@f res.toNormal()
+            res = yieldAll(body.evaluate())
+                .returnIfShouldNotContinue(res) { return@f it }
+        }
+        @CompilerFalsePositive
+        neverHappens()
     }
 }

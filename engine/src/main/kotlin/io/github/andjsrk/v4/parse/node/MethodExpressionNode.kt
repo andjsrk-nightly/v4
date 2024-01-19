@@ -19,24 +19,22 @@ class MethodExpressionNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator, ::range)
-    override fun evaluate() =
+    override fun evaluate() = lazyFlowNoYields {
         instantiateMethod(null)
             .toNormal()
+    }
     @EsSpec("InstantiateFunctionExpression")
     @EsSpec("InstantiateAsyncFunctionExpression")
     @EsSpec("InstantiateGeneratorFunctionExpression")
     @EsSpec("InstantiateAsyncGeneratorFunctionExpression")
     internal fun instantiateMethod(name: PropertyKey?) =
-        when {
-            isGenerator -> TODO(GENERATOR_FUNCTION_NOT_SUPPORTED_YET)
-            else -> OrdinaryFunctionType(
-                name,
-                parameters,
-                body,
-                runningExecutionContext.lexicalEnvironment,
-                ThisMode.METHOD,
-                isAsync,
-                isGenerator,
-            )
-        }
+        OrdinaryFunctionType(
+            name,
+            parameters,
+            body,
+            runningExecutionContext.lexicalEnv,
+            ThisMode.METHOD,
+            isAsync,
+            isGenerator,
+        )
 }

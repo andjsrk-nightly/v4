@@ -1,9 +1,9 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
+import io.github.andjsrk.v4.evaluate.lazyFlow
 import io.github.andjsrk.v4.evaluate.orReturn
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.NonEmptyWideOrAbrupt
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class SequenceExpressionNode(
@@ -13,10 +13,13 @@ class SequenceExpressionNode(
     override val childNodes = expressions
     override fun toString() =
         stringifyLikeDataClass(::expressions, ::range)
-    override fun evaluate(): NonEmptyWideOrAbrupt {
-        return Completion.WideNormal(
+    override fun evaluate() = lazyFlow f@ {
+        Completion.WideNormal(
             expressions
-                .map { it.evaluate().orReturn { return it } }
+                .map {
+                    yieldAll(it.evaluate())
+                        .orReturn { return@f it }
+                }
                 .last()
         )
     }

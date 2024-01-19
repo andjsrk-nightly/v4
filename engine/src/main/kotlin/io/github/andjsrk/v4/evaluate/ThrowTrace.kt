@@ -7,9 +7,9 @@ data class ThrowTrace(
     val value: LanguageType,
     val stackTrace: List<StackTraceItem> =
         executionContextStack.toList().asSequence()
-            .filter { it.lexicalEnvironment is FunctionEnvironment }
+            .filter { it.lexicalEnv is FunctionEnvironment }
             .map {
-                val env = it.lexicalEnvironment as FunctionEnvironment
+                val env = it.lexicalEnv as FunctionEnvironment
                 StackTraceItem(env.function)
             }
             .toList(),

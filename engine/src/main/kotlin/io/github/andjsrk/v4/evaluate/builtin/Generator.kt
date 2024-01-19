@@ -5,6 +5,12 @@ import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
+val generatorNext = method("next") fn@ { thisArg, args ->
+    val gen = thisArg.requireToBe<SyncGeneratorType> { return@fn it }
+    val input = args.getOptional(0) ?: NullType
+    gen.resume(input)
+}
+
 val generatorClose = functionWithoutThis("close") {
     normalNull
 }
@@ -19,6 +25,7 @@ val Generator = BuiltinClassType(
     Object,
     mutableMapOf(),
     mutableMapOf(
+        sealedMethod(generatorNext),
         sealedMethod(generatorClose),
         sealedMethod(generatorIterator),
     ),

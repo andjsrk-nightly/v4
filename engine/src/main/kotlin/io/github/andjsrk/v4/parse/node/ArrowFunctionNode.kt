@@ -19,22 +19,20 @@ class ArrowFunctionNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::parameters, ::body, ::isAsync, ::isGenerator, ::range)
-    override fun evaluate() =
+    override fun evaluate() = lazyFlowNoYields {
         instantiateArrowFunction(null)
             .toNormal()
+    }
     @EsSpec("InstantiateArrowFunctionExpression")
     @EsSpec("InstantiateAsyncArrowFunctionExpression")
     internal fun instantiateArrowFunction(name: PropertyKey?) =
-        when {
-            isGenerator -> TODO(GENERATOR_FUNCTION_NOT_SUPPORTED_YET)
-            else -> OrdinaryFunctionType(
-                name,
-                parameters,
-                body,
-                runningExecutionContext.lexicalEnvironment,
-                ThisMode.ARROW,
-                isAsync,
-                isGenerator,
-            )
-        }
+        OrdinaryFunctionType(
+            name,
+            parameters,
+            body,
+            runningExecutionContext.lexicalEnv,
+            ThisMode.ARROW,
+            isAsync,
+            isGenerator,
+        )
 }

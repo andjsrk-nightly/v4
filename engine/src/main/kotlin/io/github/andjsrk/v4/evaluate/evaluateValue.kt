@@ -1,9 +1,9 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.parse.node.ExpressionNode
 
-internal fun ExpressionNode.evaluateValue(): NonEmptyOrAbrupt {
-    val res = evaluate().orReturn { return it }
-    return getValue(res)
+internal fun ExpressionNode.evaluateValue() = lazyFlow {
+    val res = yieldAll(evaluate())
+        .orReturn { return@lazyFlow it }
+    getValue(res)
 }

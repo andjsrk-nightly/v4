@@ -5,6 +5,7 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.OrdinaryFunctionType
+import io.github.andjsrk.v4.mapAsSequence
 import io.github.andjsrk.v4.parse.boundStringNames
 import io.github.andjsrk.v4.parse.node.BlockNode
 
@@ -18,9 +19,10 @@ fun instantiateFunctionDeclaration(func: OrdinaryFunctionType, args: List<Langua
     )
     val calleeContext = runningExecutionContext
     val paramNames = func.parameters.boundStringNames()
-    val env = calleeContext.lexicalEnvironment
+    val env = calleeContext.lexicalEnv
     for (paramName in paramNames) env.createMutableBinding(paramName)
-    func.parameters.initializeBindingsBy(args.map { it.toNormal() }.iterator(), env)
+    func.parameters.initializeBindingsBy(args.mapAsSequence { it.toNormal() }.iterator(), env)
+        .unwrap() // await or yield can never exist because of syntactic restriction
         .orReturn { return it }
     if (func.body is BlockNode) instantiateBlockDeclaration(func.body, env)
     return empty

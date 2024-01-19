@@ -2,7 +2,6 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.evaluate.type.lang.ClassType
 
 class NewExpressionNode(
@@ -11,12 +10,12 @@ class NewExpressionNode(
     startRange: Range,
 ): CallNode(callee, arguments) {
     override val range = startRange..arguments.range
-    override fun evaluate(): NonEmptyOrAbrupt {
-        val calleeValue = callee.evaluateValue()
-            .orReturn { return it }
-        val args = arguments.evaluate()
-            .orReturn { return it }
-        val clazz = calleeValue.requireToBe<ClassType> { return it }
-        return clazz.construct(args)
+    override fun evaluate() = lazyFlow f@ {
+        val calleeValue = yieldAll(callee.evaluateValue())
+            .orReturn { return@f it }
+        val args = yieldAll(arguments.evaluate())
+            .orReturn { return@f it }
+        val clazz = calleeValue.requireToBe<ClassType> { return@f it }
+        clazz.construct(args)
     }
 }

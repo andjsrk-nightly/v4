@@ -90,7 +90,8 @@ internal class Tokenizer(sourceText: String) {
         }
     }
     private fun skipSingleLineComment() {
-        advanceWhile { it.not { isLineTerminator } }
+        advanceWhile(false) { it.not { isLineTerminator } }
+        builder.rawContent = ""
     }
     private fun readHexDigits(length: Int): Pair<String, WasSuccessful> {
         var res = ""
@@ -339,7 +340,7 @@ internal class Tokenizer(sourceText: String) {
         builder = Token.Builder()
         previousStateCheckPoint = CheckPoint()
         builder.run {
-            do {
+            while (true) {
                 startPos = source.pos
                 type = when (curr) {
                     '#' -> PRIVATE_NAME
@@ -556,7 +557,7 @@ internal class Tokenizer(sourceText: String) {
                     )
                     else -> TODO()
                 }
-            } while (builder.type == WHITE_SPACE)
+            }
         }
         return builder.build()
     }

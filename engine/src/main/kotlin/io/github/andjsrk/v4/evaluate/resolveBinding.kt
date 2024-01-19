@@ -6,4 +6,4 @@ import io.github.andjsrk.v4.evaluate.type.lang.StringType
 
 @EsSpec("ResolveBinding")
 fun resolveBinding(name: StringType, env: Environment? = null) =
-    getIdentifierReference(env ?: runningExecutionContext.lexicalEnvironment, name)
+    getIdentifierReference(env ?: runningExecutionContext.lexicalEnv, name)

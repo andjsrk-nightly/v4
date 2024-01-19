@@ -44,62 +44,69 @@ fun Iterator<NonEmptyOrAbrupt>.toRestCollectedArrayIterator(bindingElements: Lis
  * - non-rest element: collect the value of the property
  * - rest element: collect the remaining own enumerable properties as an object
  */
-fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNode>): Iterator<NonEmptyOrAbrupt> {
+fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNode>): Iterator<SimpleLazyFlow<NonEmptyOrAbrupt>> {
     val nonRestKeys = mutableSetOf<PropertyKey>()
     return bindingElements
         .asSequence()
         .map { elem ->
-            when (elem) {
-                is RestNode -> {
-                    val maybeObj = this as? ObjectType
-                    val rest = maybeObj?.run {
-                        val props = properties.toMutableMap() // clone the original object
-                        props -= nonRestKeys // remove properties that its key is contained in non-rest keys
-                        props.entries.removeAll { (_, prop) -> prop.not { enumerable } }
-                        ObjectType.createNormal(props)
+            lazyFlow f@ {
+                when (elem) {
+                    is RestNode -> {
+                        val maybeObj = this@toRestCollectedObjectIterator as? ObjectType
+                        val rest = maybeObj?.run {
+                            val props = properties.toMutableMap() // clone the original object
+                            props -= nonRestKeys // remove properties that its key is contained in non-rest keys
+                            props.entries.removeAll { (_, prop) -> prop.not { enumerable } }
+                            ObjectType.createNormal(props)
+                        }
+                            ?: ObjectType.createNormal() // since primitive values cannot have any own properties, we can sure that the result is an empty object
+                        rest.toNormal() // an object that contains the other own enumerable properties of the value
                     }
-                        ?: ObjectType.createNormal() // since primitive values cannot have any own properties, we can sure that the result is an empty object
-                    rest.toNormal() // an object that contains the other own enumerable properties of the value
+                    is NonRestObjectPropertyNode -> {
+                        val key = yieldAll(elem.key.toPropertyKey())
+                            .orReturn { return@f it }
+                        nonRestKeys += key
+                        val hasKey = hasProperty(key)
+                            .orReturn { return@f it }
+                            .value
+                        if (!hasKey && elem.default == null) throwError(
+                            TypeErrorKind.REQUIRED_PROPERTY_NOT_FOUND,
+                            key.display()
+                        )
+                        else getProperty(key)
+                    }
+                    is NonRestNode -> neverHappens()
                 }
-                is NonRestObjectPropertyNode -> {
-                    val key = elem.key.toPropertyKey()
-                        .orReturn { return@map it }
-                    nonRestKeys += key
-                    val hasKey = hasProperty(key)
-                        .orReturn { return@map it }
-                        .value
-                    if (!hasKey && elem.default == null) throwError(TypeErrorKind.REQUIRED_PROPERTY_NOT_FOUND, key.display())
-                    else getProperty(key)
-                }
-                is NonRestNode -> neverHappens()
             }
         }
         .iterator()
 }
 
-fun Iterator<NonEmptyOrAbrupt>.nextOrDefault(
+fun Iterator<SimpleLazyFlow<NonEmptyOrAbrupt>>.nextOrDefault(
     element: NonRestNode,
     expectedCount: Int,
     index: Int,
-): NonEmptyOrAbrupt {
+) = lazyFlow f@ {
+    val iter = this@nextOrDefault
     val value = when {
-        hasNext() ->
-            next()
-                .orReturn { return it }
-        element.default == null -> return throwError(
+        iter.hasNext() ->
+            yieldAll(iter.next())
+                .orReturn { return@f it }
+        element.default == null -> return@f throwError(
             TypeErrorKind.ITERABLE_YIELDED_INSUFFICIENT_NUMBER_OF_VALUES,
             expectedCount.toString(),
             index.toString(),
         )
         else -> NullType
     }
-    return (
-        if (value == NullType && element.default != null) {
-            val paramName = (element.binding as? IdentifierNode)?.stringValue
-            if (paramName != null && element.default.isAnonymous) element.default.evaluateWithName(paramName)
-            else element.default.evaluateValue()
-                .orReturn { return it }
-        } else value
-    )
+    if (value == NullType && element.default != null) {
+        val paramName = (element.binding as? IdentifierNode)?.stringValue
+        if (paramName != null && element.default.isAnonymous) element.default.evaluateWithName(paramName)
+        else element.default.evaluateValue()
+            .unwrap()
+            .orReturn { return@f it }
+    } else {
+        value
+    }
         .toNormal()
 }

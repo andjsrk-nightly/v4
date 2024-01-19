@@ -163,7 +163,8 @@ open class ObjectType(
     fun hasOwnProperty(key: PropertyKey): MaybeAbrupt<BooleanType> {
         val desc = _getOwnProperty(key)
             .orReturn { return it }
-        return BooleanType.from(desc != null)
+        return (desc != null)
+            .languageValue
             .toNormal()
     }
     @EsSpec("SetIntegrityLevel")

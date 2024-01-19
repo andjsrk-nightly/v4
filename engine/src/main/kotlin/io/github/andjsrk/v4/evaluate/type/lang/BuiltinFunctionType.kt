@@ -13,7 +13,7 @@ class BuiltinFunctionType(
     name: PropertyKey? = null,
     requiredParameterCount: UInt = 0u,
     val behavior: BuiltinFunctionBehavior,
-): FunctionType(name, requiredParameterCount, runningExecutionContext.lexicalEnvironment) {
+): FunctionType(name, requiredParameterCount, runningExecutionContext.lexicalEnv) {
     constructor(
         name: String,
         requiredParameterCount: UInt = 0u,

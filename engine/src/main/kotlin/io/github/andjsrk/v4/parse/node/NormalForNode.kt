@@ -1,7 +1,6 @@
 package io.github.andjsrk.v4.parse.node
 
-import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.Range
+import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
@@ -18,46 +17,52 @@ class NormalForNode(
     override val range = startRange..body.range
     override fun toString() =
         stringifyLikeDataClass(::init, ::test, ::update, ::body, ::range)
-    override fun evaluateLoop(): NonEmptyOrAbrupt {
+    override fun evaluateLoop() = lazyFlow f@ {
         var bindingNames = emptyList<String>()
-        val oldEnv = runningExecutionContext.lexicalEnvironment
+        val oldEnv = runningExecutionContext.lexicalEnv
         if (init != null) {
             val loopEnv = DeclarativeEnvironment(oldEnv)
             val names = init.boundStringNames()
             init.instantiateIn(loopEnv, names)
-            runningExecutionContext.lexicalEnvironment = loopEnv
-            val initRes = init.evaluate()
+            runningExecutionContext.lexicalEnv = loopEnv
+            val initRes = yieldAll(init.evaluate())
             if (initRes is Completion.Abrupt) {
-                runningExecutionContext.lexicalEnvironment = oldEnv
-                return initRes
+                runningExecutionContext.lexicalEnv = oldEnv
+                return@f initRes
             }
             if (init.isConstant) bindingNames = names
         }
-        val body = evaluateBody(bindingNames)
-        runningExecutionContext.lexicalEnvironment = oldEnv
-        return body
+        val body = yieldAll(evaluateBody(bindingNames))
+        runningExecutionContext.lexicalEnv = oldEnv
+        body
     }
     @EsSpec("ForBodyEvaluation")
-    private fun evaluateBody(bindingNames: List<String>): NonEmptyOrAbrupt {
+    private fun evaluateBody(bindingNames: List<String>) = lazyFlow f@ {
         var res: LanguageType = NullType
-        runningExecutionContext.lexicalEnvironment.coverBindingsPerIteration(bindingNames)
+        runningExecutionContext.lexicalEnv.coverBindingsPerIteration(bindingNames)
         while (true) {
             if (test != null) {
-                val testValue = test.evaluateValue().orReturn { return it }
-                    .requireToBe<BooleanType> { return it }
-                if (!testValue.value) return res.toNormal()
+                val testValue = yieldAll(test.evaluateValue())
+                    .orReturn { return@f it }
+                    .requireToBe<BooleanType> { return@f it }
+                if (!testValue.value) return@f res.toNormal()
             }
-            res = body.evaluate().returnIfShouldNotContinue(res) { return it }
-            runningExecutionContext.lexicalEnvironment.coverBindingsPerIteration(bindingNames)
-            update?.evaluateValue()?.orReturn { return it }
+            res = yieldAll(body.evaluate())
+                .returnIfShouldNotContinue(res) { return@f it }
+            runningExecutionContext.lexicalEnv.coverBindingsPerIteration(bindingNames)
+            update?.evaluateValue()
+                ?.let { yieldAll(it) }
+                ?.orReturn { return@f it }
         }
+        @CompilerFalsePositive
+        neverHappens()
     }
 }
 
 @EsSpec("CreatePerIterationEnvironment")
 private fun DeclarativeEnvironment.coverBindingsPerIteration(bindingNames: List<String>) {
     if (bindingNames.isEmpty()) return
-    val lastIterationEnv = runningExecutionContext.lexicalEnvironment
+    val lastIterationEnv = runningExecutionContext.lexicalEnv
     val outer = lastIterationEnv.outer
     requireNotNull(outer)
     val currIterationEnv = DeclarativeEnvironment(outer)
@@ -67,5 +72,5 @@ private fun DeclarativeEnvironment.coverBindingsPerIteration(bindingNames: List<
             .unwrap()
         currIterationEnv.initializeBinding(name, lastValue)
     }
-    runningExecutionContext.lexicalEnvironment = currIterationEnv
+    runningExecutionContext.lexicalEnv = currIterationEnv
 }

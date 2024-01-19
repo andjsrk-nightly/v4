@@ -1,17 +1,15 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
-import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.parse.node.*
 import io.github.andjsrk.v4.parse.stringValue
 
-fun ObjectLiteralKeyNode.toPropertyKey(): MaybeAbrupt<PropertyKey> {
-    return when (this) {
+fun ObjectLiteralKeyNode.toPropertyKey() = lazyFlow f@ {
+    when (this@toPropertyKey) {
         is IdentifierNode -> stringValue
-        is ComputedPropertyKeyNode -> expression.evaluateValue()
-            .orReturn { return it }
-            .requireToBePropertyKey { return it }
+        is ComputedPropertyKeyNode -> yieldAll(expression.evaluateValue())
+            .orReturn { return@f it }
+            .requireToBePropertyKey { return@f it }
         is StringLiteralNode -> value.languageValue
         is NumberLiteralNode -> value.languageValue.toString(10)
     }

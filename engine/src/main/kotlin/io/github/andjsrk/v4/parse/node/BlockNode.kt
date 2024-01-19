@@ -2,7 +2,8 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.*
+import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
+import io.github.andjsrk.v4.evaluate.type.empty
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class BlockNode(
@@ -12,15 +13,15 @@ class BlockNode(
     override val childNodes = elements
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
-    override fun evaluate(): MaybeEmptyOrAbrupt {
-        if (elements.isEmpty()) return empty
+    override fun evaluate() = lazyFlow f@ {
+        if (elements.isEmpty()) return@f empty
 
-        val oldEnv = runningExecutionContext.lexicalEnvironment
+        val oldEnv = runningExecutionContext.lexicalEnv
         val blockEnv = DeclarativeEnvironment(oldEnv)
-        instantiateBlockDeclaration(this, blockEnv)
-        runningExecutionContext.lexicalEnvironment = blockEnv
-        val res = evaluateStatements(this)
-        runningExecutionContext.lexicalEnvironment = oldEnv
-        return res
+        instantiateBlockDeclaration(this@BlockNode, blockEnv)
+        runningExecutionContext.lexicalEnv = blockEnv
+        val res = yieldAll(evaluateStatements(this@BlockNode))
+        runningExecutionContext.lexicalEnv = oldEnv
+        res
     }
 }

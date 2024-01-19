@@ -73,7 +73,7 @@ class SourceTextModule(
             }
         }
         val env = ModuleEnvironment(realm.globalEnv)
-        environment = env
+        this.env = env
         for (entry in importEntries) {
             val importedModule = getImportedModule(entry.sourceModule)
             when (entry) {
@@ -103,10 +103,11 @@ class SourceTextModule(
     override fun execute(capability: PromiseType.Capability?): EmptyOrAbrupt {
         if (hasTopLevelAwait) {
             requireNotNull(capability)
-            capability.asyncBlockStart(node, ExecutionContext(realm, environment))
+            capability.asyncBlockStart(node, ExecutionContext(realm, env))
         } else {
-            executionContextStack.addTop(ExecutionContext(realm, environment))
+            executionContextStack.addTop(ExecutionContext(realm, env))
             val res = node.evaluate()
+                .unwrap()
             executionContextStack.removeTop()
             if (res is Completion.Abrupt) return res
         }

@@ -41,7 +41,7 @@ fun enterReplMode() {
             eprintln(parser.error?.toErrorObject()?.display())
             continue
         }
-        instantiateBlockDeclaration(module, runningExecutionContext.lexicalEnv)
+        instantiateBlockDeclaration(module, runningExecutionContext.lexicalEnvNotNull)
         try {
             val evalRes = module.evaluate()
             evalRes.yieldedValues.forEach { it.orReturn(config::onGotUncaughtAbrupt) }

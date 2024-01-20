@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.*
+import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 import io.github.andjsrk.v4.toIterableIterator
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*

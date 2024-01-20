@@ -32,7 +32,7 @@ class MethodExpressionNode(
             name,
             parameters,
             body,
-            runningExecutionContext.lexicalEnv,
+            runningExecutionContext.lexicalEnvNotNull,
             ThisMode.METHOD,
             isAsync,
             isGenerator,

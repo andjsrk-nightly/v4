@@ -1,10 +1,8 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.*
-import io.github.andjsrk.v4.evaluate.orReturn
-import io.github.andjsrk.v4.evaluate.type.lang.NullType
-import io.github.andjsrk.v4.evaluate.type.lang.PromiseType
-import io.github.andjsrk.v4.evaluate.unwrap
+import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("Cyclic Module Record")
 abstract class CyclicModule(
@@ -50,14 +48,55 @@ abstract class CyclicModule(
                 assert(stack.isEmpty())
             }
         }
+        runJobs()
         return capability.promise
     }
+    @EsSpec("ExecuteAsyncModule")
     fun executeAsync() {
         val capability = PromiseType.Capability.new()
+        val onFulfilled = functionWithoutThis { _ ->
+            asyncModuleExecutionFulfilled()
+        }
         TODO()
         execute(capability)
     }
-    @EsSpec("Link")
+    @EsSpec("GatherAvailableAncestors")
+    fun gatherSynchronouslyExecutableAncestors(gathered: MutableSet<CyclicModule> = mutableSetOf()): MutableSet<CyclicModule> =
+        gathered.apply {
+            asyncParentModules.forEach {
+                if (it !in gathered && it.cycleRoot?.evaluationError == null) {
+                    it.pendingAsyncDependencies -= 1
+                    if (it.pendingAsyncDependencies == 0) {
+                        gathered += it
+                        if (it.not { hasTopLevelAwait }) it.gatherSynchronouslyExecutableAncestors(gathered)
+                    }
+                }
+            }
+        }
+    fun asyncModuleExecutionFulfilled() {
+        if (status == Status.EVALUATED) return
+        asyncEvaluation = false
+        status = Status.EVALUATED
+        topLevelCapability?.resolve?.call(null, listOf(NullType))
+            ?.unwrap()
+        val ancestors = gatherSynchronouslyExecutableAncestors()
+            .sortedBy { TODO() }
+        ancestors.forEach {
+            if (it.hasTopLevelAwait) executeAsync()
+            else {
+                val result = execute()
+                if (result is Completion.NonEmptyAbrupt) asyncModuleExecutionRejected(result.value)
+            }
+        }
+    }
+    fun asyncModuleExecutionRejected(reason: LanguageType) {
+        if (status == Status.EVALUATED) return
+        evaluationError = Completion.Throw(reason)
+        status = Status.EVALUATED
+        asyncParentModules.forEach { it.asyncModuleExecutionRejected(reason) }
+        topLevelCapability?.reject?.call(null, listOf(reason))
+            ?.unwrap()
+    }
     override fun link(): EmptyOrAbrupt {
         val stack = Stack<CyclicModule>()
         val result = innerModuleLinking(stack, 0)

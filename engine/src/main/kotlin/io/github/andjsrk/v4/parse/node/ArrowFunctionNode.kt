@@ -30,7 +30,7 @@ class ArrowFunctionNode(
             name,
             parameters,
             body,
-            runningExecutionContext.lexicalEnv,
+            runningExecutionContext.lexicalEnvNotNull,
             ThisMode.ARROW,
             isAsync,
             isGenerator,

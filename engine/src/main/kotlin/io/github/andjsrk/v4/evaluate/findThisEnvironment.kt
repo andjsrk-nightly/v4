@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
 import io.github.andjsrk.v4.evaluate.type.Environment
 
 @EsSpec("GetThisEnvironment")
-tailrec fun findThisEnvironment(env: Environment = runningExecutionContext.lexicalEnv): DeclarativeEnvironment? {
+tailrec fun findThisEnvironment(env: Environment = runningExecutionContext.lexicalEnvNotNull): DeclarativeEnvironment? {
     if (env is DeclarativeEnvironment && env.hasThisBinding()) return env
     val outer = env.outer ?: return null
     return findThisEnvironment(outer)

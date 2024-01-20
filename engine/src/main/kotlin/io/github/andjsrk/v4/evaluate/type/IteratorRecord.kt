@@ -36,7 +36,7 @@ class IteratorRecord(
                 .let {
                     if (it is Completion.Normal) {
                         val closeMethod = it.value ?: return completion
-                        closeMethod.call(sourceObject, emptyList())
+                        closeMethod.call(sourceObject)
                     } else it
                 }
         completion.orReturn { return it }
@@ -68,7 +68,7 @@ class IteratorRecord(
         }
         @EsSpec("GetIteratorFromMethod")
         fun fromIteratorMethod(value: LanguageType, method: FunctionType): MaybeAbrupt<IteratorRecord> {
-            val iterator = method.call(value, emptyList())
+            val iterator = method.call(value)
                 .orReturn { return it }
                 .requireToBe<ObjectType> { return it }
             val nextMethod = iterator.getMethod("next".languageValue)

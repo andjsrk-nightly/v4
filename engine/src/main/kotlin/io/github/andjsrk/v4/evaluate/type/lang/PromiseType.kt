@@ -5,8 +5,6 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Promise
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.neverHappens
-import io.github.andjsrk.v4.parse.node.StatementListNode
 
 class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
     var state: State? = null
@@ -37,12 +35,16 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
                 if (onRejected != null) rejectReactions += rejectReaction
             }
             State.FULFILLED -> {
-                val fulfillJob = Reaction.Job.new(fulfillReaction, result!!)
-                if (onFulfilled != null) jobQueue += fulfillJob
+                if (onFulfilled != null) {
+                    val fulfillJob = Reaction.Job.new(fulfillReaction, result!!)
+                    jobQueue += fulfillJob
+                }
             }
             State.REJECTED -> {
-                val rejectJob = Reaction.Job.new(rejectReaction, result!!)
-                if (onRejected != null) jobQueue += rejectJob
+                if (onRejected != null) {
+                    val rejectJob = Reaction.Job.new(rejectReaction, result!!)
+                    jobQueue += rejectJob
+                }
             }
         }
         return resultCapability?.promise ?: NullType
@@ -50,10 +52,10 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
     /**
      * Returns a pair of `resolve` and `reject`.
      */
-    fun createResolveFunction(): Pair<BuiltinFunctionType, BuiltinFunctionType> {
+    fun createResolveRejectFunction(): Pair<BuiltinFunctionType, BuiltinFunctionType> {
         val promise = this
         var alreadyResolved = false
-        val resolve = BuiltinFunctionType("resolve") fn@ { _, args ->
+        val resolve = functionWithoutThis("resolve") fn@ { args ->
             val value = args.getOptional(0) ?: NullType
             if (alreadyResolved) return@fn normalNull
             alreadyResolved = true
@@ -61,11 +63,11 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
                 reject(error(TypeErrorKind.PROMISE_CYCLIC, promise.display()))
                 return@fn normalNull
             }
-            if (value is PromiseType) TODO("Create job callback and enqueue it")
+            if (value is PromiseType) jobQueue += createThenableJob(value)
             else fulfill(value)
             normalNull
         }
-        val reject = BuiltinFunctionType("reject") fn@ { _, args ->
+        val reject = functionWithoutThis("reject") fn@ { args ->
             val reason = args.getOptional(0) ?: NullType
             if (alreadyResolved) return@fn normalNull
             alreadyResolved = true
@@ -73,6 +75,23 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
             normalNull
         }
         return resolve to reject
+    }
+    @EsSpec("NewPromiseResolveThenableJob")
+    fun createThenableJob(thenable: PromiseType) =
+        Reaction.Job({
+            val (resolve, reject) = createResolveRejectFunction()
+            thenable.then(resolve, reject, Capability.new())
+                .toNormal()
+        }, runningExecutionContext.realm, getActiveModule())
+
+    companion object {
+        @EsSpec("PromiseResolve")
+        fun resolve(value: LanguageType) =
+            Capability.new().apply {
+                resolve.call(null, listOf(value))
+                    .unwrap()
+            }
+                .promise
     }
 
     /**
@@ -88,30 +107,37 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
         val resolve: FunctionType,
         val reject: FunctionType,
     ): Record {
+        @EsSpec("AsyncFunctionStart")
+        fun startAsyncFunction(bodyEval: SimpleLazyFlow<*>) {
+            val asyncContext = runningExecutionContext.copy()
+            startAsyncBlock(bodyEval, asyncContext)
+        }
         @EsSpec("AsyncBlockStart")
-        fun asyncBlockStart(body: StatementListNode, asyncContext: ExecutionContext) {
-            val closure = lazyFlow {
-                val acAsyncContext = runningExecutionContext
-                val result = yieldAll(evaluateStatements(body))
+        fun startAsyncBlock(bodyEval: SimpleLazyFlow<*>, asyncContext: ExecutionContext) {
+            val evalState = lazyFlow {
+                val res = yieldAll(bodyEval)
                 executionContextStack.removeTop()
-                when (result) {
+                when (res) {
                     is Completion.Normal -> resolve.call(null, listOf(NullType))
-                    is Completion.Return -> resolve.call(null, listOf(result.value))
-                    is Completion.Throw -> reject.call(null, listOf(result.value))
-                    else -> neverHappens()
+                    is Completion.Return -> resolve.call(null, listOf(res.value))
+                    else -> {
+                        require(res is Completion.Throw)
+                        reject.call(null, listOf(res.value))
+                    }
                 }
                     .unwrap()
-                    .toNormal()
+                empty
             }
-            // TODO: implement step 4
+            asyncContext.codeEvaluationState = evalState
             executionContextStack.addTop(asyncContext)
+            evalState.next()
         }
 
         companion object {
             @EsSpec("NewPromiseCapability")
             fun new(): Capability {
                 val promise = PromiseType()
-                val (resolve, reject) = promise.createResolveFunction()
+                val (resolve, reject) = promise.createResolveRejectFunction()
                 return Capability(promise, resolve, reject)
             }
         }

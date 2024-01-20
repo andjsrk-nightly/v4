@@ -10,7 +10,7 @@ import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
 sealed class FunctionType(
     var name: PropertyKey?,
     requiredParameterCount: UInt,
-    val env: DeclarativeEnvironment,
+    open val env: DeclarativeEnvironment?,
     lazyPrototype: Lazy<PrototypeObjectType> = lazy { Function.instancePrototype },
 ): ObjectType(
     lazyPrototype,

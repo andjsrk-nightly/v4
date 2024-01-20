@@ -10,7 +10,7 @@ sealed interface MethodNode: FunctionNode {
     override fun evaluate() = lazyFlow f@ {
         val name = yieldAll(name.toPropertyKey())
             .orReturn { return@f it }
-        val env = runningExecutionContext.lexicalEnv
+        val env = runningExecutionContext.lexicalEnvNotNull
         OrdinaryFunctionType(name, parameters, body, env, ThisMode.METHOD)
             .toNormal()
     }

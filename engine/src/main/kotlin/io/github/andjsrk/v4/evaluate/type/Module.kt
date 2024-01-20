@@ -28,6 +28,7 @@ abstract class Module(val realm: Realm): Record {
     abstract fun evaluate(): PromiseType
     @EsSpec("ExecuteModule")
     abstract fun execute(capability: PromiseType.Capability? = null): EmptyOrAbrupt
+    @EsSpec("Link")
     abstract fun link(): EmptyOrAbrupt
 
     @EsSpec("InnerModuleEvaluation")

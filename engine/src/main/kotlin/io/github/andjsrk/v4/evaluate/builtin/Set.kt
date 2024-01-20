@@ -69,7 +69,7 @@ private val setValues = method("values") fn@ { thisArg, _ ->
 
 @EsSpec("Set.prototype[@@iterator]")
 private val setIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, _ ->
-    setValues.call(thisArg, emptyList())
+    setValues.call(thisArg)
 }
 
 @EsSpec("Set.prototype.size")

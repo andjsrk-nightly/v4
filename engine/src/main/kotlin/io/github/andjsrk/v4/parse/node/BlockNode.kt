@@ -16,12 +16,12 @@ class BlockNode(
     override fun evaluate() = lazyFlow f@ {
         if (elements.isEmpty()) return@f empty
 
-        val oldEnv = runningExecutionContext.lexicalEnv
+        val oldEnv = runningExecutionContext.lexicalEnvNotNull
         val blockEnv = DeclarativeEnvironment(oldEnv)
         instantiateBlockDeclaration(this@BlockNode, blockEnv)
-        runningExecutionContext.lexicalEnv = blockEnv
+        runningExecutionContext.lexicalEnvNotNull = blockEnv
         val res = yieldAll(evaluateStatements(this@BlockNode))
-        runningExecutionContext.lexicalEnv = oldEnv
+        runningExecutionContext.lexicalEnvNotNull = oldEnv
         res
     }
 }

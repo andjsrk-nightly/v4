@@ -498,7 +498,7 @@ private val immutableArrayValues = method("values") fn@ { thisArg, _ ->
 
 @EsSpec("Array.prototype[@@iterator]")
 private val immutableArrayIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, _ ->
-    immutableArrayValues.call(thisArg, emptyList())
+    immutableArrayValues.call(thisArg)
 }
 
 /**

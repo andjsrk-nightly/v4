@@ -53,7 +53,7 @@ open class UnaryExpressionNode(
                     .requireToBe<BooleanType> { return@f it }
                 !boolean
             }
-            // TODO: await expression
+            AWAIT -> return@f yieldAll(await(value))
             else -> missingBranch()
         }
             .toNormal()

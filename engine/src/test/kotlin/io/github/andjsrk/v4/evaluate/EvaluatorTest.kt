@@ -813,6 +813,7 @@ private inline fun <reified Value: LanguageType> EvaluationResult.shouldBeThrowA
     }
 private val config = object: HostConfig() {
     override fun loadImportedModule(module: CyclicModule, specifier: String, state: GraphLoadingState) = TODO()
+    override fun wait(ms: Int) = PromiseType.resolve(NullType)
     override fun onGotUncaughtAbrupt(abrupt: Completion.Abrupt) = TODO()
     override fun display(value: LanguageType, raw: Boolean) = TODO()
 }
@@ -839,6 +840,7 @@ private fun SourceTextModule.executeModuleWithoutIgnoringValue(): MaybeEmptyOrAb
     executionContextStack.addTop(ExecutionContext(realm, env))
     val res = node.evaluate()
         .unwrap()
+    runJobs()
     executionContextStack.removeTop()
     return res
 }

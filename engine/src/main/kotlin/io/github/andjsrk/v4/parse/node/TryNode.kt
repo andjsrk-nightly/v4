@@ -34,19 +34,19 @@ class TryNode(
     @EsSpec("CatchClauseEvaluation")
     private fun evaluateCatch(thrown: LanguageType) = lazyFlow f@ {
         requireNotNull(catch)
-        val oldEnv = runningExecutionContext.lexicalEnv
+        val oldEnv = runningExecutionContext.lexicalEnvNotNull
         if (catch.binding != null) {
             val catchEnv = DeclarativeEnvironment(oldEnv)
             for (name in catch.binding.boundStringNames()) catchEnv.createMutableBinding(name)
-            runningExecutionContext.lexicalEnv = catchEnv
+            runningExecutionContext.lexicalEnvNotNull = catchEnv
             yieldAll(catch.binding.initializeBy(thrown, catchEnv))
                 .orReturn {
-                    runningExecutionContext.lexicalEnv = oldEnv
+                    runningExecutionContext.lexicalEnvNotNull = oldEnv
                     return@f it
                 }
         }
         val res = yieldAll(catch.body.evaluate())
-        runningExecutionContext.lexicalEnv = oldEnv
+        runningExecutionContext.lexicalEnvNotNull = oldEnv
         res
     }
 }

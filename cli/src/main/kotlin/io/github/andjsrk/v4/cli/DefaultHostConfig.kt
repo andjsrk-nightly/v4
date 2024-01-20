@@ -1,14 +1,20 @@
 package io.github.andjsrk.v4.cli
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Object
-import io.github.andjsrk.v4.evaluate.orReturn
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.timerTask
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
+
+private val timer = Timer()
+private val scheduledTaskCount = AtomicInteger(0)
 
 open class DefaultHostConfig: HostConfig() {
     override fun loadImportedModule(module: CyclicModule, specifier: String, state: GraphLoadingState): EmptyOrAbrupt {
@@ -22,6 +28,23 @@ open class DefaultHostConfig: HostConfig() {
             .orReturn { return it }
         module.finishLoadingImportedModule(specifier, state, loadedModule.toWideNormal())
         return empty
+    }
+    override fun wait(ms: Int): PromiseType {
+        val capability = PromiseType.Capability.new()
+        scheduledTaskCount.incrementAndGet()
+        timer.schedule(timerTask {
+            capability.resolve.call(null, listOf(NullType))
+                .unwrap()
+            runJobs()
+
+            // decrement must always be performed
+            val isTimerIdle = scheduledTaskCount.decrementAndGet() == 0
+            if (jobQueue.isEmpty() && isTimerIdle) {
+                timer.cancel()
+                // everything has finished, so releases the timer to exit the process
+            }
+        }, ms.toLong())
+        return capability.promise
     }
     override fun onGotUncaughtAbrupt(abrupt: Completion.Abrupt): Nothing {
         exitWithAbrupt(abrupt)

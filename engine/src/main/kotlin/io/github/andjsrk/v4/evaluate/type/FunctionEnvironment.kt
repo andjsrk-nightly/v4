@@ -8,7 +8,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 @EsSpec("Function Environment Record")
 class FunctionEnvironment(
-    outer: Environment,
+    outer: Environment?,
     var function: FunctionType,
     var thisValue: LanguageType? = null,
 ): DeclarativeEnvironment(outer) {

@@ -4,6 +4,7 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.*
 import io.github.andjsrk.v4.evaluate.type.*
+import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.parse.node.*
 
 @EsSpec("function object")
@@ -12,7 +13,7 @@ class OrdinaryFunctionType(
     name: PropertyKey?,
     val parameters: UniqueFormalParametersNode,
     val body: ConciseBodyNode,
-    env: DeclarativeEnvironment,
+    override val env: DeclarativeEnvironment,
     val thisMode: ThisMode,
     val isAsync: Boolean = false,
     val isGenerator: Boolean = false,
@@ -50,54 +51,46 @@ class OrdinaryFunctionType(
     @EsSpec("OrdinaryCallBindThis")
     fun bindThisInCall(calleeContext: ExecutionContext, thisArg: LanguageType?) {
         if (!isMethod) return
-        val localEnv = calleeContext.lexicalEnv
+        val localEnv = calleeContext.lexicalEnvNotNull
         require(localEnv is FunctionEnvironment)
         localEnv.bindThisValue(thisArg)
     }
     @EsSpec("EvaluateBody")
-    fun evaluateBody(args: List<LanguageType>) =
-        if (isMethod) evaluateMethodBody(args)
-        else evaluateConciseBody(args)
     @EsSpec("EvaluateConciseBody")
     @EsSpec("EvaluateAsyncConciseBody")
-    fun evaluateConciseBody(args: List<LanguageType>) = lazyFlow f@ {
-        when {
-            isAsync && isGenerator -> TODO()
-            isAsync -> TODO()
-            isGenerator -> {
-                instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
-                    .orReturn { return@f it }
-                val generator = SyncGeneratorType()
-                generator.start(evaluateConciseBody(body))
-                Completion.Return(generator)
-            }
-            else -> {
-                instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
-                    .orReturn { return@f it }
-                yieldAll(evaluateConciseBody(body))
-            }
-        }
-    }
     @EsSpec("EvaluateFunctionBody")
     @EsSpec("EvaluateAsyncFunctionBody")
     @EsSpec("EvaluateGeneratorBody")
     @EsSpec("EvaluateAsyncGeneratorBody")
-    fun evaluateMethodBody(args: List<LanguageType>) = lazyFlow f@ {
-        require(body is BlockNode)
+    fun evaluateBody(args: List<LanguageType>) = lazyFlow f@ {
+        fun evaluateBodyFlexibly(body: ConciseBodyNode) =
+            if (isMethod) evaluateStatements(body as BlockNode)
+            else evaluateConciseBody(body)
+
+        val instantiationRes = instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
+
         when {
             isAsync && isGenerator -> TODO()
-            isAsync -> TODO()
+            isAsync -> {
+                val capability = PromiseType.Capability.new()
+                when (instantiationRes) {
+                    is Completion.Normal -> capability.startAsyncFunction(evaluateBodyFlexibly(body))
+                    is Completion.Throw ->
+                        capability.reject.call(null, listOf(instantiationRes.value))
+                            .unwrap()
+                    else -> neverHappens()
+                }
+                Completion.Return(capability.promise)
+            }
             isGenerator -> {
-                instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
-                    .orReturn { return@f it }
+                instantiationRes.orReturn { return@f it }
                 val generator = SyncGeneratorType()
-                generator.start(evaluateStatements(body))
+                generator.start(evaluateBodyFlexibly(body))
                 Completion.Return(generator)
             }
             else -> {
-                instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
-                    .orReturn { return@f it }
-                yieldAll(evaluateStatements(body))
+                instantiationRes.orReturn { return@f it }
+                yieldAll(evaluateBodyFlexibly(body))
             }
         }
     }

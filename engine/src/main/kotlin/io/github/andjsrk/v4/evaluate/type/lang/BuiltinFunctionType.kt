@@ -15,10 +15,10 @@ class BuiltinFunctionType(
     val behavior: BuiltinFunctionBehavior,
 ): FunctionType(name, requiredParameterCount, runningExecutionContext.lexicalEnv) {
     constructor(
-        name: String,
+        name: String?,
         requiredParameterCount: UInt = 0u,
         behavior: BuiltinFunctionBehavior,
-    ): this(name.languageValue, requiredParameterCount, behavior)
+    ): this(name?.languageValue, requiredParameterCount, behavior)
     override val isMethod = true
     override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrAbrupt {
         val calleeContext = ExecutionContext(realm, FunctionEnvironment.from(this, thisArg), this)
@@ -31,7 +31,7 @@ class BuiltinFunctionType(
 
 private typealias BuiltinMethodBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyOrAbrupt
 inline fun method(
-    name: PropertyKey,
+    name: PropertyKey?,
     requiredParamCount: UInt = 0u,
     crossinline behavior: BuiltinMethodBehavior,
 ) =
@@ -40,16 +40,13 @@ inline fun method(
         behavior(thisArg, args)
     }
 inline fun method(
-    name: String,
+    name: String? = null,
     requiredParamCount: UInt = 0u,
     crossinline behavior: BuiltinMethodBehavior,
 ) =
-    BuiltinFunctionType(name, requiredParamCount) fn@ { thisArg, args ->
-        if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
-        behavior(thisArg, args)
-    }
+    method(name?.languageValue, requiredParamCount, behavior)
 inline fun functionWithoutThis(
-    name: String,
+    name: String? = null,
     requiredParamCount: UInt = 0u,
     crossinline behavior: (args: List<LanguageType>) -> NonEmptyOrAbrupt,
 ) =

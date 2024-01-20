@@ -25,7 +25,7 @@ data class AccessorProperty(
     )
     override fun clone() = copy()
     override fun getValue(thisValue: LanguageType) =
-        get?.call(thisValue, emptyList()) ?: normalNull
+        get?.call(thisValue) ?: normalNull
     override fun toDescriptorObject(): ObjectType {
         val obj = ObjectType.createNormal()
         obj.createDataProperty("get".languageValue, get ?: NullType)

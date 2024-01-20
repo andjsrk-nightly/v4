@@ -24,24 +24,24 @@ class ForInNode(
         yieldAll(evaluateBody(iter))
     }
     private fun evaluateHead() = lazyFlow f@ {
-        val oldEnv = runningExecutionContext.lexicalEnv
+        val oldEnv = runningExecutionContext.lexicalEnvNotNull
         val uninitializedBoundNames = declaration.boundStringNames()
         if (uninitializedBoundNames.isNotEmpty()) {
             val newEnv = DeclarativeEnvironment(oldEnv)
             uninitializedBoundNames.forEach {
                 newEnv.createMutableBinding(it)
             }
-            runningExecutionContext.lexicalEnv = newEnv
+            runningExecutionContext.lexicalEnvNotNull = newEnv
         }
         val targetValueOrAbrupt = yieldAll(target.evaluateValue())
-        runningExecutionContext.lexicalEnv = oldEnv
+        runningExecutionContext.lexicalEnvNotNull = oldEnv
         val targetValue = targetValueOrAbrupt
             .orReturn { return@f it }
         IteratorRecord.from(targetValue)
     }
     @EsSpec("ForIn/OfBodyEvaluation")
     private fun evaluateBody(iterRec: IteratorRecord) = lazyFlow f@ {
-        val oldEnv = runningExecutionContext.lexicalEnv
+        val oldEnv = runningExecutionContext.lexicalEnvNotNull
         var res: LanguageType = NullType
         while (true) {
             val nextRes = iterRec.step()
@@ -51,14 +51,14 @@ class ForInNode(
                 .orReturn { return@f it }
             val iteratorEnv = DeclarativeEnvironment(oldEnv)
             declaration.instantiateIn(iteratorEnv)
-            runningExecutionContext.lexicalEnv = iteratorEnv
+            runningExecutionContext.lexicalEnvNotNull = iteratorEnv
             yieldAll(declaration.binding.initializeBy(nextValue, iteratorEnv))
                 .orReturn {
-                    runningExecutionContext.lexicalEnv = oldEnv
+                    runningExecutionContext.lexicalEnvNotNull = oldEnv
                     return@f iterRec.close(it)
                 }
             val stmtRes = yieldAll(body.evaluate())
-            runningExecutionContext.lexicalEnv = oldEnv
+            runningExecutionContext.lexicalEnvNotNull = oldEnv
             if (!continueLoop(stmtRes)) {
                 require(stmtRes is Completion.Abrupt)
                 val abrupt = updateEmpty(stmtRes, res)

@@ -101,7 +101,7 @@ private val mapValues = method("values") fn@ { thisArg, _ ->
 
 @EsSpec("Map.prototype[@@iterator]")
 private val mapIterator = method(SymbolType.WellKnown.iterator) fn@ { thisArg, _ ->
-    mapEntries.call(thisArg, emptyList())
+    mapEntries.call(thisArg)
 }
 
 @EsSpec("Map.prototype.size")

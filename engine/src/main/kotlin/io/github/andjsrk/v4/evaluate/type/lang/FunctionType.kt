@@ -22,7 +22,7 @@ sealed class FunctionType(
     val module = getActiveModule()
     abstract val isMethod: Boolean
     @EsSpec("Call") // the method implements Call rather than [[Call]] since additional type check is no needed
-    abstract fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrAbrupt
+    abstract fun call(thisArg: LanguageType? = null, args: List<LanguageType> = emptyList()): NonEmptyOrAbrupt
 }
 
 internal inline fun FunctionType.callCollectionCallback(

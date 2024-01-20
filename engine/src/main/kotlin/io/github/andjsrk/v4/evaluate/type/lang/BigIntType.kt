@@ -2,8 +2,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
-import io.github.andjsrk.v4.evaluate.languageValue
-import io.github.andjsrk.v4.evaluate.throwError
+import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import java.math.BigInteger
@@ -73,6 +72,8 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
     override fun toString(radix: Int) =
         value.toString(radix)
             .languageValue
+
+    override fun toString() = display()
 }
 
 private fun BigInteger.operateWithInt(operation: BigInteger.(Int) -> BigInteger, other: BigInteger): BigInteger {

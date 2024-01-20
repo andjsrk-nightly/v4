@@ -66,6 +66,7 @@ class OrdinaryFunctionType(
             isAsync -> TODO()
             isGenerator -> {
                 instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
+                    .orReturn { return@f it }
                 val generator = SyncGeneratorType()
                 generator.start(evaluateConciseBody(body))
                 Completion.Return(generator)
@@ -82,14 +83,21 @@ class OrdinaryFunctionType(
     @EsSpec("EvaluateGeneratorBody")
     @EsSpec("EvaluateAsyncGeneratorBody")
     fun evaluateMethodBody(args: List<LanguageType>) = lazyFlow f@ {
+        require(body is BlockNode)
         when {
             isAsync && isGenerator -> TODO()
             isAsync -> TODO()
-            isGenerator -> TODO()
+            isGenerator -> {
+                instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
+                    .orReturn { return@f it }
+                val generator = SyncGeneratorType()
+                generator.start(evaluateStatements(body))
+                Completion.Return(generator)
+            }
             else -> {
                 instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
                     .orReturn { return@f it }
-                yieldAll(evaluateStatements(body as BlockNode))
+                yieldAll(evaluateStatements(body))
             }
         }
     }

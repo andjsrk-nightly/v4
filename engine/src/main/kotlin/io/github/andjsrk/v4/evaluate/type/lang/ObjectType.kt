@@ -224,6 +224,8 @@ open class ObjectType(
             .toWideNormal()
     }
 
+    override fun toString() = display()
+
     companion object {
         /**
          * Returns an Object that `[[Prototype]]` is set to `%Object.prototype%`.

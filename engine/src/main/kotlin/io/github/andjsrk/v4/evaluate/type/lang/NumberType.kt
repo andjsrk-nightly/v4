@@ -283,6 +283,8 @@ value class NumberType(
         }
             .languageValue
 
+    override fun toString() = display()
+
     companion object {
         val POSITIVE_INFINITY = Double.POSITIVE_INFINITY.languageValue
         val NEGATIVE_INFINITY = Double.NEGATIVE_INFINITY.languageValue

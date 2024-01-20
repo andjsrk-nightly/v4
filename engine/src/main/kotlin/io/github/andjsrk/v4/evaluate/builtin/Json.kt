@@ -51,7 +51,7 @@ private fun JsonElement.toLanguageValue(): NonEmptyOrAbrupt {
         .toNormal()
 }
 @EsSpec("JSON.parse")
-val parse = functionWithoutThis("parse", 1u) fn@ { args ->
+private val parse = functionWithoutThis("parse", 1u) fn@ { args ->
     val string = args[0].requireToBeString { return@fn it }
     val decoded = try {
         KotlinxJson.decodeFromString<JsonElement>(string)
@@ -135,7 +135,7 @@ private fun StringBuilder.appendJsonStringifiedLanguageValue(value: LanguageType
     return empty
 }
 @EsSpec("JSON.stringify")
-val stringify = functionWithoutThis("stringify", 1u) fn@ { args ->
+private val stringify = functionWithoutThis("stringify", 1u) fn@ { args ->
     val value = args[0]
     val nonNormalizedIndentArg = args.getOrNull(1)
     val indent = when (val indentArg = nonNormalizedIndentArg?.normalizeNull()) {

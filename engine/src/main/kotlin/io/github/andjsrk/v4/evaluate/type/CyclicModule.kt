@@ -33,7 +33,7 @@ abstract class CyclicModule(
         val capability = PromiseType.Capability.new()
         module.topLevelCapability = capability
         val stack = Stack<CyclicModule>()
-        val result = module.innerModuleEvaluation(stack, 0)
+        val result = module.innerModuleEvaluation(stack, 0, mutableListOf())
         if (result is Completion.Throw) {
             for (mod in stack) {
                 mod.status = Status.EVALUATED
@@ -43,6 +43,7 @@ abstract class CyclicModule(
                 .unwrap()
         } else {
             if (!asyncEvaluation) {
+                assert(status == Status.EVALUATED)
                 capability.resolve.call(null, listOf(NullType))
                     .unwrap()
                 assert(stack.isEmpty())
@@ -52,13 +53,20 @@ abstract class CyclicModule(
         return capability.promise
     }
     @EsSpec("ExecuteAsyncModule")
-    fun executeAsync() {
+    fun executeAsync(asyncEvaluatingModules: List<CyclicModule>) {
         val capability = PromiseType.Capability.new()
         val onFulfilled = functionWithoutThis { _ ->
-            asyncModuleExecutionFulfilled()
+            asyncModuleExecutionFulfilled(asyncEvaluatingModules)
+            normalNull
         }
-        TODO()
+        val onRejected = functionWithoutThis("", 1u) { args ->
+            val reason = args[0]
+            asyncModuleExecutionRejected(reason)
+            normalNull
+        }
+        capability.promise.then(onFulfilled, onRejected)
         execute(capability)
+            .unwrap()
     }
     @EsSpec("GatherAvailableAncestors")
     fun gatherSynchronouslyExecutableAncestors(gathered: MutableSet<CyclicModule> = mutableSetOf()): MutableSet<CyclicModule> =
@@ -73,19 +81,24 @@ abstract class CyclicModule(
                 }
             }
         }
-    fun asyncModuleExecutionFulfilled() {
+    fun asyncModuleExecutionFulfilled(asyncEvaluatingModules: List<CyclicModule>) {
         if (status == Status.EVALUATED) return
         asyncEvaluation = false
         status = Status.EVALUATED
         topLevelCapability?.resolve?.call(null, listOf(NullType))
             ?.unwrap()
-        val ancestors = gatherSynchronouslyExecutableAncestors()
-            .sortedBy { TODO() }
+        val ancestors = asyncEvaluatingModules
+            .intersect(gatherSynchronouslyExecutableAncestors())
         ancestors.forEach {
-            if (it.hasTopLevelAwait) executeAsync()
+            if (it.hasTopLevelAwait) it.executeAsync(asyncEvaluatingModules)
             else {
-                val result = execute()
-                if (result is Completion.NonEmptyAbrupt) asyncModuleExecutionRejected(result.value)
+                val result = it.execute()
+                if (result is Completion.NonEmptyAbrupt) it.asyncModuleExecutionRejected(result.value)
+                else {
+                    it.status = Status.EVALUATED
+                    it.topLevelCapability?.resolve?.call(null, listOf(NullType))
+                        ?.unwrap()
+                }
             }
         }
     }

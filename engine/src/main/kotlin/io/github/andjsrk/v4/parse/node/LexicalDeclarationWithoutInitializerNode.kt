@@ -12,10 +12,10 @@ class LexicalDeclarationWithoutInitializerNode(
     override val kind: LexicalDeclarationKind,
     val binding: BindingElementNode,
     startRange: Range,
-): LexicalDeclarationNode {
+): LexicalDeclarationNode, EvaluationDelegatedNode {
     override val childNodes get() = listOf<Node?>(binding)
     override val range = startRange..binding.range
     override fun toString() =
         stringifyLikeDataClass(::kind, ::binding, ::range)
-    override fun evaluate() = TODO()
+    override fun evaluate() = super.evaluate()
 }

@@ -32,7 +32,7 @@ abstract class Module(val realm: Realm): Record {
     abstract fun link(): EmptyOrAbrupt
 
     @EsSpec("InnerModuleEvaluation")
-    fun innerModuleEvaluation(stack: Stack<CyclicModule>, index: Int): MaybeAbrupt<GeneralSpecValue<Int>> {
+    fun innerModuleEvaluation(stack: Stack<CyclicModule>, index: Int, asyncEvaluatingModules: MutableList<CyclicModule>): MaybeAbrupt<GeneralSpecValue<Int>> {
         var index = index // intentionally shadows the parameter to change its value
         if (this !is CyclicModule) {
             val promise = evaluate()
@@ -52,7 +52,7 @@ abstract class Module(val realm: Realm): Record {
         stack.addTop(this)
         for (requested in requestedModules) {
             val requestedModule = getImportedModule(requested)
-            index = requestedModule.innerModuleEvaluation(stack, index)
+            index = requestedModule.innerModuleEvaluation(stack, index, asyncEvaluatingModules)
                 .orReturn { return it }
                 .value
             if (requestedModule is CyclicModule) {
@@ -71,7 +71,8 @@ abstract class Module(val realm: Realm): Record {
         }
         if (pendingAsyncDependencies > 0 || hasTopLevelAwait) {
             asyncEvaluation = true
-            if (pendingAsyncDependencies == 0) executeAsync()
+            asyncEvaluatingModules += this
+            if (pendingAsyncDependencies == 0) executeAsync(asyncEvaluatingModules)
         } else {
             execute()
                 .orReturn { return it }

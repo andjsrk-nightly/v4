@@ -10,7 +10,7 @@ data class ExecutionContext(
     var function: FunctionType? = null,
     var generator: GeneratorType<*>? = null,
     val module: Module? = null,
-    var codeEvaluationState: SimpleLazyFlow<Empty>? = null,
+    var codeEvaluationState: SimpleLazyFlow<MaybeEmptyOrAbrupt>? = null,
 ) {
     var lexicalEnvNotNull: DeclarativeEnvironment
         get() = lexicalEnv!!

@@ -70,7 +70,12 @@ class OrdinaryFunctionType(
         val instantiationRes = instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
 
         when {
-            isAsync && isGenerator -> TODO()
+            isAsync && isGenerator -> {
+                instantiationRes.orReturn { return@f it }
+                val generator = AsyncGeneratorType()
+                generator.start(evaluateBodyFlexibly(body))
+                Completion.Return(generator)
+            }
             isAsync -> {
                 val capability = PromiseType.Capability.new()
                 when (instantiationRes) {

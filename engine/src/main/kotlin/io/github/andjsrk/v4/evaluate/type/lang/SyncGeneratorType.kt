@@ -9,20 +9,18 @@ import io.github.andjsrk.v4.evaluate.type.*
 class SyncGeneratorType(
     override val brand: String? = null,
 ): GeneratorType<SyncGeneratorState>(lazy { Generator.instancePrototype }) {
-    override var context = runningExecutionContext
+    override val context = runningExecutionContext
     override var state: SyncGeneratorState? = null // [[GeneratorState]]
-    var complete: SimpleLazyFlow<NonEmptyOrAbrupt>? = null
     @EsSpec("GeneratorStart")
     override fun start(result: SimpleLazyFlow<MaybeEmptyOrAbrupt>) {
-        val genContext = runningExecutionContext
-        genContext.generator = this
-        complete = lazyFlow f@ {
+        context.generator = this
+        context.codeEvaluationState = lazyFlow f@ {
             val acGenContext = runningExecutionContext
             val acGenerator = acGenContext.generator as SyncGeneratorType? ?: neverHappens()
             val res = yieldAll(result)
             executionContextStack.removeTop()
             acGenerator.state = SyncGeneratorState.COMPLETED
-            complete = null // drops the closure since it is no longer needed
+            acGenContext.codeEvaluationState = null // drops the flow since it is no longer needed
             val resValue = when (res) {
                 is Completion.WideNormal -> NullType
                 is Completion.Return -> res.value
@@ -31,8 +29,6 @@ class SyncGeneratorType(
             createIteratorResult(resValue, true)
                 .toNormal()
         }
-        // TODO: step 5
-        context = genContext
         state = SyncGeneratorState.SUSPENDED_START
     }
     /**
@@ -47,11 +43,12 @@ class SyncGeneratorType(
         assert(state.isOneOf(SyncGeneratorState.SUSPENDED_START, SyncGeneratorState.SUSPENDED_YIELD))
         state = SyncGeneratorState.EXECUTING
         executionContextStack.addTop(context)
-        val res = complete!!.next(value.normalizeToNormal())
-        return res
+        val res = context.codeEvaluationState!!.next(value.normalizeToNormal())
+            .orReturn { return it }
+        return res!!.toNormal()
     }
     @EsSpec("GeneratorValidate")
-    fun validate(brand: String?): EmptyOrAbrupt {
+    fun validate(brand: String? = null): EmptyOrAbrupt {
         if (this.brand != brand) return throwError(TypeErrorKind.INCOMPATIBLE_METHOD_RECEIVER, TODO(), TODO())
         if (state == SyncGeneratorState.EXECUTING) return throwError(TypeErrorKind.GENERATOR_RUNNING)
         return empty

@@ -6,7 +6,8 @@ import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 private val generatorNext = method("next") fn@ { thisArg, args ->
-    val gen = thisArg.requireToBe<SyncGeneratorType> { return@fn it }
+    val gen = thisArg
+        .requireToBe<SyncGeneratorType> { return@fn it }
     val input = args.getOptional(0) ?: NullType
     gen.resume(input)
 }

@@ -9,20 +9,14 @@ enum class GeneratorKind {
     SYNC,
     ASYNC,
 }
-enum class SyncGeneratorState {
-    SUSPENDED_START,
-    SUSPENDED_YIELD,
-    EXECUTING,
-    COMPLETED,
-}
 
 @EsSpec("GetGeneratorKind")
-internal val generatorKind: GeneratorKind get() {
-    val generator = runningExecutionContext.generator ?: return GeneratorKind.NON_GENERATOR
-
-    if (generator is AsyncGeneratorType) return GeneratorKind.ASYNC
-    else return GeneratorKind.SYNC
-}
+val generatorKind: GeneratorKind get() =
+    when (runningExecutionContext.generator) {
+        null -> GeneratorKind.NON_GENERATOR
+        is SyncGeneratorType -> GeneratorKind.SYNC
+        is AsyncGeneratorType -> GeneratorKind.ASYNC
+    }
 
 @EsSpec("Yield")
 fun commonYield(value: LanguageType) = lazyFlow f@ {
@@ -40,7 +34,7 @@ fun commonYield(value: LanguageType) = lazyFlow f@ {
 fun syncYield(iteratorResult: ObjectType) = lazyFlow {
     val generator = runningExecutionContext.generator!!
     require(generator is SyncGeneratorType)
-    generator.state = SyncGeneratorState.SUSPENDED_YIELD
+    generator.state = SyncGeneratorType.State.SUSPENDED_YIELD
     executionContextStack.removeTop()
     yield(iteratorResult.toNormal()) ?: normalNull
 }
@@ -59,7 +53,7 @@ fun asyncYield(value: LanguageType) = lazyFlow f@ {
             val toYield = generator.queue.first()
             toYield.completion
         } else {
-            generator.state = AsyncGeneratorState.SUSPENDED_YIELD
+            generator.state = AsyncGeneratorType.State.SUSPENDED_YIELD
             executionContextStack.removeTop()
             yield(normalNull)!!
         }

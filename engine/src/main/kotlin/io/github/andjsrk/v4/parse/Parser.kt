@@ -1455,10 +1455,10 @@ class Parser(sourceText: String) {
      */
     @Careful
     private fun parseFor(): ForNode? {
-        fun parseForHeadElement(givenElement: Node? = null, after: TokenType = SEMICOLON): Node? {
+        fun parseForHeadElement(after: TokenType = SEMICOLON): ExpressionNode? {
             if (takeIfMatches(after) != null) return null
 
-            val expr = givenElement ?: parseExpression() ?: return reportUnexpectedToken()
+            val expr = parseExpression() ?: return reportUnexpectedToken()
             expect(after) ?: return null
             return expr
         }
@@ -1484,9 +1484,9 @@ class Parser(sourceText: String) {
                 } else parseLexicalDeclaration(declaration)
                 expect(SEMICOLON)
                 if (hasError) return null
-                val test = parseForHeadElement() as ExpressionNode?
+                val test = parseForHeadElement()
                 if (hasError) return null
-                val update = parseForHeadElement(after=RIGHT_PARENTHESIS) as ExpressionNode?
+                val update = parseForHeadElement(RIGHT_PARENTHESIS)
                 if (hasError) return null
                 // right parenthesis will be handled on `update`'s parsing
                 val body = parseStatement() ?: return null

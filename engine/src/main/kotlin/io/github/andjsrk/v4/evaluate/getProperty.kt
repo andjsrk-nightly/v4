@@ -1,12 +1,13 @@
 package io.github.andjsrk.v4.evaluate
 
+import io.github.andjsrk.v4.CompilerFalsePositive
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.NonEmptyOrThrow
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("GetV")
-fun LanguageType.getProperty(key: PropertyKey): NonEmptyOrThrow =
+fun LanguageType.getProperty(key: PropertyKey): @CompilerFalsePositive NonEmptyOrThrow =
     when (this) {
         NullType -> throwError(TypeErrorKind.CANNOT_READ_PROPERTY, key.string(), generalizedDescriptionOf(this))
         is ObjectType -> get(key)

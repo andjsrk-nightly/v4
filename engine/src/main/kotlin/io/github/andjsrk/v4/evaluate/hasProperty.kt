@@ -1,10 +1,11 @@
 package io.github.andjsrk.v4.evaluate
 
+import io.github.andjsrk.v4.CompilerFalsePositive
 import io.github.andjsrk.v4.evaluate.type.MaybeThrow
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
 
-fun LanguageType.hasProperty(key: PropertyKey): MaybeThrow<BooleanType> =
+fun LanguageType.hasProperty(key: PropertyKey): @CompilerFalsePositive MaybeThrow<BooleanType> =
     when (this) {
         NullType -> BooleanType.FALSE.toNormal()
         is ObjectType -> hasProperty(key)

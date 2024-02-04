@@ -14,10 +14,10 @@ private val asyncGeneratorNext = method("next") fn@ { thisArg, args ->
     val value = args.getOptional(0) ?: NullType
     val capability = PromiseType.Capability.new()
     gen.validate(null)
-        .orReturn { return@fn rejectedPromise(capability, it) }
+        .orReturnThrow { return@fn rejectedPromise(capability, it) }
     if (gen.state == State.COMPLETED) {
         val iterRes = createIteratorResult(NullType, true)
-        capability.resolve.call(null, listOf(iterRes))
+        capability.resolve.callWithSingleArg(iterRes)
             .unwrap()
         return@fn capability.promise.toNormal()
     }
@@ -34,7 +34,7 @@ private val asyncGeneratorClose = method("close", 1u) fn@ { thisArg, args ->
     val value = args[0]
     val capability = PromiseType.Capability.new()
     gen.validate()
-        .orReturn { return@fn rejectedPromise(capability, it) }
+        .orReturnThrow { return@fn rejectedPromise(capability, it) }
     val returnComp = Completion.Return(value)
     gen.enqueue(returnComp, capability)
     when (gen.state) {

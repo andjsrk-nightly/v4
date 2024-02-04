@@ -12,7 +12,7 @@ class SyncGeneratorType(
     override val context = runningExecutionContext
     override var state: State? = null // [[GeneratorState]]
     @EsSpec("GeneratorStart")
-    override fun start(result: SimpleLazyFlow<MaybeEmptyOrAbrupt>) {
+    override fun start(result: SimpleLazyFlow<Completion.FromFunctionBody<*>>) {
         context.generator = this
         context.codeEvaluationState = lazyFlow f@ {
             val acGenContext = runningExecutionContext
@@ -22,9 +22,9 @@ class SyncGeneratorType(
             acGenerator.state = State.COMPLETED
             acGenContext.codeEvaluationState = null // drops the flow since it is no longer needed
             val resValue = when (res) {
-                is Completion.WideNormal -> NullType
+                is Completion.WideNormal<*> -> NullType
                 is Completion.Return -> res.value
-                is Completion.Abrupt -> return@f res
+                is Completion.Throw -> return@f res
             }
             createIteratorResult(resValue, true)
                 .toNormal()
@@ -37,19 +37,19 @@ class SyncGeneratorType(
      * @see syncYield
      */
     @EsSpec("GeneratorResume")
-    fun resume(value: LanguageType?, brand: String? = null): NonEmptyOrAbrupt {
+    fun resume(value: LanguageType?, brand: String? = null): NonEmptyOrThrow {
         validate(brand)
-            .orReturn { return it }
+            .orReturnThrow { return it }
         if (state == State.COMPLETED) return createIteratorResult(NullType, true).toNormal()
         assert(state.isOneOf(State.SUSPENDED_START, State.SUSPENDED_YIELD))
         state = State.EXECUTING
         executionContextStack.addTop(context)
         val res = context.codeEvaluationState!!.next(value.normalizeToNormal())
-            .orReturn { return it }
-        return res!!.toNormal()
+            .orReturn { return it as Completion.Throw }
+        return res.toNormal()
     }
     @EsSpec("GeneratorValidate")
-    override fun validate(brand: String?): EmptyOrAbrupt {
+    override fun validate(brand: String?): EmptyOrThrow {
         if (this.brand != brand) return throwError(TypeErrorKind.INCOMPATIBLE_METHOD_RECEIVER, TODO(), TODO())
         if (state == State.EXECUTING) return throwError(TypeErrorKind.GENERATOR_RUNNING)
         return empty

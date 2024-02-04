@@ -2,8 +2,7 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.error.*
 import io.github.andjsrk.v4.evaluate.builtin.error.*
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinClassType
-import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 fun error(kind: ErrorKind, vararg args: String): ObjectType {
     val errorClass = when (kind) {

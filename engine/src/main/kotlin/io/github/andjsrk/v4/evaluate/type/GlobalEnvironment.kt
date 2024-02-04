@@ -1,15 +1,15 @@
 package io.github.andjsrk.v4.evaluate.type
 
-import io.github.andjsrk.v4.evaluate.orReturn
+import io.github.andjsrk.v4.evaluate.orReturnThrow
 import io.github.andjsrk.v4.evaluate.type.lang.*
 
 class GlobalEnvironment(global: ObjectType): Environment(null) {
     val declarative = DeclarativeEnvironment(null)
     val `object` = ObjectEnvironment(global, null)
-    override fun hasBinding(name: String): MaybeAbrupt<BooleanType> {
+    override fun hasBinding(name: String): MaybeThrow<BooleanType> {
         val declarativeHas = declarative.hasBinding(name).value
         val objectHas = `object`.hasBinding(name)
-            .orReturn { return it }
+            .orReturnThrow { return it }
         return (declarativeHas or objectHas)
             .toNormal()
     }
@@ -31,7 +31,7 @@ class GlobalEnvironment(global: ObjectType): Environment(null) {
         ifHasBinding(name) {
             it.getBindingValue(name)
         }
-    private inline fun <R: AbstractType?> ifHasBinding(name: String, task: (Environment) -> Completion<R>) =
+    private inline fun <R: AbstractType?> ifHasBinding(name: String, task: (Environment) -> MaybeThrow<R>) =
         if (declarative.hasBinding(name).value.value) task(declarative)
         else task(`object`)
 }

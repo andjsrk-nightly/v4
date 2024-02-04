@@ -28,7 +28,7 @@ class NormalLexicalDeclarationNode(
                         .orReturn { return@f it }
                 }
             }
-            yieldAll(bindingElement.initializeBy(value, runningExecutionContext.lexicalEnvNotNull))
+            yieldAll(bindingElement.initializeWith(value, runningExecutionContext.lexicalEnvNotNull))
                 .orReturn { return@f it }
         }
         empty

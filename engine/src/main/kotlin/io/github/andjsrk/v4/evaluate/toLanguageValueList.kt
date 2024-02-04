@@ -4,12 +4,12 @@ import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.parse.node.*
 
-fun Iterator<NonEmptyOrAbrupt>.toLanguageValueList(): MaybeAbrupt<ListType<LanguageType>> {
+fun Iterator<NonEmptyOrThrow>.toLanguageValueList(): MaybeThrow<ListType<LanguageType>> {
     val values = this
         .asSequence()
         .toList()
         .map {
-            it.orReturn { return it }
+            it.orReturnThrow { return it }
         }
     return ListType(values)
         .toWideNormal()

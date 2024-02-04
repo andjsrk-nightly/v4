@@ -118,7 +118,7 @@ fun MethodNode.findDirectSuper() =
     when (this) {
         is GetterNode -> listOf(body)
         is SetterNode -> listOf(parameter, body)
-        is MethodNode -> listOf(parameters, body)
+        else -> listOf(parameters, body)
     }
         .mapAsSequence { it.find(SuperNode::class) }
         .foldElvis()

@@ -33,7 +33,7 @@ open class DefaultHostConfig: HostConfig() {
         val capability = PromiseType.Capability.new()
         scheduledTaskCount.incrementAndGet()
         timer.schedule(timerTask {
-            capability.resolve.call(null, listOf(NullType))
+            capability.resolve.callWithSingleArg(NullType)
                 .unwrap()
             runJobs()
 

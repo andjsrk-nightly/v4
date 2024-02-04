@@ -7,9 +7,9 @@ import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 
 class IteratorResult(val source: ObjectType): AbstractType {
     @EsSpec("IteratorComplete")
-    fun getDone(): MaybeAbrupt<BooleanType> {
+    fun getDone(): MaybeThrow<BooleanType> {
         return source.get("done".languageValue)
-            .orReturn { return it }
+            .orReturnThrow { return it }
             .requireToBe<BooleanType> { return it }
             .toNormal()
     }

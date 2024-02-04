@@ -88,7 +88,7 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
         @EsSpec("PromiseResolve")
         fun resolve(value: LanguageType) =
             Capability.new().apply {
-                resolve.call(null, listOf(value))
+                resolve.callWithSingleArg(value)
                     .unwrap()
             }
                 .promise
@@ -108,25 +108,22 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
         val reject: FunctionType,
     ): Record {
         @EsSpec("AsyncFunctionStart")
-        fun startAsyncFunction(bodyEval: SimpleLazyFlow<*>) {
+        fun startAsyncFunction(bodyEval: SimpleLazyFlow<Completion.FromFunctionBody<*>>) {
             val asyncContext = runningExecutionContext.copy()
             startAsyncBlock(bodyEval, asyncContext)
         }
         @EsSpec("AsyncBlockStart")
-        fun startAsyncBlock(bodyEval: SimpleLazyFlow<*>, asyncContext: ExecutionContext) {
+        fun startAsyncBlock(bodyEval: SimpleLazyFlow<Completion.FromFunctionBody<*>>, asyncContext: ExecutionContext) {
             val evalState = lazyFlow {
                 val res = yieldAll(bodyEval)
                 executionContextStack.removeTop()
                 when (res) {
-                    is Completion.Normal -> resolve.call(null, listOf(NullType))
-                    is Completion.Return -> resolve.call(null, listOf(res.value))
-                    else -> {
-                        require(res is Completion.Throw)
-                        reject.call(null, listOf(res.value))
-                    }
+                    is Completion.WideNormal<*> -> resolve.callWithSingleArg(NullType)
+                    is Completion.Return -> resolve.callWithSingleArg(res.value)
+                    is Completion.Throw -> reject.callWithSingleArg(res.value)
                 }
                     .unwrap()
-                empty
+                normalNull
             }
             asyncContext.codeEvaluationState = evalState
             executionContextStack.addTop(asyncContext)
@@ -160,7 +157,7 @@ class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
                         val fn =
                             if (handlerRes is Completion.Abrupt) capability.reject
                             else capability.resolve
-                        fn.call(null, listOf(handlerRes.value as LanguageType))
+                        fn.callWithSingleArg(handlerRes.value as LanguageType)
                             .unwrap()
                             .toNormal()
                     }, reaction.handler?.realm, getActiveModule())

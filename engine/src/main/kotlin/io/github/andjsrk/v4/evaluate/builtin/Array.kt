@@ -254,7 +254,7 @@ internal val arrayIndexOf = method("indexOf", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("Array.prototype.keys")
-private val indices = method("indices") fn@ { thisArg, args ->
+private val indices = method("indices") fn@ { thisArg, _ ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val indicesSeq = arr.array.indices.asSequence()
         .map { it.languageValue }
@@ -271,7 +271,7 @@ internal val arrayJoin = method("join") fn@ { thisArg, args ->
     val res = arr.array
         .map {
             stringify(it)
-                .orReturn { return@fn it }
+                .orReturnThrow { return@fn it }
                 .value
         }
         .joinToString(separator)
@@ -320,10 +320,10 @@ private inline fun FunctionType.callReduceCallback(
     element: LanguageType,
     index: Int,
     collection: LanguageType,
-    rtn: AbruptReturnLambda,
+    rtn: ThrowReturnLambda,
 ) =
     call(null, listOf(accumulator, element, index.languageValue, collection))
-        .orReturn(rtn)
+        .orReturnThrow(rtn)
 internal val reduceFromLeft = method("reduceFromLeft", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<ArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
@@ -436,11 +436,11 @@ internal val sortDefaultCompareFn = functionWithoutThis("compareFn", 2u) sort@ {
     val b = args[1]
     when {
         a.lessThan(b)
-            .orReturn { return@sort it }
+            .orReturnThrow { return@sort it }
             .value
             -> -1
         b.lessThan(a)
-            .orReturn { return@sort it }
+            .orReturnThrow { return@sort it }
             .value
             -> 1
         else -> 0
@@ -451,12 +451,12 @@ internal val sortDefaultCompareFn = functionWithoutThis("compareFn", 2u) sort@ {
 internal inline fun generalSort(
     compareFn: FunctionType,
     sort: (comparator: (LanguageType, LanguageType) -> Int) -> ArrayType,
-): MaybeAbrupt<ArrayType> {
+): MaybeThrow<ArrayType> {
     val res: ArrayType
     try {
         res = sort { a, b ->
             val compareRes = compareFn.call(null, listOf(a, b))
-                .orReturn { throw SortBreakException(it) }
+                .orReturnThrow { throw SortBreakException(it) }
                 .requireToBe<NumberType> { throw SortBreakException(it) }
             when {
                 compareRes.isNaN ->
@@ -469,11 +469,11 @@ internal inline fun generalSort(
             }
         }
     } catch (e: SortBreakException) {
-        return e.abruptCompletion
+        return e.reason
     }
     return res.toNormal()
 }
-internal class SortBreakException(val abruptCompletion: Completion.Abrupt): Exception()
+internal class SortBreakException(val reason: Completion.Throw): Exception()
 
 @EsSpec("Array.prototype.with")
 private val immutableArraySet = method("set", 2u) fn@ { thisArg, args ->

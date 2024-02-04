@@ -14,7 +14,7 @@ class FunctionEnvironment(
 ): DeclarativeEnvironment(outer) {
     var initialized = false
     @EsSpec("BindThisValue")
-    fun bindThisValue(value: LanguageType?): EmptyOrAbrupt {
+    fun bindThisValue(value: LanguageType?): EmptyOrThrow {
         if (initialized) TODO() // what ReferenceError should I throw?
         thisValue = value
         initialized = true
@@ -22,7 +22,7 @@ class FunctionEnvironment(
     }
     override fun hasThisBinding() =
         function.isMethod
-    override fun getThisBinding(): NonEmptyOrAbrupt {
+    override fun getThisBinding(): NonEmptyOrThrow {
         assert(function.isMethod)
         if (!initialized) TODO()
         val thisValue = thisValue ?: return throwError(TypeErrorKind.THISARG_NOT_PROVIDED)

@@ -12,17 +12,17 @@ import io.github.andjsrk.v4.evaluate.type.*
  * @param lazyPrototype to avoid some recursions, its type is [Lazy].
  */
 open class ObjectType(
-    lazyPrototype: Lazy<PrototypeObjectType?> = lazy { Object.instancePrototype },
+    lazyPrototype: Lazy<ObjectType?> = lazy { Object.instancePrototype },
     val properties: MutableMap<PropertyKey, Property> = mutableMapOf(),
 ): LanguageType {
     @EsSpec("OrdinaryObjectCreate")
-    constructor(prototype: PrototypeObjectType?): this(lazy { prototype })
+    constructor(prototype: ObjectType?): this(lazy { prototype })
     var prototype by MutableLazy.from(lazyPrototype)
         protected set
     var extensible = true
 
     @EsSpec("[[SetPrototypeOf]]")
-    fun _setPrototype(prototype: PrototypeObjectType?): WasSuccessful {
+    fun _setPrototype(prototype: ObjectType?): WasSuccessful {
         val curr = this.prototype
         if (!extensible) return false
         var proto = prototype
@@ -35,15 +35,15 @@ open class ObjectType(
         return true
     }
     @EsSpec("[[GetOwnProperty]]")
-    open fun _getOwnProperty(key: PropertyKey): MaybeAbrupt<Property?> =
+    open fun _getOwnProperty(key: PropertyKey): MaybeThrow<Property?> =
         properties[key].toWideNormal()
     @EsSpec("[[DefineOwnProperty]]")
-    fun _defineOwnProperty(key: PropertyKey, descriptor: Property): EmptyOrAbrupt {
+    fun _defineOwnProperty(key: PropertyKey, descriptor: Property): EmptyOrThrow {
         val current = _getOwnProperty(key)
-            .orReturn { return it }
+            .orReturnThrow { return it }
         return _applyPropertyDescriptor(key, descriptor, current)
     }
-    fun _throwIfNotCompatiblePropertyDescriptor(current: Property?, key: PropertyKey): EmptyOrAbrupt {
+    fun _throwIfNotCompatiblePropertyDescriptor(current: Property?, key: PropertyKey): EmptyOrThrow {
         when {
             current == null ->
                 if (!extensible) return throwError(TypeErrorKind.OBJECT_NOT_EXTENSIBLE, key.string())
@@ -52,27 +52,27 @@ open class ObjectType(
         }
         return empty
     }
-    fun _applyPropertyDescriptor(key: PropertyKey, descriptor: Property, current: Property?): EmptyOrAbrupt {
+    fun _applyPropertyDescriptor(key: PropertyKey, descriptor: Property, current: Property?): EmptyOrThrow {
         _throwIfNotCompatiblePropertyDescriptor(current, key)
-            .orReturn { return it }
+            .orReturnThrow { return it }
 
         properties[key] = descriptor.clone()
         return empty
     }
     @EsSpec("[[HasProperty]]")
-    open fun _hasProperty(key: PropertyKey): MaybeAbrupt<BooleanType> {
+    open fun _hasProperty(key: PropertyKey): MaybeThrow<BooleanType> {
         val hasOwn = hasOwnProperty(key)
-            .orReturn { return it }
+            .orReturnThrow { return it }
         if (hasOwn.value) return hasOwn.toNormal()
         val prototypeHas = prototype?._hasProperty(key)
-            ?.orReturn { return it }
+            ?.orReturnThrow { return it }
         return (prototypeHas ?: BooleanType.FALSE)
             .toNormal()
     }
     @EsSpec("[[Get]]")
-    open fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyOrAbrupt {
+    open fun _get(key: PropertyKey, receiver: LanguageType): NonEmptyOrThrow {
         val desc = _getOwnProperty(key)
-            .orReturn { return it }
+            .orReturnThrow { return it }
             ?: run {
                 val proto = prototype ?: return normalNull
                 return proto._get(key, receiver)
@@ -80,10 +80,10 @@ open class ObjectType(
         return desc.getValue(receiver)
     }
     @EsSpec("[[Set]]")
-    open fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): MaybeAbrupt<BooleanType?> {
+    open fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): MaybeThrow<BooleanType?> {
         when (
             val ownDesc = _getOwnProperty(key)
-                .orReturn { return it }
+                .orReturnThrow { return it }
         ) {
             null -> {
                 val parent = prototype
@@ -94,7 +94,7 @@ open class ObjectType(
                 if (ownDesc.not { writable }) return throwError(TypeErrorKind.CANNOT_ASSIGN_TO_READ_ONLY_PROPERTY, key.string())
                 require(receiver is ObjectType)
                 val existingDesc = receiver._getOwnProperty(key)
-                    .orReturn { return it }
+                    .orReturnThrow { return it }
                 if (existingDesc == null) createDataProperty(key, value)
                 else {
                     if (existingDesc is AccessorProperty) return BooleanType.FALSE.toNormal()
@@ -106,15 +106,15 @@ open class ObjectType(
             is AccessorProperty -> {
                 val setter = ownDesc.set ?: return throwError(TypeErrorKind.NO_SETTER, key.display())
                 setter.call(receiver, listOf(value))
-                    .orReturn { return it }
+                    .orReturnThrow { return it }
             }
         }
         return empty
     }
     @EsSpec("[[Delete]]")
-    open fun _delete(key: PropertyKey): EmptyOrAbrupt {
+    open fun _delete(key: PropertyKey): EmptyOrThrow {
         val desc = _getOwnProperty(key)
-            .orReturn { return it }
+            .orReturnThrow { return it }
             ?: return empty
         if (desc.not { configurable }) return throwError(TypeErrorKind.CANNOT_DELETE_PROPERTY)
         properties.remove(key)
@@ -160,35 +160,35 @@ open class ObjectType(
     inline fun hasProperty(key: PropertyKey) =
         _hasProperty(key)
     @EsSpec("HasOwnProperty")
-    fun hasOwnProperty(key: PropertyKey): MaybeAbrupt<BooleanType> {
+    fun hasOwnProperty(key: PropertyKey): MaybeThrow<BooleanType> {
         val desc = _getOwnProperty(key)
-            .orReturn { return it }
+            .orReturnThrow { return it }
         return (desc != null)
             .languageValue
             .toNormal()
     }
     @EsSpec("SetIntegrityLevel")
-    fun setImmutabilityLevel(level: ObjectImmutabilityLevel): EmptyOrAbrupt {
+    fun setImmutabilityLevel(level: ObjectImmutabilityLevel): EmptyOrThrow {
         val keys = _ownPropertyKeys()
         for (key in keys) {
             val desc = _getOwnProperty(key)
-                .orReturn { return it }!!
+                .orReturnThrow { return it }!!
                 .clone()
                 .apply {
                     configurable = false
                     if (level == ObjectImmutabilityLevel.FROZEN && this is DataProperty) writable = false
                 }
             definePropertyOrThrow(key, desc)
-                .orReturn { return it }
+                .orReturnThrow { return it }
         }
         return empty
     }
     @EsSpec("TestIntegrityLevel")
-    fun satisfiesImmutabilityLevel(level: ObjectImmutabilityLevel): MaybeAbrupt<GeneralSpecValue<Boolean>> {
+    fun satisfiesImmutabilityLevel(level: ObjectImmutabilityLevel): MaybeThrow<GeneralSpecValue<Boolean>> {
         if (extensible) return false.toGeneralWideNormal()
         for (key in _ownPropertyKeys()) {
             val desc = _getOwnProperty(key)
-                .orReturn { return it }!!
+                .orReturnThrow { return it }!!
             if (desc.configurable) return false.toGeneralWideNormal()
             if (level == ObjectImmutabilityLevel.FROZEN && desc is DataProperty && desc.writable) {
                 return false.toGeneralWideNormal()
@@ -207,18 +207,18 @@ open class ObjectType(
     fun ownEnumerableStringPropertyKeys() =
         transformOwnEnumerableStringPropertyKeys { it }
     @EsSpec("EnumerableOwnProperties") // kind: value
-    fun ownEnumerableStringPropertyKeyValues(): MaybeAbrupt<ListType<LanguageType>> {
+    fun ownEnumerableStringPropertyKeyValues(): MaybeThrow<ListType<LanguageType>> {
         return transformOwnEnumerableStringPropertyKeys { key ->
             get(key)
-                .orReturn { return it }
+                .orReturnThrow { return it }
         }
             .toWideNormal()
     }
     @EsSpec("EnumerableOwnProperties") // kind: key+value
-    fun ownEnumerableStringKeyEntries(): MaybeAbrupt<ListType<ArrayType>> {
+    fun ownEnumerableStringKeyEntries(): MaybeThrow<ListType<ArrayType>> {
         return transformOwnEnumerableStringPropertyKeys { key ->
             val value = get(key)
-                .orReturn { return it }
+                .orReturnThrow { return it }
             ImmutableArrayType.from(listOf(key, value))
         }
             .toWideNormal()

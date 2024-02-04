@@ -34,9 +34,9 @@ val Generator = BuiltinClassType(
         val sourceObj = args[0]
             .requireToBe<ObjectType> { return@ctor it }
         val nextMethod = sourceObj.getMethod("next".languageValue)
-            .orReturn { return@ctor it }
+            .orReturnThrow { return@ctor it }
         val closeMethod = sourceObj.getMethod("close".languageValue)
-            .orReturn { return@ctor it }
+            .orReturnThrow { return@ctor it }
         val gen = SyncGeneratorType()
         gen.definePropertyOrThrow("next".languageValue, DataProperty(nextMethod)).unwrap()
         if (closeMethod != null) gen.definePropertyOrThrow("close".languageValue, DataProperty(closeMethod)).unwrap()

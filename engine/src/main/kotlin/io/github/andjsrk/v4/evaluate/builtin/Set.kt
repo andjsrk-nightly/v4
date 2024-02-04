@@ -46,7 +46,7 @@ private val setForEach = method("forEach", 1u) fn@ { thisArg, args ->
         .requireToBe<FunctionType> { return@fn it }
     set.set.forEach {
         callback.call(null, listOf(it, set))
-            .orReturn { return@fn it }
+            .orReturnThrow { return@fn it }
     }
     set.toNormal()
 }

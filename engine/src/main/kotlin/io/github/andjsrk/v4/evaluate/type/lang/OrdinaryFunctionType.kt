@@ -32,13 +32,14 @@ class OrdinaryFunctionType(
     },
 ) {
     override val isMethod = thisMode == ThisMode.METHOD
-    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrAbrupt {
+    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrThrow {
         val calleeContext = prepareForOrdinaryCall()
         bindThisInCall(calleeContext, thisArg)
-        val res = evaluateBody(args).unwrap()
+        val res = evaluateBody(args).unwrap() as Completion.FromFunctionBody<*>
         executionContextStack.removeTop()
         if (res is Completion.Return) return res.value.toNormal()
-        res.orReturn { return it }
+        require(res is MaybeThrow<*>)
+        res.orReturnThrow { return it }
         // if the function returned nothing, return `null`
         return normalNull
     }
@@ -64,8 +65,10 @@ class OrdinaryFunctionType(
     @EsSpec("EvaluateAsyncGeneratorBody")
     fun evaluateBody(args: List<LanguageType>) = lazyFlow f@ {
         fun evaluateBodyFlexibly(body: ConciseBodyNode) =
-            if (isMethod) evaluateStatements(body as BlockNode)
-            else evaluateConciseBody(body)
+            (
+                if (isMethod) evaluateStatements(body as BlockNode).asFromFunctionBody()
+                else evaluateConciseBody(body)
+            )
 
         val instantiationRes = instantiateFunctionDeclaration(this@OrdinaryFunctionType, args)
 
@@ -81,7 +84,7 @@ class OrdinaryFunctionType(
                 when (instantiationRes) {
                     is Completion.Normal -> capability.startAsyncFunction(evaluateBodyFlexibly(body))
                     is Completion.Throw ->
-                        capability.reject.call(null, listOf(instantiationRes.value))
+                        capability.reject.callWithSingleArg(instantiationRes.value)
                             .unwrap()
                     else -> neverHappens()
                 }

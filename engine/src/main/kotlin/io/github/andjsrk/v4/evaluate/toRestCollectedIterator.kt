@@ -1,9 +1,8 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.error.TypeErrorKind
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.neverHappens
 import io.github.andjsrk.v4.not
 import io.github.andjsrk.v4.parse.isAnonymous
@@ -16,7 +15,7 @@ import io.github.andjsrk.v4.parse.stringValue
  * - non-rest element: collect the element as it is
  * - rest element: collect the remaining elements as an array
  */
-fun Iterator<NonEmptyOrAbrupt>.toRestCollectedArrayIterator(bindingElements: List<MaybeRestNode>) =
+fun Iterator<NonEmptyOrThrow>.toRestCollectedArrayIterator(bindingElements: List<MaybeRestNode>) =
     iterator {
         for (elem in bindingElements) {
             when (elem) {
@@ -25,7 +24,7 @@ fun Iterator<NonEmptyOrAbrupt>.toRestCollectedArrayIterator(bindingElements: Lis
                     else return@iterator
                 is RestNode -> {
                     val values = toLanguageValueList()
-                        .orReturn {
+                        .orReturnThrow {
                             yield(it)
                             return@iterator
                         }
@@ -67,7 +66,7 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
                             .orReturn { return@f it }
                         nonRestKeys += key
                         val hasKey = hasProperty(key)
-                            .orReturn { return@f it }
+                            .orReturnThrow { return@f it }
                             .value
                         if (!hasKey && elem.default == null) throwError(
                             TypeErrorKind.REQUIRED_PROPERTY_NOT_FOUND,
@@ -82,29 +81,33 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
         .iterator()
 }
 
-fun Iterator<SimpleLazyFlow<NonEmptyOrAbrupt>>.nextOrDefault(
+fun Iterator<Completion.FromFunctionBody<LanguageType>>.nextOrDefault(
     element: NonRestNode,
     expectedCount: Int,
     index: Int,
 ) = lazyFlow f@ {
     val iter = this@nextOrDefault
+    var tookNext = false
     val value = when {
-        iter.hasNext() ->
-            yieldAll(iter.next())
-                .orReturn { return@f it }
-        element.default == null -> return@f throwError(
-            TypeErrorKind.ITERABLE_YIELDED_INSUFFICIENT_NUMBER_OF_VALUES,
-            expectedCount.toString(),
-            index.toString(),
-        )
+        iter.hasNext() -> {
+            tookNext = true
+            iter.next()
+                .orReturnNonEmpty { return@f it }
+        }
         else -> NullType
     }
+    if (!tookNext && element.default == null) return@f throwError(
+        TypeErrorKind.ITERABLE_YIELDED_INSUFFICIENT_NUMBER_OF_VALUES,
+        expectedCount.toString(),
+        index.toString(),
+    )
     if (value == NullType && element.default != null) {
         val paramName = (element.binding as? IdentifierNode)?.stringValue
         if (paramName != null && element.default.isAnonymous) element.default.evaluateWithName(paramName)
         else element.default.evaluateValue()
+            .asFromFunctionBody()
             .unwrap()
-            .orReturn { return@f it }
+            .orReturnNonEmpty { return@f it }
     } else {
         value
     }

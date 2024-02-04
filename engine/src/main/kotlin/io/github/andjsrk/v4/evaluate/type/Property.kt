@@ -10,7 +10,7 @@ sealed class Property: AbstractType {
     abstract var enumerable: Boolean
     abstract var configurable: Boolean
     abstract fun clone(): Property
-    abstract fun getValue(thisValue: LanguageType): NonEmptyOrAbrupt
+    abstract fun getValue(thisValue: LanguageType): NonEmptyOrThrow
     abstract fun toDescriptorObject(): ObjectType
     protected fun toDescriptorObject(obj: ObjectType): ObjectType {
         return obj.apply {

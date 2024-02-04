@@ -5,13 +5,13 @@ import io.github.andjsrk.v4.evaluate.type.*
 
 sealed class ClassType(
     val name: PropertyKey?,
-    val parent: ClassType?,
-    staticProperties: MutableMap<PropertyKey, Property>,
+    val parentPrototype: PrototypeObjectType?,
+    staticProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     open val constructor: FunctionType,
 ): ObjectType(properties=staticProperties) {
-    val instancePrototype: PrototypeObjectType =
-        PrototypeObjectType(lazy { parent?.instancePrototype }, instancePrototypeProperties, this)
+    val instancePrototype: ClassAssociatedPrototypeObjectType =
+        ClassAssociatedPrototypeObjectType(lazy { parentPrototype }, instancePrototypeProperties, this)
     init {
         definePropertyOrThrow("instancePrototype".languageValue, DataProperty.sealed(instancePrototype))
     }

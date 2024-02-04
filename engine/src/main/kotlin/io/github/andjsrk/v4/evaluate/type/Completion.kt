@@ -1,25 +1,44 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
+import io.github.andjsrk.v4.evaluate.SimpleLazyFlow
 import io.github.andjsrk.v4.evaluate.ThrowTrace
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
-typealias MaybeAbrupt<NormalV> = Completion<NormalV>
-typealias Empty = Completion.Normal<Nothing?>
-typealias EmptyOrAbrupt = MaybeAbrupt<Nothing?>
-typealias NonEmptyWideOrAbrupt = MaybeAbrupt<AbstractType>
 typealias MaybeEmpty = Completion.Normal<LanguageType?>
-typealias MaybeEmptyOrAbrupt = MaybeAbrupt<LanguageType?>
+typealias Empty = Completion.Normal<Nothing?>
 typealias NonEmpty = Completion.Normal<LanguageType>
+
+typealias MaybeAbrupt<V> = Completion<V>
+typealias NonEmptyWideOrAbrupt = MaybeAbrupt<AbstractType>
+typealias MaybeEmptyOrAbrupt = MaybeAbrupt<LanguageType?>
+typealias EmptyOrAbrupt = MaybeAbrupt<Nothing?>
 typealias NonEmptyOrAbrupt = MaybeAbrupt<LanguageType>
+
+typealias MaybeThrow<V> = Completion.WideNormalOrThrow<V>
+typealias EmptyOrThrow = MaybeThrow<Nothing?>
+typealias NonEmptyOrThrow = MaybeThrow<LanguageType>
+
+typealias EmptyOrNonEmptyAbrupt = Completion.FromFunctionBody<Nothing?>
 
 @EsSpec("Completion Record")
 sealed interface Completion<out V: AbstractType?>: Record {
     val value: AbstractType?
 
+    /**
+     * Indicates an union of [WideNormal], [NonEmptyAbrupt].
+     * Note that the union should contain [Normal] instead of [WideNormal] originally,
+     * but if the union contains [Normal] it drops convenience extremely on when expressions with [WideNormalOrThrow].
+     */
+    sealed interface FromFunctionBody<out V: AbstractType?>: Completion<V>
+
+    /**
+     * Indicates an union of [WideNormal], [Throw].
+     */
+    sealed interface WideNormalOrThrow<out V: AbstractType?>: FromFunctionBody<V>
     @EsSpec("normal completion")
-    open class WideNormal<out V: AbstractType?>(override val value: V): Completion<V>
+    open class WideNormal<out V: AbstractType?>(override val value: V): WideNormalOrThrow<V>
     /**
      * A normal completion that only contains either a language value or `empty`.
      *
@@ -40,11 +59,11 @@ sealed interface Completion<out V: AbstractType?>: Record {
     sealed interface Abrupt: Completion<Nothing> {
         override val value: LanguageType?
     }
-    sealed interface NonEmptyAbrupt: Abrupt {
+    sealed interface NonEmptyAbrupt: Abrupt, FromFunctionBody<Nothing> {
         override val value: LanguageType
     }
     data class Return(override val value: LanguageType): NonEmptyAbrupt
-    data class Throw(override val value: LanguageType): NonEmptyAbrupt {
+    data class Throw(override val value: LanguageType): NonEmptyAbrupt, WideNormalOrThrow<Nothing> {
         init {
             ThrowTrace.instance = ThrowTrace(value)
         }
@@ -70,3 +89,17 @@ inline fun <T: AbstractType?> T.toWideNormal() =
     Completion.WideNormal(this)
 inline fun <T> T.toGeneralWideNormal() =
     GeneralSpecValue(this).toWideNormal()
+
+/**
+ * Unsafely casts the [SimpleLazyFlow] to contain a [Completion.FromFunctionBody].
+ */
+fun <T: AbstractType?> SimpleLazyFlow<Completion<T>>.asFromFunctionBody() =
+    this as SimpleLazyFlow<Completion.FromFunctionBody<T>>
+/**
+ * Unsafely casts the [SimpleLazyFlow] to contain a [MaybeThrow].
+ */
+fun <T: AbstractType?> SimpleLazyFlow<Completion<T>>.asMaybeThrow() =
+    this as SimpleLazyFlow<MaybeThrow<T>>
+
+fun <T: AbstractType> SimpleLazyFlow<Completion.FromFunctionBody<T?>>.asNotNullable() =
+    this as SimpleLazyFlow<Completion.FromFunctionBody<T>>

@@ -13,24 +13,24 @@ class IteratorRecord(
     var done: Boolean = done
         private set
     @EsSpec("IteratorNext")
-    fun next(value: LanguageType? = null): MaybeAbrupt<IteratorResult> {
+    fun next(value: LanguageType? = null): MaybeThrow<IteratorResult> {
         return nextMethod.call(sourceObject, if (value == null) emptyList() else listOf(value))
-            .orReturn { return it }
+            .orReturnThrow { return it }
             .requireToBe<ObjectType> { return it }
             .asIteratorResult()
             .toWideNormal()
     }
     @EsSpec("IteratorStep")
-    fun step(): MaybeAbrupt<IteratorResult?> {
+    fun step(): MaybeThrow<IteratorResult?> {
         val rawRes = next()
-        val res = rawRes.orReturn { return it }
+        val res = rawRes.orReturnThrow { return it }
         val done = res.getDone()
-            .orReturn { return it }
+            .orReturnThrow { return it }
             .value
         return if (done) empty else rawRes
     }
     @EsSpec("IteratorClose")
-    fun <V: AbstractType?> close(completion: MaybeAbrupt<V>): MaybeAbrupt<V> {
+    fun <V: AbstractType?> close(completion: Completion.FromFunctionBody<V>): Completion.FromFunctionBody<V> {
         val res =
             sourceObject.getMethod("close".languageValue)
                 .let {
@@ -39,16 +39,16 @@ class IteratorRecord(
                         closeMethod.call(sourceObject)
                     } else it
                 }
-        completion.orReturn { return it }
-        res.orReturn { return it } // just ignore, do not require anything to the language value (the original requires it to be an object)
+        if (completion is Completion.Throw) return completion
+        res.orReturnThrow { return it } // just ignore, do not require anything to the language value (the original requires it to be an object)
         return completion
     }
-    fun toSequence(): Sequence<NonEmptyOrAbrupt> =
+    fun toSequence(): Sequence<NonEmptyOrThrow> =
         sequence {
             while (true) {
                 val value = step()
-                    .orReturn {
-                        yield(close(it))
+                    .orReturnThrow {
+                        yield(close(it) as NonEmptyOrThrow)
                         return@sequence
                     }
                     ?: break
@@ -59,20 +59,20 @@ class IteratorRecord(
 
     companion object {
         @EsSpec("GetIterator")
-        fun from(value: LanguageType): MaybeAbrupt<IteratorRecord> {
+        fun from(value: LanguageType): MaybeThrow<IteratorRecord> {
             val method =
                 value.getMethod(SymbolType.WellKnown.iterator)
-                    .orReturn { return it }
+                    .orReturnThrow { return it }
                     ?: return throwError(TypeErrorKind.NOT_ITERABLE)
             return fromIteratorMethod(value, method)
         }
         @EsSpec("GetIteratorFromMethod")
-        fun fromIteratorMethod(value: LanguageType, method: FunctionType): MaybeAbrupt<IteratorRecord> {
+        fun fromIteratorMethod(value: LanguageType, method: FunctionType): MaybeThrow<IteratorRecord> {
             val iterator = method.call(value)
-                .orReturn { return it }
+                .orReturnThrow { return it }
                 .requireToBe<ObjectType> { return it }
             val nextMethod = iterator.getMethod("next".languageValue)
-                .orReturn { return it }
+                .orReturnThrow { return it }
                 ?: return throwError(TypeErrorKind.NOT_AN_ITERATOR)
             return IteratorRecord(iterator, nextMethod)
                 .toWideNormal()

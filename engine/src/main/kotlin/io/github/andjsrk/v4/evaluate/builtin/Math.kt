@@ -115,7 +115,7 @@ val clz32 = functionWithoutThis("clz32", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
         .toUint32()
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
     x.value.toUInt().countLeadingZeroBits()
         .languageValue
         .toNormal()
@@ -178,13 +178,13 @@ val imul = functionWithoutThis("imul", 2u) fn@ { args ->
     val a = args[0]
         .requireToBe<NumberType> { return@fn it }
         .toInt32()
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
         .value
         .toInt()
     val b = args[1]
         .requireToBe<NumberType> { return@fn it }
         .toInt32()
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
         .value
         .toInt()
     (a * b)

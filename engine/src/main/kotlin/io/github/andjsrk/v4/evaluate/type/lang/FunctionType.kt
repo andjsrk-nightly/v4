@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Function
 import io.github.andjsrk.v4.evaluate.builtin.sealedData
 import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrThrow
 
 sealed class FunctionType(
     var name: PropertyKey?,
@@ -22,23 +22,25 @@ sealed class FunctionType(
     val module = getActiveModule()
     abstract val isMethod: Boolean
     @EsSpec("Call") // the method implements Call rather than [[Call]] since additional type check is no needed
-    abstract fun call(thisArg: LanguageType? = null, args: List<LanguageType> = emptyList()): NonEmptyOrAbrupt
+    abstract fun call(thisArg: LanguageType? = null, args: List<LanguageType> = emptyList()): NonEmptyOrThrow
+    fun callWithSingleArg(value: LanguageType) =
+        call(null, listOf(value))
 }
 
 internal inline fun FunctionType.callCollectionCallback(
     element: LanguageType,
     index: Int,
     collection: LanguageType,
-    rtn: AbruptReturnLambda,
+    rtn: ThrowReturnLambda,
 ) =
     call(null, listOf(element, index.languageValue, collection))
-        .orReturn(rtn)
+        .orReturnThrow(rtn)
 
 internal inline fun FunctionType.callCollectionPredicate(
     element: LanguageType,
     index: Int,
     array: ArrayType,
-    rtn: AbruptReturnLambda,
+    rtn: ThrowReturnLambda,
 ) =
     callCollectionCallback(element, index, array, rtn)
         .requireToBe<BooleanType>(rtn)

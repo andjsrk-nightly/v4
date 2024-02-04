@@ -30,15 +30,14 @@ fun await(value: LanguageType) = lazyFlow {
  *
  * @sample rejectedPromiseSample
  */
-fun rejectedPromise(capability: PromiseType.Capability, reason: Completion.Abrupt) =
+fun rejectedPromise(capability: PromiseType.Capability, reason: Completion.Throw) =
     capability.promise.toNormal().also {
-        require(reason is Completion.NonEmptyAbrupt)
         capability.reject.call(null, listOf(reason.value))
             .unwrap()
     }
-fun rejectedPromiseSample(): Completion.Normal<PromiseType> {
+private fun rejectedPromiseSample(): Completion.Normal<PromiseType> {
     val capability = PromiseType.Capability.new()
-    var someCompletion: NonEmptyOrAbrupt = TODO()
+    var someCompletion: NonEmptyOrThrow = TODO()
     someCompletion
-        .orReturn { return rejectedPromise(capability, it) }
+        .orReturnThrow { return rejectedPromise(capability, it) }
 }

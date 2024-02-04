@@ -103,7 +103,7 @@ class SourceTextModule(
     override fun execute(capability: PromiseType.Capability?): EmptyOrAbrupt {
         if (hasTopLevelAwait) {
             requireNotNull(capability)
-            capability.startAsyncBlock(node.evaluate(), ExecutionContext(realm, env))
+            capability.startAsyncBlock(node.evaluate().asFromFunctionBody(), ExecutionContext(realm, env))
         } else {
             executionContextStack.addTop(ExecutionContext(realm, env))
             val res = node.evaluate()

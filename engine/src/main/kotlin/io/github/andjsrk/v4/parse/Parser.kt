@@ -1223,13 +1223,12 @@ class Parser(sourceText: String) {
      */
     private fun <N: NonRestNode> N?.withInvalidDefaultCheck() =
         this?.let {
-            when {
-                default is YieldNode ->
-                    reportError(SyntaxErrorKind.YIELD_IN_PARAMETER, range)
-                default is UnaryExpressionNode && default.operation == UnaryOperationType.AWAIT ->
-                    reportError(SyntaxErrorKind.AWAIT_EXPRESSION_FORMAL_PARAMETER, range)
-                else -> this
-            }
+            if (default == null) return this
+            val yield = default.find(YieldNode::class)
+            if (yield != null) return reportError(SyntaxErrorKind.YIELD_IN_PARAMETER, yield.range)
+            val await = default.find(UnaryExpressionNode::class) { it.operation == UnaryOperationType.AWAIT }
+            if (await != null) return reportError(SyntaxErrorKind.AWAIT_EXPRESSION_FORMAL_PARAMETER, await.range)
+            this
         }
     /**
      * Parses [ArrowFormalParameters](https://tc39.es/ecma262/multipage/ecmascript-language-functions-and-classes.html#prod-ArrowFormalParameters).

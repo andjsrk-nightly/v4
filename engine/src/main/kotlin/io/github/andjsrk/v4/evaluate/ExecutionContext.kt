@@ -1,8 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.FunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.GeneratorType
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 data class ExecutionContext(
     var realm: Realm,
@@ -10,7 +9,7 @@ data class ExecutionContext(
     var function: FunctionType? = null,
     var generator: GeneratorType<*>? = null,
     val module: Module? = null,
-    var codeEvaluationState: SimpleLazyFlow<MaybeEmptyOrAbrupt>? = null,
+    var codeEvaluationState: SimpleLazyFlow<Completion.FromFunctionBody<LanguageType>>? = null,
 ) {
     var lexicalEnvNotNull: DeclarativeEnvironment
         get() = lexicalEnv!!

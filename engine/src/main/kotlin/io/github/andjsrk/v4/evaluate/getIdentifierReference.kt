@@ -5,11 +5,11 @@ import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.StringType
 
 @EsSpec("GetIdentifierReference")
-fun getIdentifierReference(env: Environment?, name: StringType): MaybeAbrupt<Reference> {
+fun getIdentifierReference(env: Environment?, name: StringType): MaybeThrow<Reference> {
     if (env == null) return Reference(null, name).toWideNormal()
 
     val hasBinding = env.hasBinding(name.value)
-        .orReturn { return it }
+        .orReturnThrow { return it }
         .value
     return (
         if (hasBinding) Reference(env, name).toWideNormal()

@@ -18,9 +18,9 @@ private val objectAssign = functionWithoutThis("assign", 2u) fn@ { args ->
         for ((key, desc) in source.ownPropertyEntries()) {
             if (desc.enumerable) {
                 val value = source.get(key)
-                    .orReturn { return@fn it }
+                    .orReturnThrow { return@fn it }
                 target.set(key, value)
-                    .orReturn { return@fn it }
+                    .orReturnThrow { return@fn it }
             }
         }
     }
@@ -30,7 +30,7 @@ private val objectAssign = functionWithoutThis("assign", 2u) fn@ { args ->
 private val objectEntries = functionWithoutThis("entries", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val entries = obj.ownEnumerableStringKeyEntries()
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
     // TODO: migrate to generator
     ImmutableArrayType.from(entries.list)
         .toNormal()
@@ -40,7 +40,7 @@ private val objectEntries = functionWithoutThis("entries", 1u) fn@ { args ->
 private val freeze = functionWithoutThis("freeze", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     obj.setImmutabilityLevel(ObjectImmutabilityLevel.FROZEN)
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
     obj.toNormal()
 }
 
@@ -66,7 +66,7 @@ private val getOwnStringKeys = functionWithoutThis("getOwnStringKeys", 1u) fn@ {
 private val getOwnStringKeyValues = functionWithoutThis("getOwnStringKeyValues", 1u) fn@ { args ->
     val obj = args[0].requireToBe<ObjectType> { return@fn it }
     val values = obj.ownEnumerableStringPropertyKeyValues()
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
     // TODO: migrate to generator
     ImmutableArrayType.from(values)
         .toNormal()
@@ -104,7 +104,7 @@ val Object = BuiltinClassType(
     constructor ctor@ { _, args ->
         val prototype = args.getOptional(0)
             ?.normalizeNull()
-            ?.requireToBe<PrototypeObjectType> { return@ctor it }
+            ?.requireToBe<ObjectType> { return@ctor it }
         ObjectType(prototype)
             .toNormal()
     },

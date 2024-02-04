@@ -1,9 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
-import io.github.andjsrk.v4.evaluate.type.Property
+typealias PrototypeObjectType = ObjectType
 
-class PrototypeObjectType(
-    lazyPrototype: Lazy<PrototypeObjectType?> = lazy { null },
-    properties: MutableMap<PropertyKey, Property>,
-    val ownerClass: ClassType,
-): ObjectType(lazyPrototype, properties)
+val PrototypeObjectType.ownerClass get() =
+    (this as? ClassAssociatedPrototypeObjectType)
+        ?.ownerClass

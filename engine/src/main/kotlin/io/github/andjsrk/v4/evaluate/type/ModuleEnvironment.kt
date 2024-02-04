@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.not
 
 @EsSpec("Module Environment Record")
 class ModuleEnvironment(outer: Environment?): DeclarativeEnvironment(outer) {
-    override fun getBindingValue(name: String): NonEmptyOrAbrupt {
+    override fun getBindingValue(name: String): NonEmptyOrThrow {
         val binding = bindings[name]
         requireNotNull(binding)
         if (binding.isIndirect) {

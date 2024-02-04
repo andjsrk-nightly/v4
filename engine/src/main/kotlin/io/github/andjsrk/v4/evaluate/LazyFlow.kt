@@ -1,14 +1,15 @@
 package io.github.andjsrk.v4.evaluate
 
+import io.github.andjsrk.v4.evaluate.type.Completion
 import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.toIterableIterator
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*
 import kotlin.experimental.ExperimentalTypeInference
 
-private typealias Input = NonEmptyOrAbrupt
-private typealias Yield = NonEmptyOrAbrupt
+private typealias Input = Completion.FromFunctionBody<LanguageType>
+private typealias Yield = Completion.FromFunctionBody<LanguageType>
 
 typealias SimpleLazyFlow<R> = LazyFlow<R, R>
 

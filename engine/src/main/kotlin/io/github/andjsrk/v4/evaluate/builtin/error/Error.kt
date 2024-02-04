@@ -32,25 +32,25 @@ val Error = BuiltinClassType(
             ?.requireToBe<ObjectType> { return@ctor it }
         if (message != null) error.createDataProperty("message".languageValue, message)
         error.initializeErrorCause(options)
-            .orReturn { return@ctor it }
+            .orReturnThrow { return@ctor it }
         error.toNormal()
     },
 )
 
 private tailrec fun ObjectType.findName(): PropertyKey? {
     val proto = prototype ?: return null
-    return proto.ownerClass.name ?: proto.findName()
+    return proto.ownerClass?.name ?: proto.findName()
 }
 
 @EsSpec("InstallErrorCause")
-private fun ObjectType.initializeErrorCause(options: ObjectType?): EmptyOrAbrupt {
+private fun ObjectType.initializeErrorCause(options: ObjectType?): EmptyOrThrow {
     if (options == null) return empty
     val hasCause = options.hasProperty("cause".languageValue)
-        .orReturn { return it }
+        .orReturnThrow { return it }
         .value
     if (hasCause) {
         val cause = options.get("cause".languageValue)
-            .orReturn { return it }
+            .orReturnThrow { return it }
         createNonEnumerableDataPropertyOrThrow("cause".languageValue, cause)
             .unwrap()
     }

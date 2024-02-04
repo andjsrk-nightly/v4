@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.StringType
 
 @EsSpec("GetValue")
-internal fun getValue(v: AbstractType?): NonEmptyOrAbrupt {
+internal fun getValue(v: AbstractType?): NonEmptyOrThrow {
     requireNotNull(v) // requires v should not be null but the function accepts null due to convenience
     if (v is LanguageType) return v.toNormal()
     require(v is Reference)

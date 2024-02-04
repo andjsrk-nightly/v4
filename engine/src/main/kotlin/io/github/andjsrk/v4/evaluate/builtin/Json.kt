@@ -12,14 +12,14 @@ import kotlinx.serialization.json.Json as KotlinxJson
 
 private const val SPACE = '\u0020'
 
-private fun JsonElement.toLanguageValue(): NonEmptyOrAbrupt {
+private fun JsonElement.toLanguageValue(): NonEmptyOrThrow {
     return when (this) {
         is JsonObject ->
             ObjectType(properties=mutableMapOf(
                 *entries.map {
                     val key = it.key.languageValue
                     val value = it.value.toLanguageValue()
-                        .orReturn { return it }
+                        .orReturnThrow { return it }
                     key to DataProperty(value)
                 }
                     .toTypedArray()
@@ -28,7 +28,7 @@ private fun JsonElement.toLanguageValue(): NonEmptyOrAbrupt {
             ImmutableArrayType(
                 map {
                     it.toLanguageValue()
-                        .orReturn { return it }
+                        .orReturnThrow { return it }
                 }
             )
         is JsonNull -> NullType
@@ -59,7 +59,7 @@ private val parse = functionWithoutThis("parse", 1u) fn@ { args ->
         return@fn throwError(SyntaxErrorKind.INVALID_JSON, string)
     }
     decoded.toLanguageValue()
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
         .toNormal()
 }
 
@@ -72,16 +72,16 @@ private data class JsonStringifyContext(
     val indentAcc: String = "",
     val stack: Stack<ObjectType> = Stack(),
 )
-private fun validateNonCircularStructure(stack: Stack<ObjectType>, value: ObjectType): EmptyOrAbrupt =
+private fun validateNonCircularStructure(stack: Stack<ObjectType>, value: ObjectType): EmptyOrThrow =
     if (value in stack) throwError(TypeErrorKind.CIRCULAR_STRUCTURE)
     else empty
-private fun StringBuilder.appendJsonStringifiedLanguageValue(value: LanguageType, ctx: JsonStringifyContext): EmptyOrAbrupt {
+private fun StringBuilder.appendJsonStringifiedLanguageValue(value: LanguageType, ctx: JsonStringifyContext): EmptyOrThrow {
     var value = value
     val toJsonMethod = value.getMethod(SymbolType.WellKnown.toJson)
-        .orReturn { return it }
+        .orReturnThrow { return it }
     if (toJsonMethod != null) {
         value = toJsonMethod.call(value, listOf(ctx.indentArg.languageValue))
-            .orReturn { return it }
+            .orReturnThrow { return it }
     }
     val needIndent = ctx.indentArg.isNotEmpty()
     val newIndentAcc = ctx.indentAcc + ctx.indentArg
@@ -97,13 +97,14 @@ private fun StringBuilder.appendJsonStringifiedLanguageValue(value: LanguageType
         is FunctionType -> return throwError(TypeErrorKind.CANNOT_CONVERT_FUNCTION_TO_JSON)
         is ArrayType -> {
             validateNonCircularStructure(ctx.stack, value)
-                .orReturn { return it }
+                .orReturnThrow { return it }
             append('[')
             ctx.stack.addTop(value) // stack will be shared with newCtx since both are same instance
             val newCtx = ctx.copy(indentAcc=newIndentAcc)
             for ((i, elem) in value.array.withIndex()) {
                 append(newIndent)
                 appendJsonStringifiedLanguageValue(elem, newCtx)
+                    .orReturnThrow { return it }
                 if (i != value.array.lastIndex) append(',')
             }
             ctx.stack.removeTop()
@@ -112,7 +113,7 @@ private fun StringBuilder.appendJsonStringifiedLanguageValue(value: LanguageType
         }
         is ObjectType -> {
             validateNonCircularStructure(ctx.stack, value)
-                .orReturn { return it }
+                .orReturnThrow { return it }
             append('{')
             ctx.stack.addTop(value)
             val newCtx = ctx.copy(indentAcc=newIndentAcc)
@@ -121,9 +122,10 @@ private fun StringBuilder.appendJsonStringifiedLanguageValue(value: LanguageType
             for ((i, key) in keys.withIndex()) {
                 append(newIndent)
                 appendJsonStringifiedLanguageValue(key, ctx)
+                    .orReturnThrow { return it }
                 append(comma)
                 val value = value.get(key)
-                    .orReturn { return it }
+                    .orReturnThrow { return it }
                 appendJsonStringifiedLanguageValue(value, newCtx)
                 if (i != keys.lastIndex) append(',')
             }
@@ -149,7 +151,7 @@ private val stringify = functionWithoutThis("stringify", 1u) fn@ { args ->
     }
     val builder = StringBuilder()
     builder.appendJsonStringifiedLanguageValue(value, JsonStringifyContext(indent))
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
     builder.toString()
         .languageValue
         .toNormal()

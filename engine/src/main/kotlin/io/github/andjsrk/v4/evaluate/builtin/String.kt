@@ -122,7 +122,7 @@ private val findMatchedIndex = method("findMatchedIndex", 1u) fn@ { thisArg, arg
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0] // intentionally does not coerce to regular expressions
     val findMatchedIndexMethod = generalArg.getMethod(SymbolType.WellKnown.findMatchedIndex)
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
         ?: return@fn unexpectedType(generalArg, "a value that has Symbol.findMatchedIndex method")
     findMatchedIndexMethod.call(generalArg, listOf(stringArg))
 }
@@ -203,7 +203,7 @@ private val matchOne = method("matchOne", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0]
     val matchMethod = generalArg.getMethod(SymbolType.WellKnown.match)
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
         ?: return@fn unexpectedType(generalArg, "a value that has Symbol.match method")
     matchMethod.call(generalArg, listOf(stringArg, BooleanType.FALSE))
 }
@@ -213,7 +213,7 @@ private val matchAll = method("matchAll", 1u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
     val generalArg = args[0]
     val matchMethod = generalArg.getMethod(SymbolType.WellKnown.match)
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
         ?: return@fn unexpectedType(generalArg, "a value that has Symbol.match method")
     matchMethod.call(generalArg, listOf(stringArg, BooleanType.TRUE))
 }
@@ -301,10 +301,10 @@ private val replaceAll = method("replaceAll", 2u) fn@ { thisArg, args ->
         is StringType -> value
         else -> return@fn (
             value.getMethod(SymbolType.WellKnown.replace)
-                .orReturn { return@fn it }
+                .orReturnThrow { return@fn it }
                 ?.let { replaceMethod ->
                     checkStringReplaceNewArg(new)
-                        .orReturn { return@fn it }
+                        .orReturnThrow { return@fn it }
                     replaceMethod.call(value, listOf(stringArg, new, BooleanType.TRUE))
                 }
                 ?: unexpectedType(value, "${generalizedDescriptionOf<StringType>()} or a value that has Symbol.replace method")
@@ -312,7 +312,7 @@ private val replaceAll = method("replaceAll", 2u) fn@ { thisArg, args ->
     }
     val old = oldArg.value
     checkStringReplaceNewArg(new)
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
 
     when (new) {
         is StringType -> string.replace(old, new.value)
@@ -352,10 +352,10 @@ private val replaceFirst = method("replaceFirst", 2u) fn@ { thisArg, args ->
         is StringType -> value
         else -> return@fn (
             value.getMethod(SymbolType.WellKnown.replace)
-                .orReturn { return@fn it }
+                .orReturnThrow { return@fn it }
                 ?.let { replaceMethod ->
                     checkStringReplaceNewArg(new)
-                        .orReturn { return@fn it }
+                        .orReturnThrow { return@fn it }
                     replaceMethod.call(value, listOf(stringArg, new, BooleanType.FALSE))
                 }
                 ?: unexpectedType(value, "${generalizedDescriptionOf<StringType>()} or a value that has Symbol.replace method")
@@ -363,7 +363,7 @@ private val replaceFirst = method("replaceFirst", 2u) fn@ { thisArg, args ->
     }
     val old = oldArg.value
     checkStringReplaceNewArg(new)
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
 
     when (new) {
         is StringType ->
@@ -435,7 +435,7 @@ private val split = method("split") fn@ { thisArg, args ->
         is StringType -> value
         null -> {
             checkSplitLimitArg(limit)
-                .orReturn { return@fn it }
+                .orReturnThrow { return@fn it }
             return@fn ImmutableArrayType.from(
                 listOf(stringArg)
             )
@@ -443,16 +443,16 @@ private val split = method("split") fn@ { thisArg, args ->
         }
         else -> {
             val splitMethod = value.getMethod(SymbolType.WellKnown.split)
-                .orReturn { return@fn it }
+                .orReturnThrow { return@fn it }
                 ?: return@fn unexpectedType(value, "a value that has Symbol.split method")
             checkSplitLimitArg(limit)
-                .orReturn { return@fn it }
+                .orReturnThrow { return@fn it }
             return@fn splitMethod.call(value, listOf(stringArg, limit ?: NullType))
         }
     }
     val separator = separatorArg.value
     val safeLimit = checkSplitLimitArg(limit)
-        .orReturn { return@fn it }
+        .orReturnThrow { return@fn it }
         .value
     val res = string.split(separator, limit=safeLimit)
         .let {
@@ -607,14 +607,14 @@ private fun checkStringReplaceNewArg(value: LanguageType) =
         is StringType, is FunctionType -> empty
         else -> unexpectedType(value, StringType::class, FunctionType::class)
     }
-private fun checkSplitLimitArg(limit: LanguageType?): MaybeAbrupt<GeneralSpecValue<Int>> {
+private fun checkSplitLimitArg(limit: LanguageType?): MaybeThrow<GeneralSpecValue<Int>> {
     return limit
         .requireToBe<NumberType> { return it }
         .requireToBeUnsignedInt { return it }
         .toGeneralWideNormal()
 }
 
-private inline fun NumberType.requireToBeIndexWithinString(string: String, name: String = "startIndex", rtn: AbruptReturnLambda): Int {
+private inline fun NumberType.requireToBeIndexWithinString(string: String, name: String = "startIndex", rtn: ThrowReturnLambda): Int {
     val index = this.requireToBeIndex(rtn)
     if (index >= string.length) rtn(
         throwError(
@@ -626,7 +626,7 @@ private inline fun NumberType.requireToBeIndexWithinString(string: String, name:
     )
     return index
 }
-private inline fun NumberType.requireToBePositionWithinString(string: String, name: String = "stringEnd", rtn: AbruptReturnLambda): Int {
+private inline fun NumberType.requireToBePositionWithinString(string: String, name: String = "stringEnd", rtn: ThrowReturnLambda): Int {
     val index = this.requireToBeUnsignedInt(rtn)
     if (index > string.length) rtn(
         throwError(

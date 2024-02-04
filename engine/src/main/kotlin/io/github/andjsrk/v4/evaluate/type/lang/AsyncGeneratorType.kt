@@ -14,7 +14,7 @@ class AsyncGeneratorType(
     override var state: State? = null // [[AsyncGeneratorState]]
     val queue = ArrayDeque<Request>()
     @EsSpec("AsyncGeneratorStart")
-    override fun start(result: SimpleLazyFlow<MaybeEmptyOrAbrupt>) {
+    override fun start(result: SimpleLazyFlow<Completion.FromFunctionBody<*>>) {
         val genContext = runningExecutionContext
         genContext.generator = this
         genContext.codeEvaluationState = lazyFlow f@ {
@@ -23,8 +23,9 @@ class AsyncGeneratorType(
             val res = yieldAll(result)
             executionContextStack.removeTop()
             acGenerator.state = State.COMPLETED
+            acGenContext.codeEvaluationState = null
             val returnValue = when (res) {
-                is Completion.Normal -> normalNull
+                is Completion.WideNormal<*> -> normalNull
                 is Completion.Return -> res.value.toNormal()
                 else -> neverHappens()
             }
@@ -34,7 +35,7 @@ class AsyncGeneratorType(
         state = State.SUSPENDED_START
     }
     @EsSpec("AsyncGeneratorResume")
-    fun resume(completion: NonEmptyOrAbrupt) {
+    fun resume(completion: Completion.FromFunctionBody<LanguageType>) {
         state = State.EXECUTING
         executionContextStack.addTop(context)
         context.codeEvaluationState?.next(completion)
@@ -44,7 +45,7 @@ class AsyncGeneratorType(
         assert(queue.isNotEmpty())
         val next = queue.removeFirst()
         if (completion is Completion.Throw) {
-            next.capability.reject.call(null, listOf(completion.value))
+            next.capability.reject.callWithSingleArg(completion.value)
                 .unwrap()
         } else {
             require(completion is Completion.Normal)
@@ -56,7 +57,7 @@ class AsyncGeneratorType(
                     runningExecutionContext.realm = oldRealm
                     res
                 } else createIteratorResult(completion.value, done)
-            next.capability.resolve.call(null, listOf(iterRes))
+            next.capability.resolve.callWithSingleArg(iterRes)
                 .unwrap()
         }
     }
@@ -83,7 +84,7 @@ class AsyncGeneratorType(
         promise.then(onFulfilled, onRejected)
     }
     @EsSpec("AsyncGeneratorEnqueue")
-    fun enqueue(completion: NonEmptyOrAbrupt, capability: PromiseType.Capability) {
+    fun enqueue(completion: Completion.FromFunctionBody<LanguageType>, capability: PromiseType.Capability) {
         queue += Request(completion, capability)
     }
     @EsSpec("AsyncGeneratorDrainQueue")
@@ -101,7 +102,12 @@ class AsyncGeneratorType(
                 done = true
             } else {
                 val comp =
-                    if (next.completion is Completion.Normal) normalNull
+                    when (next.completion) {
+                        is Completion.WideNormal<*> -> normalNull
+                        is Completion.Return -> next.completion
+                        is Completion.Throw -> next.completion
+                    }
+                    if (next.completion is Completion.WideNormal<*>) normalNull
                     else next.completion
                 completeStep(comp, true)
                 if (queue.isEmpty()) done = true
@@ -109,13 +115,13 @@ class AsyncGeneratorType(
         }
     }
     @EsSpec("AsyncGeneratorValidate")
-    override fun validate(brand: String?): EmptyOrAbrupt {
+    override fun validate(brand: String?): EmptyOrThrow {
         if (this.brand != brand) return throwError(TypeErrorKind.INCOMPATIBLE_METHOD_RECEIVER, TODO(), TODO())
         return empty
     }
 
     @EsSpec("AsyncGeneratorRequest")
-    data class Request(val completion: NonEmptyOrAbrupt, val capability: PromiseType.Capability)
+    data class Request(val completion: Completion.FromFunctionBody<LanguageType>, val capability: PromiseType.Capability)
     enum class State {
         SUSPENDED_START,
         SUSPENDED_YIELD,

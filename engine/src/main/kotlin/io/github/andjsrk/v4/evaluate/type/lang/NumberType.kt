@@ -201,7 +201,7 @@ value class NumberType(
         generalShift(other, ::toInt32, Double::toInt) { a, b -> (a shr b).toDouble() }
     override fun unsignedRightShift(other: NumberType) =
         generalShift(other, ::toUint32, Double::toUInt) { a, b -> (a shr b).toDouble() }
-    override fun lessThan(other: NumberType): MaybeAbrupt<BooleanType> {
+    override fun lessThan(other: NumberType): MaybeThrow<BooleanType> {
         return when {
             this.isNaN || other.isNaN -> return throwError(TypeErrorKind.CANNOT_COMPARE_NAN)
             this.value == other.value -> FALSE // +0 < -0 or -0 < +0 will be handled on this case
@@ -328,36 +328,36 @@ internal fun throwMustBeIntegerInRange(description: String, range: LongRange) =
         range.first.languageValue.display(),
         range.last.languageValue.display(),
     )
-internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", rtn: AbruptReturnLambda) =
+internal inline fun NumberType.requireToBeIntWithin(range: LongRange, description: String = "The number", rtn: ThrowReturnLambda) =
     requireToBeIntegerWithin(range)
         ?.toInt()
         ?: rtn(throwMustBeIntegerInRange(description, range))
-internal inline fun NumberType.requireToBeIntWithin(range: NamedRange, description: String = "The number", rtn: AbruptReturnLambda) =
+internal inline fun NumberType.requireToBeIntWithin(range: NamedRange, description: String = "The number", rtn: ThrowReturnLambda) =
     requireToBeIntegerWithin(range.range)
         ?.toInt()
         ?: rtn(unexpectedNumberRange(description, range.name))
 
-internal inline fun NumberType.requireToBeUnsignedInt(rtn: AbruptReturnLambda) =
+internal inline fun NumberType.requireToBeUnsignedInt(rtn: ThrowReturnLambda) =
     requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
 /**
  * Note that the function returns `-1` if the number is [NumberType.POSITIVE_INFINITY].
  */
-internal inline fun NumberType.requireToBeUnsignedIntOrPositiveInfinity(rtn: AbruptReturnLambda): Int {
+internal inline fun NumberType.requireToBeUnsignedIntOrPositiveInfinity(rtn: ThrowReturnLambda): Int {
     if (this.isPositiveInfinity) return -1
     return this.requireToBeIntegerWithin(NamedRange.unsignedInteger.range)
         ?.toInt()
         ?: rtn(unexpectedNumberRange("The number", "an unsigned integer or positive infinity"))
 }
-internal inline fun NumberType.requireToBeRadix(rtn: AbruptReturnLambda) =
+internal inline fun NumberType.requireToBeRadix(rtn: ThrowReturnLambda) =
     requireToBeIntWithin(NamedRange.radix, rtn=rtn)
-internal inline fun NumberType.requireToBeIndex(rtn: AbruptReturnLambda) =
+internal inline fun NumberType.requireToBeIndex(rtn: ThrowReturnLambda) =
     requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
-internal inline fun NumberType.requireToBeIndexWithin(size: Int, rtn: AbruptReturnLambda) =
+internal inline fun NumberType.requireToBeIndexWithin(size: Int, rtn: ThrowReturnLambda) =
     requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
         .let {
             it.takeIf { it < size } ?: rtn(invalidIndex(it))
         }
-internal inline fun NumberType.requireToBeRelativeIndex(rtn: AbruptReturnLambda) =
+internal inline fun NumberType.requireToBeRelativeIndex(rtn: ThrowReturnLambda) =
     requireToBeIntWithin(NamedRange.relativeIndex, rtn=rtn)
 /**
  * Returns `null` if the number is greater than [Int.MAX_VALUE].
@@ -369,7 +369,7 @@ internal fun Int.resolveRelativeIndex(length: Int): Int? {
     val mightBeOutOfRange = if (index < 0) length + index else index
     return mightBeOutOfRange.takeIf { it in 0 until length }
 }
-internal inline fun Int.resolveRelativeIndexOrReturn(length: Int, rtn: AbruptReturnLambda) =
+internal inline fun Int.resolveRelativeIndexOrReturn(length: Int, rtn: ThrowReturnLambda) =
     resolveRelativeIndex(length) ?: rtn(invalidRelativeIndex(this))
 internal fun invalidIndex(index: Int) =
     throwError(RangeErrorKind.INVALID_INDEX, index.languageValue.display())

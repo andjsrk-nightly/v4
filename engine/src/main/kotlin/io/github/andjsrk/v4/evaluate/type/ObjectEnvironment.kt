@@ -20,18 +20,18 @@ class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environm
         throw NotImplementedError()
     override fun initializeBinding(name: String, value: LanguageType) =
         setMutableBinding(name, value)
-    override fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt {
+    override fun setMutableBinding(name: String, value: LanguageType): EmptyOrThrow {
         val has = `object`.hasProperty(name.languageValue)
-            .orReturn { return it }
+            .orReturnThrow { return it }
             .value
         if (!has) return throwError(ReferenceErrorKind.NOT_DEFINED, name)
         `object`.set(name.languageValue, value)
-            .orReturn { return it }
+            .orReturnThrow { return it }
         return empty
     }
-    override fun getBindingValue(name: String): NonEmptyOrAbrupt {
+    override fun getBindingValue(name: String): NonEmptyOrThrow {
         val has = `object`.hasProperty(name.languageValue)
-            .orReturn { return it }
+            .orReturnThrow { return it }
             .value
         if (!has) return throwError(ReferenceErrorKind.NOT_DEFINED, name)
         return `object`.get(name.languageValue)

@@ -31,14 +31,14 @@ open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
         binding.value = value
         return empty
     }
-    override fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt {
+    override fun setMutableBinding(name: String, value: LanguageType): EmptyOrThrow {
         val binding = bindings[name] ?: return throwError(ReferenceErrorKind.NOT_DEFINED, name)
         if (binding.not { isInitialized }) return throwError(ReferenceErrorKind.ACCESSED_UNINITIALIZED_VARIABLE, name)
         if (binding.not { isMutable }) return throwError(TypeErrorKind.CONST_ASSIGN)
         binding.value = value
         return empty
     }
-    override fun getBindingValue(name: String): NonEmptyOrAbrupt {
+    override fun getBindingValue(name: String): NonEmptyOrThrow {
         assert(name in bindings)
         val binding = bindings[name] ?: neverHappens()
         if (binding.not { isInitialized }) return throwError(ReferenceErrorKind.ACCESSED_UNINITIALIZED_VARIABLE, name)
@@ -48,6 +48,6 @@ open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {
     open fun hasThisBinding() =
         false
     @EsSpec("GetThisBinding")
-    open fun getThisBinding(): NonEmptyOrAbrupt =
+    open fun getThisBinding(): NonEmptyOrThrow =
         throw NotImplementedError()
 }

@@ -34,15 +34,15 @@ data class AccessorProperty(
     }
 }
 
-inline fun getter(name: String, crossinline block: (thisArg: LanguageType) -> NonEmptyOrAbrupt) =
+inline fun getter(name: String, crossinline block: (thisArg: LanguageType) -> NonEmptyOrThrow) =
     BuiltinFunctionType(name, 0u) fn@ { thisArg, _ ->
         if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
         block(thisArg)
     }
-inline fun setter(name: String, crossinline block: (thisArg: LanguageType, value: LanguageType) -> EmptyOrAbrupt) =
+inline fun setter(name: String, crossinline block: (thisArg: LanguageType, value: LanguageType) -> EmptyOrThrow) =
     BuiltinFunctionType(name, 1u) fn@ { thisArg, args ->
         if (thisArg == null) return@fn throwError(TypeErrorKind.THISARG_NOT_PROVIDED)
         block(thisArg, args[0])
-            .orReturn { return@fn it }
+            .orReturnThrow { return@fn it }
         normalNull
     }

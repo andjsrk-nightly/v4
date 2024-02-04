@@ -3,8 +3,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
-import io.github.andjsrk.v4.evaluate.type.toNormal
+import io.github.andjsrk.v4.evaluate.type.*
 import java.math.BigInteger
 
 @JvmInline
@@ -51,7 +50,7 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
         leftShift(-other)
     override fun unsignedRightShift(other: BigIntType) =
         throwError(TypeErrorKind.BIGINT_SHR)
-    override fun lessThan(other: BigIntType): MaybeAbrupt<BooleanType> =
+    override fun lessThan(other: BigIntType): MaybeThrow<BooleanType> =
         (value < other.value)
             .languageValue
             .toNormal()

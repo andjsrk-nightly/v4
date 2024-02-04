@@ -1,9 +1,10 @@
 package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.*
-import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.requireToBe
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
+import io.github.andjsrk.v4.evaluate.withUnsafeModification
 
 private val mutableArrayFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val arrayLike = args[0]
@@ -99,12 +100,13 @@ private val mutableArrayFlatMap = method("flatMap", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
     val i = Ref(0)
-    while (i.value < arr.array.size) {
-        val value = arr.array[i.value]
-        val res = callback.call(null, listOf(value, i.value.languageValue, arr))
-            .orReturn { return@fn it }
-        arr.array.removeAt(i.value)
-        arr.array.addFlattenedAt(i, res, 1)
+    withUnsafeModification({ return@fn it }) {
+        while (i.value < arr.array.size) {
+            val value = arr.array[i.value]
+            val res = callback.callCollectionCallback(value, i.value, arr) { return@fn it }
+            arr.array.removeAt(i.value)
+            arr.array.addFlattenedAt(i, res, 1)
+        }
     }
     arr.toNormal()
 }
@@ -112,9 +114,10 @@ private val mutableArrayFlatMap = method("flatMap", 1u) fn@ { thisArg, args ->
 private val mutableArrayMap = method("map", 1u) fn@ { thisArg, args ->
     val arr = thisArg.requireToBe<MutableArrayType> { return@fn it }
     val callback = args[0].requireToBe<FunctionType> { return@fn it }
-    repeat(arr.array.size) { i ->
-        arr.array[i] = callback.call(null, listOf(arr.array[i], i.languageValue, arr))
-            .orReturn { return@fn it }
+    withUnsafeModification({ return@fn it }) {
+        repeat(arr.array.size) { i ->
+            arr.array[i] = callback.callCollectionCallback(arr.array[i], i, arr) { return@fn it }
+        }
     }
     arr.toNormal()
 }
@@ -200,9 +203,11 @@ private val mutableArraySort = method("sort") fn@ { thisArg, args ->
     val compareFn = args.getOptional(0)
         ?.requireToBe<FunctionType> { return@fn it }
         ?: sortDefaultCompareFn
-    generalSort(compareFn) { comp ->
-        arr.array.sortWith(comp)
-        arr
+    withUnsafeModification({ return@fn it }) {
+        generalSort(compareFn) { comp ->
+            arr.array.sortWith(comp)
+            arr
+        }
     }
 }
 

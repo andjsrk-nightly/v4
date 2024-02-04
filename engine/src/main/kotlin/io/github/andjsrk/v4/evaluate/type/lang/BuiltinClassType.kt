@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.evaluate.languageValue
-import io.github.andjsrk.v4.evaluate.orReturn
+import io.github.andjsrk.v4.evaluate.orReturnThrow
 import io.github.andjsrk.v4.evaluate.type.*
 
 /**
@@ -21,9 +21,9 @@ class BuiltinClassType(
         instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
         constructor: BuiltinFunctionType,
     ): this(name.languageValue, parent, staticProperties, instancePrototypeProperties, constructor)
-    override fun construct(args: List<LanguageType>): MaybeAbrupt<ObjectType> {
+    override fun construct(args: List<LanguageType>): MaybeThrow<ObjectType> {
         val res = constructor.call(ObjectType(instancePrototype), args)
-            .orReturn { return it }
+            .orReturnThrow { return it }
         require(res is ObjectType)
         return res.toNormal()
     }
@@ -31,7 +31,7 @@ class BuiltinClassType(
 
 internal inline fun constructor(
     requiredParamCount: UInt = 0u,
-    crossinline block: (obj: ObjectType, args: List<LanguageType>) -> MaybeAbrupt<ObjectType>,
+    crossinline block: (obj: ObjectType, args: List<LanguageType>) -> MaybeThrow<ObjectType>,
 ) =
     BuiltinFunctionType("constructor", requiredParamCount) { obj, args ->
         require(obj is ObjectType)

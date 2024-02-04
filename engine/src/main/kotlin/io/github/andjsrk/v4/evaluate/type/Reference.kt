@@ -3,7 +3,7 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
-import io.github.andjsrk.v4.evaluate.orReturn
+import io.github.andjsrk.v4.evaluate.orReturnThrow
 import io.github.andjsrk.v4.evaluate.throwError
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
@@ -28,14 +28,14 @@ data class Reference(
     inline val isSuper get() =
         thisValue != null
     @EsSpec("InitializeReferencedBinding")
-    fun initializeBinding(value: LanguageType): EmptyOrAbrupt {
+    fun initializeBinding(value: LanguageType): EmptyOrThrow {
         assert(this.not { isUnresolvable })
         require(base is Environment)
         require(referencedName is StringType)
         return base.initializeBinding(referencedName.value, value)
     }
     @EsSpec("PutValue")
-    fun putValue(value: LanguageType): EmptyOrAbrupt {
+    fun putValue(value: LanguageType): EmptyOrThrow {
         return when {
             this.isUnresolvable -> {
                 require(referencedName is StringType)
@@ -44,7 +44,7 @@ data class Reference(
             this.isProperty -> {
                 if (base !is ObjectType) return throwError(TypeErrorKind.PRIMITIVE_IMMUTABLE)
                 base._set(referencedName!!, value, getThis())
-                    .orReturn { return it }
+                    .orReturnThrow { return it }
                 empty
             }
             else -> {

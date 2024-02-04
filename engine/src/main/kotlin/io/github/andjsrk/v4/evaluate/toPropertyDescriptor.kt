@@ -5,18 +5,18 @@ import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.neverHappens
 
-internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
+internal fun ObjectType.toPropertyDescriptor(): MaybeThrow<Property> {
     val hasValueField = hasOwnProperty("value".languageValue)
-        .orReturn { return it }
+        .orReturnThrow { return it }
         .value
     val hasWritableField = hasOwnProperty("writable".languageValue)
-        .orReturn { return it }
+        .orReturnThrow { return it }
         .value
     val hasGetField = hasOwnProperty("get".languageValue)
-        .orReturn { return it }
+        .orReturnThrow { return it }
         .value
     val hasSetField = hasOwnProperty("set".languageValue)
-        .orReturn { return it }
+        .orReturnThrow { return it }
         .value
 
     val isData = hasValueField || hasWritableField
@@ -32,16 +32,16 @@ internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
         when {
             isData -> {
                 val value = getOwnPropertyValue("value".languageValue)
-                    .orReturn { return it }
+                    .orReturnThrow { return it }
                 val writable = getOptionalBooleanPropertyValueOrReturn("writable".languageValue) { return it }
                 DataProperty(value, writable, enumerable, configurable)
             }
             isAccessor -> {
                 val getter = getOwnPropertyValue("get".languageValue)
-                    .orReturn { return it }
+                    .orReturnThrow { return it }
                     ?.requireToBe<FunctionType> { return it }
                 val setter = getOwnPropertyValue("set".languageValue)
-                    .orReturn { return it }
+                    .orReturnThrow { return it }
                     ?.requireToBe<FunctionType> { return it }
                 AccessorProperty(getter, setter, enumerable, configurable)
             }
@@ -50,8 +50,8 @@ internal fun ObjectType.toPropertyDescriptor(): MaybeAbrupt<Property> {
     )
 }
 
-private inline fun ObjectType.getOptionalBooleanPropertyValueOrReturn(key: PropertyKey, rtn: AbruptReturnLambda) =
+private inline fun ObjectType.getOptionalBooleanPropertyValueOrReturn(key: PropertyKey, rtn: ThrowReturnLambda) =
     getOwnPropertyValue(key)
-        .orReturn (rtn)
+        .orReturnThrow(rtn)
         ?.requireToBe<BooleanType>(rtn)
         ?.value

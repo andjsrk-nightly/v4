@@ -47,7 +47,7 @@ private val mapForEach = method("forEach", 1u) fn@ { thisArg, args ->
         .requireToBe<FunctionType> { return@fn it }
     map.map.forEach { (key, value) ->
         callback.call(null, listOf(value, key, map))
-            .orReturn { return@fn it }
+            .orReturnThrow { return@fn it }
     }
     map.toNormal()
 }

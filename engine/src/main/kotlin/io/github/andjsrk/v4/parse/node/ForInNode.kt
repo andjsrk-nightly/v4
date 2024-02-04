@@ -52,15 +52,15 @@ class ForInNode(
             val iteratorEnv = DeclarativeEnvironment(oldEnv)
             declaration.instantiateIn(iteratorEnv)
             runningExecutionContext.lexicalEnvNotNull = iteratorEnv
-            yieldAll(declaration.binding.initializeBy(nextValue, iteratorEnv))
-                .orReturn {
+            yieldAll(declaration.binding.initializeWith(nextValue, iteratorEnv))
+                .orReturnNonEmpty {
                     runningExecutionContext.lexicalEnvNotNull = oldEnv
                     return@f iterRec.close(it)
                 }
             val stmtRes = yieldAll(body.evaluate())
             runningExecutionContext.lexicalEnvNotNull = oldEnv
             if (!continueLoop(stmtRes)) {
-                require(stmtRes is Completion.Abrupt)
+                require(stmtRes is Completion.Throw)
                 val abrupt = updateEmpty(stmtRes, res)
                 return@f iterRec.close(abrupt)
             }

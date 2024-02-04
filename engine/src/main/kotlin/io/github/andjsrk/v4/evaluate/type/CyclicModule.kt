@@ -44,7 +44,7 @@ abstract class CyclicModule(
         } else {
             if (!asyncEvaluation) {
                 assert(status == Status.EVALUATED)
-                capability.resolve.call(null, listOf(NullType))
+                capability.resolve.callWithSingleArg(NullType)
                     .unwrap()
                 assert(stack.isEmpty())
             }
@@ -85,7 +85,7 @@ abstract class CyclicModule(
         if (status == Status.EVALUATED) return
         asyncEvaluation = false
         status = Status.EVALUATED
-        topLevelCapability?.resolve?.call(null, listOf(NullType))
+        topLevelCapability?.resolve?.callWithSingleArg(NullType)
             ?.unwrap()
         val ancestors = asyncEvaluatingModules
             .intersect(gatherSynchronouslyExecutableAncestors())
@@ -96,7 +96,7 @@ abstract class CyclicModule(
                 if (result is Completion.NonEmptyAbrupt) it.asyncModuleExecutionRejected(result.value)
                 else {
                     it.status = Status.EVALUATED
-                    it.topLevelCapability?.resolve?.call(null, listOf(NullType))
+                    it.topLevelCapability?.resolve?.callWithSingleArg(NullType)
                         ?.unwrap()
                 }
             }
@@ -107,7 +107,7 @@ abstract class CyclicModule(
         evaluationError = Completion.Throw(reason)
         status = Status.EVALUATED
         asyncParentModules.forEach { it.asyncModuleExecutionRejected(reason) }
-        topLevelCapability?.reject?.call(null, listOf(reason))
+        topLevelCapability?.reject?.callWithSingleArg(reason)
             ?.unwrap()
     }
     override fun link(): EmptyOrAbrupt {

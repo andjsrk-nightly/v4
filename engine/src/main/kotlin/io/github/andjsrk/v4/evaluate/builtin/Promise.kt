@@ -50,7 +50,7 @@ private val finally = method("finally", 1u) fn@ { thisArg, args ->
     val thenFinally = functionWithoutThis("", 1u) then@ { args ->
         val value = args[0]
         val res = onFinally.call()
-            .orReturn { return@then it }
+            .orReturnThrow { return@then it }
         val p = PromiseType.resolve(res)
         val valueProvider = functionWithoutThis("") {
             value.toNormal()
@@ -60,7 +60,7 @@ private val finally = method("finally", 1u) fn@ { thisArg, args ->
     val catchFinally = functionWithoutThis("", 1u) catch@ { args ->
         val reason = args[0]
         val res = onFinally.call()
-            .orReturn { return@catch it }
+            .orReturnThrow { return@catch it }
         val p = PromiseType.resolve(res)
         val thrower = functionWithoutThis("") {
             Completion.Throw(reason)

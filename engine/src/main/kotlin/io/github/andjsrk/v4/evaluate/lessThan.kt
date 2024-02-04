@@ -2,12 +2,11 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
-import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.toNormal
 
 @EsSpec("IsLessThan")
-fun LanguageType.lessThan(other: LanguageType): MaybeAbrupt<BooleanType> {
+fun LanguageType.lessThan(other: LanguageType): MaybeThrow<BooleanType> {
     listOf(this, other).forEach {
         if (it !is StringType && it !is NumericType<*>) return unexpectedType(it, StringType::class, NumericType::class)
     }

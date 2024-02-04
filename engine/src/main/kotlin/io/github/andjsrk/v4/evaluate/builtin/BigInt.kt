@@ -3,7 +3,7 @@ package io.github.andjsrk.v4.evaluate.builtin
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.MaybeAbrupt
+import io.github.andjsrk.v4.evaluate.type.MaybeThrow
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.evaluate.type.toNormal
 import java.math.BigInteger
@@ -91,7 +91,7 @@ val BigInt = BuiltinClassType(
     },
 )
 
-private fun NumberType.toBigInt(): MaybeAbrupt<BigIntType> {
+private fun NumberType.toBigInt(): MaybeThrow<BigIntType> {
     if (this.not { isInteger }) return throwError(TypeErrorKind.BIGINT_FROM_NON_INTEGER, toString(10).value)
     return value.toBigDecimal().toBigIntegerExact()
         .languageValue

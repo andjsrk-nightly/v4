@@ -7,15 +7,15 @@ import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 @EsSpec("Environment Record")
 sealed class Environment(var outer: Environment?): Record {
     @EsSpec("HasBinding")
-    abstract fun hasBinding(name: String): MaybeAbrupt<BooleanType>
+    abstract fun hasBinding(name: String): MaybeThrow<BooleanType>
     @EsSpec("CreateMutableBinding")
-    abstract fun createMutableBinding(name: String): EmptyOrAbrupt
+    abstract fun createMutableBinding(name: String): EmptyOrThrow
     @EsSpec("CreateImmutableBinding")
-    abstract fun createImmutableBinding(name: String): EmptyOrAbrupt
+    abstract fun createImmutableBinding(name: String): EmptyOrThrow
     @EsSpec("InitializeBinding")
-    abstract fun initializeBinding(name: String, value: LanguageType): EmptyOrAbrupt
+    abstract fun initializeBinding(name: String, value: LanguageType): EmptyOrThrow
     @EsSpec("SetMutableBinding")
-    abstract fun setMutableBinding(name: String, value: LanguageType): EmptyOrAbrupt
+    abstract fun setMutableBinding(name: String, value: LanguageType): EmptyOrThrow
     @EsSpec("GetBindingValue")
-    abstract fun getBindingValue(name: String): NonEmptyOrAbrupt
+    abstract fun getBindingValue(name: String): NonEmptyOrThrow
 }

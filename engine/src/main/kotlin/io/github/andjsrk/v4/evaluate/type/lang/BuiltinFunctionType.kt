@@ -4,9 +4,9 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.FunctionEnvironment
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrAbrupt
+import io.github.andjsrk.v4.evaluate.type.NonEmptyOrThrow
 
-private typealias BuiltinFunctionBehavior = (thisArg: LanguageType?, args: List<LanguageType>) -> NonEmptyOrAbrupt
+private typealias BuiltinFunctionBehavior = (thisArg: LanguageType?, args: List<LanguageType>) -> NonEmptyOrThrow
 
 @EsSpec("CreateBuiltinFunction")
 class BuiltinFunctionType(
@@ -20,7 +20,7 @@ class BuiltinFunctionType(
         behavior: BuiltinFunctionBehavior,
     ): this(name?.languageValue, requiredParameterCount, behavior)
     override val isMethod = true
-    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrAbrupt {
+    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrThrow {
         val calleeContext = ExecutionContext(realm, FunctionEnvironment.from(this, thisArg), this)
         executionContextStack.addTop(calleeContext)
         val res = behavior(thisArg, args)
@@ -29,7 +29,7 @@ class BuiltinFunctionType(
     }
 }
 
-private typealias BuiltinMethodBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyOrAbrupt
+private typealias BuiltinMethodBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyOrThrow
 inline fun method(
     name: PropertyKey?,
     requiredParamCount: UInt = 0u,
@@ -48,7 +48,7 @@ inline fun method(
 inline fun functionWithoutThis(
     name: String? = null,
     requiredParamCount: UInt = 0u,
-    crossinline behavior: (args: List<LanguageType>) -> NonEmptyOrAbrupt,
+    crossinline behavior: (args: List<LanguageType>) -> NonEmptyOrThrow,
 ) =
     BuiltinFunctionType(name, requiredParamCount) { _, args ->
         behavior(args)

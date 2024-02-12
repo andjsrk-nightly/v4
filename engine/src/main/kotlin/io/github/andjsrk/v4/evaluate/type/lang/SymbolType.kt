@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.evaluate.type.lang
 
 import io.github.andjsrk.v4.EsSpec
 
-class SymbolType(val description: String? = null): PrimitiveLanguageType, PropertyKey {
+class SymbolType(val description: String? = null): PrimitiveLanguageType, LanguageTypePropertyKey {
     /**
      * Note that symbols will be compared by its identity, not [value].
      */

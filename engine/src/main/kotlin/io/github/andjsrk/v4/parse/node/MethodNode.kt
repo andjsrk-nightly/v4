@@ -9,7 +9,7 @@ sealed interface MethodNode: FunctionNode {
     override val body: BlockNode
     override fun evaluate() = evaluateFlexibly(false, false)
     fun evaluateFlexibly(isAsync: Boolean, isGenerator: Boolean) = lazyFlow f@ {
-        val name = yieldAll(name.toPropertyKey())
+        val name = yieldAll(name.toLanguageTypePropertyKey())
             .orReturn { return@f it }
         val env = runningExecutionContext.lexicalEnvNotNull
         val privEnv = runningExecutionContext.privateEnv

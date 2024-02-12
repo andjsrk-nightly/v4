@@ -32,6 +32,7 @@ class ArrowFunctionNode(
             body,
             ThisMode.ARROW,
             runningExecutionContext.lexicalEnvNotNull,
+            runningExecutionContext.privateEnv,
             isAsync,
             isGenerator,
         )

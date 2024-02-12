@@ -62,7 +62,7 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
                         rest.toNormal() // an object that contains the other own enumerable properties of the value
                     }
                     is NonRestObjectPropertyNode -> {
-                        val key = yieldAll(elem.key.toPropertyKey())
+                        val key = yieldAll(elem.key.toLanguageTypePropertyKey())
                             .orReturn { return@f it }
                         nonRestKeys += key
                         val hasKey = hasProperty(key)
@@ -70,7 +70,7 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
                             .value
                         if (!hasKey && elem.default == null) throwError(
                             TypeErrorKind.REQUIRED_PROPERTY_NOT_FOUND,
-                            key.display()
+                            key.string()
                         )
                         else getProperty(key)
                     }

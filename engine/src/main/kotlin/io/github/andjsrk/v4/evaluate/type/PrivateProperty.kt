@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type
 
-import io.github.andjsrk.v4.evaluate.PrivateName
+import io.github.andjsrk.v4.evaluate.type.lang.PrivateName
 
 /**
  * The class only stores [data] since it can cover all the fields.

@@ -124,9 +124,12 @@ open class ObjectType(
     }
     @EsSpec("[[OwnPropertyKeys]]")
     fun _ownPropertyKeys() =
-        properties.keys.toList()
+        properties.keys.filterIsInstance<LanguageTypePropertyKey>()
     fun ownPropertyEntries() =
-        properties.entries.map { it.toPair() }
+        properties.entries.flatMap { (k, v) ->
+            if (k is LanguageTypePropertyKey) listOf(k to v)
+            else emptyList()
+        }
 
     @EsSpec("Get")
     inline fun get(key: PropertyKey) =
@@ -175,7 +178,7 @@ open class ObjectType(
     }
     @EsSpec("DefineMethod")
     fun defineMethod(methodNode: MethodNode) = lazyFlow f@ {
-        val name = yieldAll(methodNode.name.toPropertyKey())
+        val name = yieldAll(methodNode.name.toLanguageTypePropertyKey())
             .orReturn { return@f it }
         val env = runningExecutionContext.lexicalEnvNotNull
         val privEnv = runningExecutionContext.privateEnv

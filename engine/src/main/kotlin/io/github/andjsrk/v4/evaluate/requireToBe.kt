@@ -18,6 +18,6 @@ internal inline fun LanguageType.requireToBeString(rtn: ThrowReturnLambda) =
     requireToBe<StringType>(rtn)
         .value
 
-internal inline fun LanguageType.requireToBePropertyKey(rtn: ThrowReturnLambda) =
-    if (this !is PropertyKey) rtn(unexpectedType(this, PropertyKey::class))
+internal inline fun LanguageType.requireToBeLanguageTypePropertyKey(rtn: ThrowReturnLambda) =
+    if (this !is LanguageTypePropertyKey) rtn(unexpectedType(this, LanguageTypePropertyKey::class))
     else this

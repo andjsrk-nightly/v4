@@ -13,7 +13,7 @@ class ClassDeclarationNode(
 ): ClassNode(), DeclarationNode {
     override fun evaluate() = lazyFlow {
         val name = name.stringValue
-        val value = evaluateTail()
+        val value = evaluateTail(true)
         empty
     }
 }

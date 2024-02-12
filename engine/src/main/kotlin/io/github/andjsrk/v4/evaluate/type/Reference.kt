@@ -42,7 +42,7 @@ data class Reference(
             }
             isProperty -> {
                 if (base !is ObjectType) return throwError(TypeErrorKind.PRIMITIVE_IMMUTABLE)
-                if (referencedName is StringType && referencedName.isPrivateName) return base.privateSet(referencedName, value)
+                if (referencedName is PrivateName) return base.privateSet(referencedName, value)
                 base._set(referencedName!!, value, getThis())
                     .orReturnThrow { return it }
                 empty

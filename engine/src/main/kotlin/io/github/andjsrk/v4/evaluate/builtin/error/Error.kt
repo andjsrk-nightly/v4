@@ -13,7 +13,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 @EsSpec("Error.prototype.name")
 val errorNameGetter = getter("name") fn@ {
     val error = it.requireToBe<ObjectType> { return@fn it }
-    error.findName().normalizeToNormal()
+    error.findName()?.toLanguageValue().normalizeToNormal()
 }
 
 @EsSpec("%Error%")

@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.error.TypeErrorKind
+import io.github.andjsrk.v4.evaluate.type.AbstractType
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.NullType
 import kotlin.reflect.KClass
@@ -12,7 +13,7 @@ fun unexpectedType(actual: LanguageType?, expectedDescription: String) =
         generalizedDescriptionOf(actual ?: NullType),
     )
 
-fun unexpectedType(actual: LanguageType?, vararg expectedTypes: KClass<out LanguageType>) =
+fun unexpectedType(actual: LanguageType?, vararg expectedTypes: KClass<out AbstractType>) =
     unexpectedType(
         actual,
         expectedTypes.joinToString(" or ") {

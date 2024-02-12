@@ -40,7 +40,7 @@ class BinaryExpressionNode(
             return@f rval.toNormal()
         }
 
-        if (operation == BinaryOpType.IN && left is IdentifierNode && left.private) {
+        if (operation == BinaryOpType.IN && left is IdentifierNode && left.isPrivateName) {
             val rval = yieldAll(right.evaluateValue())
                 .orReturn { return@f it }
             val privEnv = runningExecutionContext.privateEnv
@@ -144,7 +144,7 @@ internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode
                 .languageValue
                 .toNormal()
         BinaryOpType.IN -> {
-            val key = left.requireToBePropertyKey { return@f it }
+            val key = left.requireToBeLanguageTypePropertyKey { return@f it }
             return@f right.hasProperty(key)
         }
         BinaryOpType.INSTANCEOF -> return@f when {

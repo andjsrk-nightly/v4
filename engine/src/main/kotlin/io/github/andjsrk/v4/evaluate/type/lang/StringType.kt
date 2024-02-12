@@ -9,7 +9,7 @@ import io.github.andjsrk.v4.evaluate.type.toNormal
  * @see [isPrivateName]
  */
 @JvmInline
-value class StringType(override val value: String): PrimitiveLanguageType, PropertyKey {
+value class StringType(override val value: String): PrimitiveLanguageType, LanguageTypePropertyKey {
     operator fun plus(other: StringType) =
         StringType(value + other.value)
     fun lessThan(other: StringType) =

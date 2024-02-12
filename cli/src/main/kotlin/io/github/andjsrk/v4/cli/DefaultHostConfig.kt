@@ -58,22 +58,22 @@ open class DefaultHostConfig: HostConfig() {
         when (value) {
             NullType -> "null"
             is StringType ->
-                if (raw) Json.encodeToString(value.value)
-                else value.value
+                if (raw) value.value
+                else Json.encodeToString(value.value)
             is NumberType -> value.toString(10).value
             is BigIntType -> value.toString(10).value
             is BooleanType -> value.value.toString()
             is SymbolType -> value.toString()
             is ArrayType -> {
                 val mutabilityPrefix = (value is MutableArrayType).thenTake { "(mutable) " }.orEmpty()
-                val items = value.array.joinToString(", ") { display(it, true) }
+                val items = value.array.joinToString(", ") { display(it, false) }
                 "$mutabilityPrefix[$items]"
             }
             is ObjectType -> {
                 val prefix =
                     if (value.prototype == Object.instancePrototype) ""
                     else {
-                        val name = value.prototype?.ownerClass?.name?.let(::display) ?: "(anonymous)"
+                        val name = value.prototype?.ownerClass?.name?.string() ?: "(anonymous)"
                         "$name "
                     }
                 val props = value.properties.asSequence()
@@ -83,11 +83,12 @@ open class DefaultHostConfig: HostConfig() {
                             when (k) {
                                 is StringType ->
                                     if (k.value.all { it.isIdentifierChar }) k.value
-                                    else display(k, true)
+                                    else display(k, false)
                                 is SymbolType -> display(k)
+                                is PrivateName -> k.description
                             }
                         val value = when (desc) {
-                            is DataProperty -> display(desc.value, true)
+                            is DataProperty -> display(desc.value, false)
                             is AccessorProperty ->
                                 "<${
                                     listOfNotNull(

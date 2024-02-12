@@ -39,11 +39,11 @@ class MemberExpressionNode(
         if (isComputed) {
             val key = yieldAll(property.evaluateValue())
                 .orReturn { return@f it }
-                .requireToBePropertyKey { return@f it }
+                .requireToBeLanguageTypePropertyKey { return@f it }
             Reference(base, key)
         } else {
             require(property is IdentifierNode)
-            if (property.private) Reference.private(base, property.value)
+            if (property.isPrivateName) Reference.private(base, property.value)
             else Reference(base, property.stringValue)
         }
                 .toWideNormal()

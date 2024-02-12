@@ -23,7 +23,7 @@ class MethodExpressionNode(
         instantiateMethod(null)
             .toNormal()
     }
-    @EsSpec("InstantiateFunctionExpression")
+    @EsSpec("InstantiateOrdinaryFunctionExpression")
     @EsSpec("InstantiateAsyncFunctionExpression")
     @EsSpec("InstantiateGeneratorFunctionExpression")
     @EsSpec("InstantiateAsyncGeneratorFunctionExpression")
@@ -34,6 +34,7 @@ class MethodExpressionNode(
             body,
             ThisMode.METHOD,
             runningExecutionContext.lexicalEnvNotNull,
+            runningExecutionContext.privateEnv,
             isAsync,
             isGenerator,
         )

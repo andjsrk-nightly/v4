@@ -1,8 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type
 
-import io.github.andjsrk.v4.evaluate.PrivateName
-import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.lang.*
 
 class PrivateEnvironment(override val outer: PrivateEnvironment?): Environment(outer) {
     val names = mutableSetOf<PrivateName>()

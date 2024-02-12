@@ -7,13 +7,13 @@ import io.github.andjsrk.v4.evaluate.type.lang.*
 
 private val functionNameGetter = getter("name") fn@ { thisArg ->
     val func = thisArg.requireToBe<FunctionType> { return@fn it }
-    func.name.normalizeToNormal()
+    func.name?.toLanguageValue().normalizeToNormal()
 }
 private val functionNameSetter = setter("name") fn@ { thisArg, value ->
     val func = thisArg.requireToBe<FunctionType> { return@fn it }
     val name = value
         .normalizeNull()
-        ?.requireToBePropertyKey { return@fn it }
+        ?.requireToBeLanguageTypePropertyKey { return@fn it }
     func.name = name
     empty
 }

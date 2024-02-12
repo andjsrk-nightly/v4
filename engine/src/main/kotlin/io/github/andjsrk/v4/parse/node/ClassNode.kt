@@ -26,7 +26,7 @@ sealed class ClassNode: NonAtomicNode {
         val outerPrivEnv = runningExecutionContext.privateEnv
         val classPrivEnv = PrivateEnvironment(outerPrivEnv)
         for (privName in privateBoundIdentifiers()) {
-            classPrivEnv.names += privName.stringValue // produces a Private Name
+            classPrivEnv.names += privName.toPrivateName() // produces a Private Name
         }
         val parentValue = parent?.let { parentNode ->
             runningExecutionContext.lexicalEnv = classEnv
@@ -93,7 +93,7 @@ private fun evaluateClassElement(element: ClassElementNode, obj: ObjectType) =
     }
 
 private fun evaluateField(field: FieldNode, obj: ObjectType) = lazyFlow f@ {
-    val name = yieldAll(field.name.toPropertyKey())
+    val name = yieldAll(field.name.toLanguageTypePropertyKey())
         .orReturn { return@f it }
     val initializer = field.value?.let { value ->
         OrdinaryFunctionType(

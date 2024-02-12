@@ -32,7 +32,7 @@ class ObjectLiteralNode(
                     is ComputedPropertyKeyNode -> keyNode.expression.range == property.value.range
                     else -> keyNode.range == property.value.range
                 }
-                val key = yieldAll(keyNode.toPropertyKey())
+                val key = yieldAll(keyNode.toLanguageTypePropertyKey())
                     .orReturn { return@f it }
                 val value = when {
                     isShorthand && keyNode is ComputedPropertyKeyNode -> key // should be evaluated only once in this case

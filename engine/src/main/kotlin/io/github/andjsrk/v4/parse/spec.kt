@@ -145,7 +145,7 @@ fun Node.propName(): ObjectLiteralKeyNode? =
         else -> null
     }
         ?.takeIf { it !is ComputedPropertyKeyNode }
-        ?.takeIf { !(it is IdentifierNode && it.private) }
+        ?.takeIf { !(it is IdentifierNode && it.isPrivateName) }
 
 @EsSpec("StringValue")
 val IdentifierNode.stringValue get() =
@@ -153,7 +153,7 @@ val IdentifierNode.stringValue get() =
 
 fun Node.privateBoundIdentifiers(): List<IdentifierNode> =
     when (this) {
-        is IdentifierNode -> if (private) listOf(this) else emptyList()
+        is IdentifierNode -> if (isPrivateName) listOf(this) else emptyList()
         is FieldNode -> name.privateBoundIdentifiers()
         is MethodNode -> name.privateBoundIdentifiers()
         is ClassNode ->

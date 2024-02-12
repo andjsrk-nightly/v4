@@ -7,22 +7,23 @@ import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 import io.github.andjsrk.v4.evaluate.type.lang.StringType
 
 @EsSpec("GetValue")
-internal fun getValue(v: AbstractType?): NonEmptyOrThrow {
-    requireNotNull(v) // requires v should not be null but the function accepts null due to convenience
-    if (v is LanguageType) return v.toNormal()
-    require(v is Reference)
-    if (v.isUnresolvable) {
-        require(v.referencedName is StringType)
-        return throwError(ReferenceErrorKind.NOT_DEFINED, v.referencedName.value)
+internal fun getValue(value: AbstractType?): NonEmptyOrThrow {
+    requireNotNull(value) // v should not be null but the function accepts null for convenience
+    if (value is LanguageType) return value.toNormal()
+    require(value is Reference)
+    if (value.isUnresolvable) {
+        require(value.referencedName is StringType)
+        return throwError(ReferenceErrorKind.NOT_DEFINED, value.referencedName.value)
     }
-    if (v.isProperty) {
-        require(v.base is LanguageType)
-        if (v.referencedName == null) return normalNull
-        return v.base.getProperty(v.referencedName)
+    if (value.isProperty) {
+        require(value.base is LanguageType)
+        val refName = value.referencedName ?: return normalNull
+        if (refName is StringType && refName.isPrivateName) return value.base.privateGet(refName)
+        return value.base.getProperty(refName)
     } else {
-        val base = v.base
+        val base = value.base
         require(base is Environment)
-        require(v.referencedName is StringType)
-        return base.getBindingValue(v.referencedName.value)
+        require(value.referencedName is StringType)
+        return base.getBindingValue(value.referencedName.value)
     }
 }

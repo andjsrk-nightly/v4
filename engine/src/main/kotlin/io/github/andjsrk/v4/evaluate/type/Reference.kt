@@ -3,8 +3,7 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
-import io.github.andjsrk.v4.evaluate.orReturnThrow
-import io.github.andjsrk.v4.evaluate.throwError
+import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
 
@@ -37,12 +36,13 @@ data class Reference(
     @EsSpec("PutValue")
     fun putValue(value: LanguageType): EmptyOrThrow {
         return when {
-            this.isUnresolvable -> {
+            isUnresolvable -> {
                 require(referencedName is StringType)
                 throwError(ReferenceErrorKind.NOT_DEFINED, referencedName.value)
             }
-            this.isProperty -> {
+            isProperty -> {
                 if (base !is ObjectType) return throwError(TypeErrorKind.PRIMITIVE_IMMUTABLE)
+                if (referencedName is StringType && referencedName.isPrivateName) return base.privateSet(referencedName, value)
                 base._set(referencedName!!, value, getThis())
                     .orReturnThrow { return it }
                 empty
@@ -57,4 +57,14 @@ data class Reference(
     @EsSpec("GetThisValue")
     fun getThis() =
         thisValue ?: base as LanguageType
+
+    companion object {
+        @EsSpec("MakePrivateReference")
+        fun private(baseValue: LanguageType, name: String): Reference {
+            val env = runningExecutionContext.privateEnv
+            requireNotNull(env)
+            val privateName = resolvePrivateIdentifier(name, env)
+            return Reference(baseValue, privateName)
+        }
+    }
 }

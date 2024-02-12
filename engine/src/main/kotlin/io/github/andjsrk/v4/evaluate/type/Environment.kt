@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
 import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 @EsSpec("Environment Record")
-sealed class Environment(var outer: Environment?): Record {
+sealed class Environment(open val outer: Environment?): Record {
     @EsSpec("HasBinding")
     abstract fun hasBinding(name: String): MaybeThrow<BooleanType>
     @EsSpec("CreateMutableBinding")

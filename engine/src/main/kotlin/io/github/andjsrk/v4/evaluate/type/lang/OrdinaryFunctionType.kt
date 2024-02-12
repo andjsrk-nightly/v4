@@ -13,14 +13,16 @@ class OrdinaryFunctionType(
     name: PropertyKey?,
     val parameters: UniqueFormalParametersNode,
     val body: ConciseBodyNode,
-    override val env: DeclarativeEnvironment,
     val thisMode: ThisMode,
+    override val env: DeclarativeEnvironment,
+    privateEnv: PrivateEnvironment? = null,
     val isAsync: Boolean = false,
     val isGenerator: Boolean = false,
 ): FunctionType(
     name,
     parameters.requiredParameterCount,
     env,
+    privateEnv,
     lazy {
         when {
             isAsync && isGenerator -> AsyncGeneratorFunction

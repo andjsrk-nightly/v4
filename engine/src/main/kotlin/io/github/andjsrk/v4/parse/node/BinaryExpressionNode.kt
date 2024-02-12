@@ -40,6 +40,17 @@ class BinaryExpressionNode(
             return@f rval.toNormal()
         }
 
+        if (operation == BinaryOpType.IN && left is IdentifierNode && left.private) {
+            val rval = yieldAll(right.evaluateValue())
+                .orReturn { return@f it }
+            val privEnv = runningExecutionContext.privateEnv
+            requireNotNull(privEnv)
+            val privName = resolvePrivateIdentifier(left.value, privEnv)
+            return@f (rval is ObjectType && privName in rval.privateElements)
+                .languageValue
+                .toNormal()
+        }
+
         val lval = yieldAll(left.evaluateValue())
             .orReturn { return@f it }
 

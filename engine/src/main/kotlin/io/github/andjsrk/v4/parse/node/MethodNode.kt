@@ -7,11 +7,13 @@ import io.github.andjsrk.v4.evaluate.type.toNormal
 sealed interface MethodNode: FunctionNode {
     val name: ObjectLiteralKeyNode
     override val body: BlockNode
-    override fun evaluate() = lazyFlow f@ {
+    override fun evaluate() = evaluateFlexibly(false, false)
+    fun evaluateFlexibly(isAsync: Boolean, isGenerator: Boolean) = lazyFlow f@ {
         val name = yieldAll(name.toPropertyKey())
             .orReturn { return@f it }
         val env = runningExecutionContext.lexicalEnvNotNull
-        OrdinaryFunctionType(name, parameters, body, env, ThisMode.METHOD)
+        val privEnv = runningExecutionContext.privateEnv
+        OrdinaryFunctionType(name, parameters, body, ThisMode.METHOD, env, privEnv, isAsync, isGenerator)
             .toNormal()
     }
 }

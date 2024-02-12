@@ -4,13 +4,13 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Function
 import io.github.andjsrk.v4.evaluate.builtin.sealedData
-import io.github.andjsrk.v4.evaluate.type.DeclarativeEnvironment
-import io.github.andjsrk.v4.evaluate.type.NonEmptyOrThrow
+import io.github.andjsrk.v4.evaluate.type.*
 
 sealed class FunctionType(
     var name: PropertyKey?,
     requiredParameterCount: UInt,
     open val env: DeclarativeEnvironment?,
+    val privateEnv: PrivateEnvironment? = null,
     lazyPrototype: Lazy<PrototypeObjectType> = lazy { Function.instancePrototype },
 ): ObjectType(
     lazyPrototype,
@@ -18,6 +18,7 @@ sealed class FunctionType(
         "requiredParameterCount".sealedData(requiredParameterCount.toDouble().languageValue),
     ),
 ) {
+    var homeObject: ObjectType? = null
     val realm = runningExecutionContext.realm
     val module = getActiveModule()
     abstract val isMethod: Boolean

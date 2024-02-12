@@ -8,5 +8,5 @@ fun ObjectType.getOwnPropertyValue(key: PropertyKey): MaybeThrow<LanguageType?> 
     val desc = getOwnProperty(key)
         .orReturnThrow { return it }
         ?: return empty
-    return desc.getValue(this)
+    return desc.getValue(this, key)
 }

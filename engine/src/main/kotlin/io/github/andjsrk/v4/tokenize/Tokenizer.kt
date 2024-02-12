@@ -541,7 +541,11 @@ internal class Tokenizer(sourceText: String) {
                         advance()
                         return getTemplateHeadToken()
                     }
-                    PRIVATE_NAME -> TODO()
+                    PRIVATE_NAME -> {
+                        advance()
+                        advanceWhile { it.isIdentifierChar }
+                        return build(PRIVATE_NAME)
+                    }
                     IDENTIFIER -> {
                         advanceWhile { it.isIdentifierChar }
                         return build(IDENTIFIER)

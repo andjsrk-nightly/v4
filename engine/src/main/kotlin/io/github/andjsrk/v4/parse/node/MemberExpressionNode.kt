@@ -43,7 +43,8 @@ class MemberExpressionNode(
             Reference(base, key)
         } else {
             require(property is IdentifierNode)
-            Reference(base, property.stringValue)
+            if (property.private) Reference.private(base, property.value)
+            else Reference(base, property.stringValue)
         }
                 .toWideNormal()
     }

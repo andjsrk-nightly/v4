@@ -13,7 +13,7 @@ class BuiltinClassType(
     staticProperties: MutableMap<PropertyKey, Property>,
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     override val constructor: BuiltinFunctionType,
-): ClassType(name, parent, staticProperties, instancePrototypeProperties, constructor) {
+): ClassType(name, parent?.instancePrototype, staticProperties, instancePrototypeProperties, constructor) {
     constructor(
         name: String,
         parent: ClassType? = null,
@@ -21,8 +21,8 @@ class BuiltinClassType(
         instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
         constructor: BuiltinFunctionType,
     ): this(name.languageValue, parent, staticProperties, instancePrototypeProperties, constructor)
-    override fun construct(args: List<LanguageType>): MaybeThrow<ObjectType> {
-        val res = constructor.call(ObjectType(instancePrototype), args)
+    override fun construct(args: List<LanguageType>, thisArg: LanguageType): MaybeThrow<ObjectType> {
+        val res = constructor.call(thisArg, args)
             .orReturnThrow { return it }
         require(res is ObjectType)
         return res.toNormal()

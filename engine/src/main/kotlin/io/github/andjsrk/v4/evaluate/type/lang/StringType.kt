@@ -4,6 +4,10 @@ import io.github.andjsrk.v4.evaluate.display
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.type.toNormal
 
+/**
+ * Note that this covers a [Private Name](https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-private-names).
+ * @see [isPrivateName]
+ */
 @JvmInline
 value class StringType(override val value: String): PrimitiveLanguageType, PropertyKey {
     operator fun plus(other: StringType) =
@@ -12,6 +16,8 @@ value class StringType(override val value: String): PrimitiveLanguageType, Prope
         (value < other.value)
             .languageValue
             .toNormal()
+    val isPrivateName get() =
+        value.startsWith('#')
 
     override fun toString() = display()
 

@@ -7,6 +7,7 @@ data class Range(val start: Int, val end: Int) {
         if (other == null) this
         else this..other
     companion object {
+        val dummy = Range(-1, -1)
         fun since(start: Int, length: Int) =
             Range(start, start + length)
     }

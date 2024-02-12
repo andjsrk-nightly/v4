@@ -5,6 +5,7 @@ import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Object
 import io.github.andjsrk.v4.evaluate.type.*
+import io.github.andjsrk.v4.parse.node.MethodNode
 
 /**
  * Note that methods which its name start with underscore means it is an internal method in ES specification.
@@ -15,6 +16,7 @@ open class ObjectType(
     lazyPrototype: Lazy<ObjectType?> = lazy { Object.instancePrototype },
     val properties: MutableMap<PropertyKey, Property> = mutableMapOf(),
 ): LanguageType {
+    val privateElements = mutableMapOf<PrivateName, PrivateProperty>()
     @EsSpec("OrdinaryObjectCreate")
     constructor(prototype: ObjectType?): this(lazy { prototype })
     var prototype by MutableLazy.from(lazyPrototype)
@@ -77,7 +79,7 @@ open class ObjectType(
                 val proto = prototype ?: return normalNull
                 return proto._get(key, receiver)
             }
-        return desc.getValue(receiver)
+        return desc.getValue(receiver, key)
     }
     @EsSpec("[[Set]]")
     open fun _set(key: PropertyKey, value: LanguageType, receiver: LanguageType): MaybeThrow<BooleanType?> {
@@ -104,7 +106,7 @@ open class ObjectType(
                 }
             }
             is AccessorProperty -> {
-                val setter = ownDesc.set ?: return throwError(TypeErrorKind.NO_SETTER, key.display())
+                val setter = ownDesc.set ?: return throwError(TypeErrorKind.NO_SETTER, key.string())
                 setter.call(receiver, listOf(value))
                     .orReturnThrow { return it }
             }
@@ -166,6 +168,27 @@ open class ObjectType(
         return (desc != null)
             .languageValue
             .toNormal()
+    }
+    @EsSpec("DefineField")
+    fun defineField(receiver: ObjectType, fieldRecord: Pair<PropertyKey, FunctionType?>): EmptyOrThrow {
+        TODO()
+    }
+    @EsSpec("DefineMethod")
+    fun defineMethod(methodNode: MethodNode) = lazyFlow f@ {
+        val name = yieldAll(methodNode.name.toPropertyKey())
+            .orReturn { return@f it }
+        val env = runningExecutionContext.lexicalEnvNotNull
+        val privEnv = runningExecutionContext.privateEnv
+        OrdinaryFunctionType(name, methodNode.parameters, methodNode.body, ThisMode.METHOD, env, privEnv)
+            .apply {
+                homeObject = this@ObjectType
+            }
+            .toNormal()
+    }
+    fun addPrivateMethodOrAccessor(prop: PrivateProperty): EmptyOrThrow {
+        if (prop.key in privateElements) return throwError(TODO()) // TypeError
+        privateElements[prop.key] = prop
+        return empty
     }
     @EsSpec("SetIntegrityLevel")
     fun setImmutabilityLevel(level: ObjectImmutabilityLevel): EmptyOrThrow {

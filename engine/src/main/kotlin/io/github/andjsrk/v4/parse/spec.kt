@@ -145,10 +145,23 @@ fun Node.propName(): ObjectLiteralKeyNode? =
         else -> null
     }
         ?.takeIf { it !is ComputedPropertyKeyNode }
+        ?.takeIf { !(it is IdentifierNode && it.private) }
 
 @EsSpec("StringValue")
 val IdentifierNode.stringValue get() =
     value.languageValue
+
+fun Node.privateBoundIdentifiers(): List<IdentifierNode> =
+    when (this) {
+        is IdentifierNode -> if (private) listOf(this) else emptyList()
+        is FieldNode -> name.privateBoundIdentifiers()
+        is MethodNode -> name.privateBoundIdentifiers()
+        is ClassNode ->
+            elements
+                .flatMap { it.privateBoundIdentifiers() }
+                .distinctBy { it.value } // the first point that the names may conflict
+        else -> emptyList()
+    }
 
 @EsSpec("ExportedNames")
 fun ModuleNode.exportedNames() =

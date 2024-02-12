@@ -24,8 +24,15 @@ data class AccessorProperty(
         configurable ?: CONFIGURABLE_DEFAULT,
     )
     override fun clone() = copy()
-    override fun getValue(thisValue: LanguageType) =
-        get?.call(thisValue) ?: normalNull
+    override fun getValue(thisValue: LanguageType, key: PropertyKey) =
+        get?.call(thisValue)
+            ?: throwError(TypeErrorKind.NO_GETTER, key.string())
+    override fun setValue(thisValue: LanguageType, key: PropertyKey, value: LanguageType): EmptyOrThrow {
+        set?.call(thisValue, listOf(value))
+            ?.orReturnThrow { return it }
+            ?: return throwError(TypeErrorKind.NO_SETTER, key.string())
+        return empty
+    }
     override fun toDescriptorObject(): ObjectType {
         val obj = ObjectType.createNormal()
         obj.createDataProperty("get".languageValue, get ?: NullType)

@@ -114,7 +114,7 @@ class Parser(sourceText: String) {
         }
     // <editor-fold desc="expressions">
     // <editor-fold desc="primary expressions">
-    private fun <T: Node> Token.to(constructor: (String, Range) -> T) =
+    private inline fun <T: Node> Token.to(constructor: (String, Range) -> T) =
         constructor(rawContent, range)
     /**
      * Parses [Identifier](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Identifier).
@@ -132,6 +132,11 @@ class Parser(sourceText: String) {
     @Careful
     private fun parseIdentifierName() =
         takeIfMatches(IDENTIFIER)?.to(::IdentifierNode)
+    @Careful
+    private fun parsePrivateName() =
+        takeIfMatches(PRIVATE_NAME)?.to { value, range ->
+            IdentifierNode(value, true, range)
+        }
     @Careful
     private fun parseNumberLiteral() =
         takeIfMatches(NUMBER)?.to(::NumberLiteralNode)
@@ -763,7 +768,7 @@ class Parser(sourceText: String) {
             DOT -> {
                 if (isOptionalChain) return reportUnexpectedToken()
                 advance()
-                property = parseIdentifierName() ?: return reportUnexpectedToken()
+                property = parseIdentifierName() ?: parsePrivateName() ?: return reportUnexpectedToken()
                 endRange = property.range
             }
             IDENTIFIER -> {

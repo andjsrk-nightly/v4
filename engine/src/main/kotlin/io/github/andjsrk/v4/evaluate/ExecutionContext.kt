@@ -10,6 +10,7 @@ data class ExecutionContext(
     var generator: GeneratorType<*>? = null,
     val module: Module? = null,
     var codeEvaluationState: SimpleLazyFlow<Completion.FromFunctionBody<LanguageType>>? = null,
+    var privateEnv: PrivateEnvironment? = null,
 ) {
     var lexicalEnvNotNull: DeclarativeEnvironment
         get() = lexicalEnv!!

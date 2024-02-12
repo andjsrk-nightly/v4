@@ -32,8 +32,8 @@ class MethodExpressionNode(
             name,
             parameters,
             body,
-            runningExecutionContext.lexicalEnvNotNull,
             ThisMode.METHOD,
+            runningExecutionContext.lexicalEnvNotNull,
             isAsync,
             isGenerator,
         )

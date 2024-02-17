@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.*
+import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Object
@@ -173,8 +174,14 @@ open class ObjectType(
             .toNormal()
     }
     @EsSpec("DefineField")
-    fun defineField(fieldRecord: ClassFieldDefinition): EmptyOrThrow {
-        TODO()
+    fun defineField(field: ClassFieldDefinition): EmptyOrThrow {
+        val initialValue = field.initializer?.call(this)
+            ?.orReturnThrow { return it }
+            ?: NullType
+        return (
+            if (field.name is PrivateName) addPrivateField(field.name, initialValue)
+            else createDataPropertyOrThrow(field.name, initialValue)
+        )
     }
     @EsSpec("DefineMethod")
     fun defineMethod(methodNode: MethodNode) = lazyFlow f@ {
@@ -193,8 +200,15 @@ open class ObjectType(
             .unwrap()
         return empty
     }
+    @EsSpec("PrivateFieldAdd")
+    fun addPrivateField(key: PrivateName, value: LanguageType): EmptyOrThrow {
+        if (key in privateElements) return throwError(SyntaxErrorKind.INVALID_PRIVATE_MEMBER_REINITIALIZATION, key.string())
+        privateElements[key] = PrivateProperty(key, DataProperty(value, enumerable=false, configurable=false))
+        return empty
+    }
+    @EsSpec("PrivateMethodOrAccessorAdd")
     fun addPrivateMethodOrAccessor(prop: PrivateProperty): EmptyOrThrow {
-        if (prop.key in privateElements) return throwError(TODO()) // TypeError
+        if (prop.key in privateElements) return throwError(SyntaxErrorKind.INVALID_PRIVATE_MEMBER_REINITIALIZATION, prop.key.string())
         privateElements[prop.key] = prop
         return empty
     }

@@ -2,8 +2,7 @@ package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.requireToBe
-import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.toNormal
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.evaluate.withUnsafeModification
 
 private val mutableArrayFrom = functionWithoutThis("from", 1u) fn@ { args ->

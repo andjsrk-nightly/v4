@@ -1,6 +1,5 @@
 package io.github.andjsrk.v4.evaluate.type
 
-import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
 import io.github.andjsrk.v4.parse.exportEntries
 import io.github.andjsrk.v4.parse.importEntries
 import io.github.andjsrk.v4.parse.node.ModuleNode

@@ -4,7 +4,7 @@ import io.github.andjsrk.v4.CompilerFalsePositive
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.type.NonEmptyOrThrow
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.*
 
 @EsSpec("GetV")
 fun LanguageType.getProperty(key: PropertyKey): @CompilerFalsePositive NonEmptyOrThrow =

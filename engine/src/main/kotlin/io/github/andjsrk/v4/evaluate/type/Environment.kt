@@ -1,8 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.lang.BooleanType
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 @EsSpec("Environment Record")
 sealed class Environment(open val outer: Environment?): Record {

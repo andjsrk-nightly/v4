@@ -3,8 +3,6 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.throwError
-import io.github.andjsrk.v4.evaluate.type.lang.FunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 @EsSpec("Function Environment Record")
 class FunctionEnvironment(

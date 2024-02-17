@@ -1,9 +1,7 @@
 package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.evaluate.languageValue
-import io.github.andjsrk.v4.evaluate.type.AccessorProperty
-import io.github.andjsrk.v4.evaluate.type.lang.BuiltinFunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
+import io.github.andjsrk.v4.evaluate.type.*
 
 inline fun PropertyKey.accessor(
     getter: BuiltinFunctionType? = null,

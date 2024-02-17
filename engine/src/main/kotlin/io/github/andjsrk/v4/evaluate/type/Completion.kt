@@ -3,15 +3,13 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.SimpleLazyFlow
 import io.github.andjsrk.v4.evaluate.ThrowTrace
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
-import io.github.andjsrk.v4.evaluate.type.lang.NullType
 
 typealias MaybeEmpty = Completion.Normal<LanguageType?>
 typealias Empty = Completion.Normal<Nothing?>
 typealias NonEmpty = Completion.Normal<LanguageType>
 
 typealias MaybeAbrupt<V> = Completion<V>
-typealias NonEmptyWideOrAbrupt = MaybeAbrupt<AbstractType>
+typealias NonEmptyWideOrAbrupt = MaybeAbrupt<EvaluationResult>
 typealias MaybeEmptyOrAbrupt = MaybeAbrupt<LanguageType?>
 typealias EmptyOrAbrupt = MaybeAbrupt<Nothing?>
 typealias NonEmptyOrAbrupt = MaybeAbrupt<LanguageType>

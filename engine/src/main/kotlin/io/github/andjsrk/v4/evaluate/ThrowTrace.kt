@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.evaluate.type.FunctionEnvironment
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.LanguageType
 
 data class ThrowTrace(
     val value: LanguageType,

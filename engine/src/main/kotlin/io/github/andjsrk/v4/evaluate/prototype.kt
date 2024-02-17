@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.*
 
 val LanguageType.prototype get() =
     when (this) {
@@ -12,4 +12,4 @@ val LanguageType.prototype get() =
     }
 
 val PrimitiveLanguageType.prototype get() =
-    this.toBuiltinClass()?.instancePrototype
+    toBuiltinClass()?.instancePrototype

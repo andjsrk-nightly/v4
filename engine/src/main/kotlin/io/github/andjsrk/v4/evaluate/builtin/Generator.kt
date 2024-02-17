@@ -3,7 +3,6 @@ package io.github.andjsrk.v4.evaluate.builtin
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
 
 private val generatorNext = method("next") fn@ { thisArg, args ->
     val gen = thisArg
@@ -16,19 +15,14 @@ private val generatorClose = functionWithoutThis("close") {
     normalNull
 }
 
-private val generatorIterator = method(SymbolType.WellKnown.iterator) { thisArg, _ ->
-    thisArg.toNormal()
-}
-
 @EsSpec("%GeneratorFunction.prototype%")
 val Generator = BuiltinClassType(
     "Generator",
-    Object,
+    IteratorInstancePrototype,
     mutableMapOf(),
     mutableMapOf(
         sealedMethod(generatorNext),
         sealedMethod(generatorClose),
-        sealedMethod(generatorIterator),
     ),
     constructor ctor@ { _, args ->
         val sourceObj = args[0]

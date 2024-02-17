@@ -1,7 +1,6 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.evaluate.orReturnThrow
-import io.github.andjsrk.v4.evaluate.type.lang.*
 
 class GlobalEnvironment(global: ObjectType): Environment(null) {
     val declarative = DeclarativeEnvironment(null)

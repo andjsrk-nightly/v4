@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.lang.PromiseType
+import io.github.andjsrk.v4.evaluate.type.PromiseType
 
 val jobQueue = ArrayDeque<PromiseType.Reaction.Job>()
 

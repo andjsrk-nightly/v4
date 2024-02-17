@@ -1,8 +1,6 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.MaybeThrow
-import io.github.andjsrk.v4.evaluate.type.lang.NumberType
-import io.github.andjsrk.v4.evaluate.type.toNormal
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.not
 import kotlin.math.truncate
 

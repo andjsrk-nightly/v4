@@ -2,10 +2,9 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.OrdinaryFunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
-import io.github.andjsrk.v4.evaluate.type.toNormal
+import io.github.andjsrk.v4.evaluate.ThisMode
+import io.github.andjsrk.v4.evaluate.lazyFlowNoYields
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class ArrowFunctionNode(
@@ -26,14 +25,5 @@ class ArrowFunctionNode(
     @EsSpec("InstantiateArrowFunctionExpression")
     @EsSpec("InstantiateAsyncArrowFunctionExpression")
     internal fun instantiateArrowFunction(name: PropertyKey?) =
-        OrdinaryFunctionType(
-            name,
-            parameters,
-            body,
-            ThisMode.ARROW,
-            runningExecutionContext.lexicalEnvNotNull,
-            runningExecutionContext.privateEnv,
-            isAsync,
-            isGenerator,
-        )
+        OrdinaryFunctionType(name, parameters, body, ThisMode.ARROW, isAsync, isGenerator)
 }

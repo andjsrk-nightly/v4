@@ -3,7 +3,6 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
 
 class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environment(outer) {
     override fun hasBinding(name: String) =

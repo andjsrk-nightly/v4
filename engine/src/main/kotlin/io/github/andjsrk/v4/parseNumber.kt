@@ -2,7 +2,7 @@ package io.github.andjsrk.v4
 
 import io.github.andjsrk.v4.evaluate.getSignAndRest
 import io.github.andjsrk.v4.evaluate.languageValue
-import io.github.andjsrk.v4.evaluate.type.lang.NumberType
+import io.github.andjsrk.v4.evaluate.type.NumberType
 import io.github.andjsrk.v4.parse.foldElvis
 import kotlin.math.withSign
 

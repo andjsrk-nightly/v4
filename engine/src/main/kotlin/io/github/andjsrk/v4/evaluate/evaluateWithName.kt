@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.lang.FunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
+import io.github.andjsrk.v4.evaluate.type.FunctionType
+import io.github.andjsrk.v4.evaluate.type.PropertyKey
 import io.github.andjsrk.v4.missingBranch
 import io.github.andjsrk.v4.parse.node.*
 

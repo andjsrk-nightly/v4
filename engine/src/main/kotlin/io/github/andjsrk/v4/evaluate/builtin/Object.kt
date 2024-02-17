@@ -2,8 +2,7 @@ package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.toNormal
+import io.github.andjsrk.v4.evaluate.type.*
 
 private val objectAssign = functionWithoutThis("assign", 2u) fn@ { args ->
     val target = args[0].requireToBe<ObjectType> { return@fn it }

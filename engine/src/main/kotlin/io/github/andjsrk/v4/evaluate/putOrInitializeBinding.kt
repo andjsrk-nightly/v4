@@ -3,7 +3,6 @@ package io.github.andjsrk.v4.evaluate
 import io.github.andjsrk.v4.CompilerFalsePositive
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 /**
  * Note that the function accepts a [Reference], not a [String].

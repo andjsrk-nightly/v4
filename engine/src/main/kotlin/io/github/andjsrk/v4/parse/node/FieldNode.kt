@@ -9,10 +9,9 @@ class FieldNode(
     override val isStatic: Boolean,
     startRange: Range,
     semicolonRange: Range?,
-): NormalClassElementNode {
+): NormalClassElementNode, EvaluationDelegatedNode {
     override val childNodes get() = listOf(name, value)
     override val range = startRange..(value ?: name).range.extendCarefully(semicolonRange)
     override fun toString() =
         stringifyLikeDataClass(::name, ::value, ::isStatic, ::range)
-    override fun evaluate() = TODO()
 }

@@ -4,7 +4,6 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
 import io.github.andjsrk.v4.not
 
 @EsSpec("Reference Record")
@@ -16,7 +15,7 @@ data class Reference(
     val referencedName: PropertyKey?,
     val thisValue: LanguageType? = null,
     val isOptionalChain: Boolean = false,
-): Record {
+): Record, EvaluationResult {
     @EsSpec("IsPropertyReference")
     val isProperty get() =
         base != null && base !is Environment

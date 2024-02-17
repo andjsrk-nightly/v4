@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.MAX_CODE_POINT
-import io.github.andjsrk.v4.evaluate.type.lang.NumberType
+import io.github.andjsrk.v4.evaluate.type.NumberType
 
 internal class NamedRange(val name: String, val range: LongRange) {
     companion object {

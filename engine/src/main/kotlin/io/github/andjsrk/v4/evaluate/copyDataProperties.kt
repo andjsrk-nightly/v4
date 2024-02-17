@@ -1,9 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.EmptyOrAbrupt
-import io.github.andjsrk.v4.evaluate.type.empty
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.*
 
 @EsSpec("CopyDataProperties")
 internal fun copyDataProperties(

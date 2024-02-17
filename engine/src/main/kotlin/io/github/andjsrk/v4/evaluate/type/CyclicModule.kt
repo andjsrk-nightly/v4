@@ -2,7 +2,6 @@ package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("Cyclic Module Record")
 abstract class CyclicModule(

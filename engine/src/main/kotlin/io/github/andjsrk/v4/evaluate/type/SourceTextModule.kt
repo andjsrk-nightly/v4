@@ -3,8 +3,6 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.SyntaxErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.ObjectType
-import io.github.andjsrk.v4.evaluate.type.lang.PromiseType
 import io.github.andjsrk.v4.parse.node.ModuleNode
 
 @EsSpec("Source Text Module Record")

@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.missingBranch
 import kotlin.reflect.KClass
 
@@ -20,7 +20,7 @@ internal fun generalizedDescriptionOf(clazz: KClass<*>) =
         clazz.`is`<LanguageTypePropertyKey>() -> "a property key"
         clazz.`is`<ArrayType>() -> "an array"
         clazz.`is`<FunctionType>() -> "a function"
-        clazz.`is`<RegExpType>() -> "a regular expression"
+        clazz.`is`<io.github.andjsrk.v4.evaluate.type.RegExpType>() -> "a regular expression"
         clazz.`is`<ObjectType>() -> "an object"
         else -> missingBranch()
     }

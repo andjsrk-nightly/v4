@@ -3,10 +3,9 @@ package io.github.andjsrk.v4.evaluate
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("GetValue")
-internal fun getValue(value: AbstractType?): NonEmptyOrThrow {
+internal fun getValue(value: EvaluationResult?): NonEmptyOrThrow {
     requireNotNull(value) // v should not be null but the function accepts null for convenience
     if (value is LanguageType) return value.toNormal()
     require(value is Reference)

@@ -1,7 +1,7 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
+import io.github.andjsrk.v4.evaluate.type.LanguageType
 
 internal inline fun Completion<*>.returnIfShouldNotContinue(res: LanguageType, rtn: AbruptReturnLambda): LanguageType {
     if (!continueLoop(this)) {

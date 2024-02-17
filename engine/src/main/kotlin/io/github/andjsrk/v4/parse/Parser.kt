@@ -35,11 +35,11 @@ class Parser(sourceText: String) {
     )
     private inline fun <R> withParseContext(ctxProvider: ParseContext.() -> ParseContext, block: () -> R): R {
         val ctx = ctxProvider(parseCtxs.top)
-        parseCtxs.addTop(ctx)
-        return try { block() } finally {
-            val popped = parseCtxs.removeTop()
-            assert(popped === ctx)
-        }
+        return withTemporalState(
+            { parseCtxs.addTop(ctx) },
+            { parseCtxs.removeTop() },
+            block,
+        )
     }
     /**
      * Represents stack trace about where the last call of [reportError] is.
@@ -217,7 +217,7 @@ class Parser(sourceText: String) {
     private fun parseMethod(name: ObjectLiteralKeyNode, isAsync: Boolean, isGenerator: Boolean, startRange: Range): ObjectMethodNode? {
         if (!isAsync && !isGenerator && currToken.type != LEFT_PARENTHESIS) return null
         val parameters = parseArrowFormalParameters() ?: return null
-        val body = withParseContext({ copy(allowReturn=true) }) {
+        val body = withParseContext({ copy(allowReturn=true, allowAwait=isAsync) }) {
             parseBlock(false) ?: return null
         }
         return ObjectMethodNode(name, parameters, body, isAsync, isGenerator, startRange)
@@ -1197,10 +1197,7 @@ class Parser(sourceText: String) {
      */
     @Careful
     private fun parseConciseBody() =
-        if (currToken.type == LEFT_BRACE)
-            withParseContext({ copy(allowReturn=true) }) {
-                parseBlock()
-            }
+        if (currToken.type == LEFT_BRACE) parseBlock()
         else parseAssignment()
     @Careful
     private fun parseArrowFunctionWithoutParenthesis(parameter: IdentifierNode): ArrowFunctionNode? {
@@ -1209,7 +1206,9 @@ class Parser(sourceText: String) {
         if (currToken.isPrevLineTerminator) return reportUnexpectedToken()
         advance()
 
-        val body = parseConciseBody() ?: return null
+        val body = withParseContext({ copy(allowReturn=true, allowAwait=false) }) {
+            parseConciseBody() ?: return null
+        }
 
         return ArrowFunctionNode(
             UniqueFormalParametersNode(
@@ -1333,7 +1332,7 @@ class Parser(sourceText: String) {
                 )
             }
         expect(ARROW) ?: return null
-        val body = withParseContext({ copy(allowAwait=isAsync) }) {
+        val body = withParseContext({ copy(allowReturn=true, allowAwait=isAsync) }) {
             parseConciseBody() ?: return null
         }
         return ArrowFunctionNode(parameters, body, isAsync, isGenerator, nonNullStartRange..body.range)

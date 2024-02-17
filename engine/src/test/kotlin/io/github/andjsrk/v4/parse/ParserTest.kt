@@ -1103,6 +1103,18 @@ internal class ParserTest {
         """.shouldBeInvalidStatementWithError(SyntaxErrorKind.DUPLICATE_CLASS_ELEMENT_NAMES)
     }
     @Test
+    fun testPrivateAccess() {
+        """
+            a.#b
+        """.shouldBeValidExpressionAnd<MemberExpressionNode> {
+            `object`.assertIdentifierNamed("a")
+            property.assertTypeAnd<IdentifierNode> {
+                assert(value == "#b")
+                assertTrue(isPrivateName)
+            }
+        }
+    }
+    @Test
     fun testSuper() {
         """
             class A extends P {

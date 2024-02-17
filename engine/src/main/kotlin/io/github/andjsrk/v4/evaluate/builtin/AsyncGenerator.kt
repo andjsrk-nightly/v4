@@ -2,10 +2,8 @@ package io.github.andjsrk.v4.evaluate.builtin
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.lang.AsyncGeneratorType.State
-import io.github.andjsrk.v4.evaluate.type.toNormal
+import io.github.andjsrk.v4.evaluate.type.*
+import io.github.andjsrk.v4.evaluate.type.AsyncGeneratorType.State
 import io.github.andjsrk.v4.isOneOf
 
 private val asyncGeneratorNext = method("next") fn@ { thisArg, args ->
@@ -56,7 +54,7 @@ private val asyncGeneratorClose = method("close", 1u) fn@ { thisArg, args ->
 @EsSpec("%AsyncGeneratorFunction.prototype%")
 val AsyncGenerator = BuiltinClassType(
     "AsyncGenerator",
-    Object,
+    IteratorInstancePrototype,
     mutableMapOf(),
     mutableMapOf(
         sealedMethod(asyncGeneratorNext),

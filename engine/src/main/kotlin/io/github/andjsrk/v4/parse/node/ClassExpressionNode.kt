@@ -1,8 +1,7 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.evaluate.SimpleLazyFlow
-import io.github.andjsrk.v4.evaluate.type.NonEmptyWideOrAbrupt
+import io.github.andjsrk.v4.evaluate.lazyFlow
 
 class ClassExpressionNode(
     override val name: IdentifierNode?,
@@ -10,7 +9,7 @@ class ClassExpressionNode(
     override val elements: List<ClassElementNode>,
     override val range: Range,
 ): ClassNode(), ExpressionNode {
-    override fun evaluate(): SimpleLazyFlow<NonEmptyWideOrAbrupt> {
-        TODO()
+    override fun evaluate() = lazyFlow f@ {
+        yieldAll(evaluateTail())
     }
 }

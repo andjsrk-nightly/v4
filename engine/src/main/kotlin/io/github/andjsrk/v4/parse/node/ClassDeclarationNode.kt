@@ -1,9 +1,8 @@
 package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.evaluate.lazyFlow
-import io.github.andjsrk.v4.evaluate.type.empty
-import io.github.andjsrk.v4.parse.stringValue
+import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.type.toNormal
 
 class ClassDeclarationNode(
     override val name: IdentifierNode,
@@ -11,9 +10,11 @@ class ClassDeclarationNode(
     override val elements: List<ClassElementNode>,
     override val range: Range,
 ): ClassNode(), DeclarationNode {
-    override fun evaluate() = lazyFlow {
-        val name = name.stringValue
-        val value = evaluateTail(true)
-        empty
+    override fun evaluate() = lazyFlow f@ {
+        val name = name.value
+        val value = yieldAll(evaluateTail())
+            .orReturn { return@f it }
+        runningExecutionContext.lexicalEnvNotNull.initializeBinding(name, value)
+        value.toNormal()
     }
 }

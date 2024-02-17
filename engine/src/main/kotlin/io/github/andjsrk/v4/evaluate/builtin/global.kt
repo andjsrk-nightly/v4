@@ -4,9 +4,7 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.HostConfig
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.error.*
-import io.github.andjsrk.v4.evaluate.type.DataProperty
-import io.github.andjsrk.v4.evaluate.type.lang.*
-import io.github.andjsrk.v4.evaluate.type.toNormal
+import io.github.andjsrk.v4.evaluate.type.*
 
 val wait = functionWithoutThis("wait", 1u) fn@ { args ->
     val ms = args[0]

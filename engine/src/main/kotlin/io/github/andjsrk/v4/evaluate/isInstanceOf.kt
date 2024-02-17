@@ -1,6 +1,6 @@
 package io.github.andjsrk.v4.evaluate
 
-import io.github.andjsrk.v4.evaluate.type.lang.*
+import io.github.andjsrk.v4.evaluate.type.*
 
 private fun ObjectType.isInPrototypeChainOf(obj: ObjectType): Boolean =
     when (val proto = obj.prototype) {

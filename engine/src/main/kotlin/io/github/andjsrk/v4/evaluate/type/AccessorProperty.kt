@@ -3,7 +3,6 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("accessor property")
 data class AccessorProperty(
@@ -15,8 +14,8 @@ data class AccessorProperty(
     constructor(
         get: FunctionType? = null,
         set: FunctionType? = null,
-        enumerable: Boolean? = ENUMERABLE_DEFAULT,
-        configurable: Boolean? = CONFIGURABLE_DEFAULT,
+        enumerable: Boolean? = null,
+        configurable: Boolean? = null,
     ): this(
         get,
         set,

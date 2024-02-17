@@ -2,7 +2,7 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.Range
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.ClassType
+import io.github.andjsrk.v4.evaluate.type.ClassType
 
 class NewExpressionNode(
     callee: ExpressionNode,

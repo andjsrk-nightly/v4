@@ -5,7 +5,6 @@ import io.github.andjsrk.v4.error.ReferenceErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.throwError
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
 
 @EsSpec("Declarative Environment Record")
 open class DeclarativeEnvironment(outer: Environment?): Environment(outer) {

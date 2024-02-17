@@ -1,8 +1,8 @@
 package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.type.lang.LanguageType
-import io.github.andjsrk.v4.evaluate.type.lang.NumberType
+import io.github.andjsrk.v4.evaluate.type.LanguageType
+import io.github.andjsrk.v4.evaluate.type.NumberType
 
 @EsSpec("SameValue")
 @EsSpec("SameValueZero") // covers it by passing `NumberType::internallyStrictlyEqual` as comparator

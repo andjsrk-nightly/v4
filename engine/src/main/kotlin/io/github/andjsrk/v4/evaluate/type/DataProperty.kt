@@ -4,7 +4,6 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.languageValue
 import io.github.andjsrk.v4.evaluate.throwError
-import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("data property")
 data class DataProperty(

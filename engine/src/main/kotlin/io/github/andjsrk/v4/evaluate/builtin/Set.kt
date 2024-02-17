@@ -3,7 +3,6 @@ package io.github.andjsrk.v4.evaluate.builtin
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
 
 @EsSpec("Set.prototype.add")
 private val setAdd = method("add", 1u) fn@ { thisArg, args ->

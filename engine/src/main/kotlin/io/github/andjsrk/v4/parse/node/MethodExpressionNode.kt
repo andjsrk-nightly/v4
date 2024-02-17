@@ -2,10 +2,9 @@ package io.github.andjsrk.v4.parse.node
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.Range
-import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.lang.OrdinaryFunctionType
-import io.github.andjsrk.v4.evaluate.type.lang.PropertyKey
-import io.github.andjsrk.v4.evaluate.type.toNormal
+import io.github.andjsrk.v4.evaluate.ThisMode
+import io.github.andjsrk.v4.evaluate.lazyFlowNoYields
+import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.parse.stringifyLikeDataClass
 
 class MethodExpressionNode(
@@ -28,14 +27,5 @@ class MethodExpressionNode(
     @EsSpec("InstantiateGeneratorFunctionExpression")
     @EsSpec("InstantiateAsyncGeneratorFunctionExpression")
     internal fun instantiateMethod(name: PropertyKey?) =
-        OrdinaryFunctionType(
-            name,
-            parameters,
-            body,
-            ThisMode.METHOD,
-            runningExecutionContext.lexicalEnvNotNull,
-            runningExecutionContext.privateEnv,
-            isAsync,
-            isGenerator,
-        )
+        OrdinaryFunctionType(name, parameters, body, ThisMode.METHOD, isAsync, isGenerator)
 }

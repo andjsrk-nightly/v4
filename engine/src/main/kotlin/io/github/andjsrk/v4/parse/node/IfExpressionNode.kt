@@ -16,7 +16,7 @@ class IfExpressionNode(
             .orReturn { return@f it }
             .requireToBe<BooleanType> { return@f it }
         yieldAll(
-            if (testVal.value) then.evaluateValue()
+            if (testVal.nativeValue) then.evaluateValue()
             else `else`.evaluateValue()
         )
     }

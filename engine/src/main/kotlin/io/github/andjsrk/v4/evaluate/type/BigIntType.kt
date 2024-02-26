@@ -3,47 +3,46 @@ package io.github.andjsrk.v4.evaluate.type
 import io.github.andjsrk.v4.error.RangeErrorKind
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
-import io.github.andjsrk.v4.evaluate.type.*
 import java.math.BigInteger
 
 @JvmInline
-value class BigIntType(override val value: BigInteger): NumericType<BigIntType> {
+value class BigIntType(override val nativeValue: BigInteger): NumericType<BigIntType> {
     override fun unaryMinus() =
-        (-value)
+        (-nativeValue)
             .languageValue
     override fun bitwiseNot() =
-        (-value - BigInteger.ONE)
+        (-nativeValue - BigInteger.ONE)
             .languageValue
             .toNormal()
     override fun pow(other: BigIntType) =
         when {
-            other.value < BigInteger.ZERO -> throwError(RangeErrorKind.NUMBER_MUST_BE, "positive")
-            else -> value.operateWithInt(BigInteger::pow, other.value)
+            other.nativeValue < BigInteger.ZERO -> throwError(RangeErrorKind.NUMBER_MUST_BE, "positive")
+            else -> nativeValue.operateWithInt(BigInteger::pow, other.nativeValue)
                 .languageValue
                 .toNormal()
         }
     override fun times(other: BigIntType) =
-        (value * other.value)
+        (nativeValue * other.nativeValue)
             .languageValue
     override fun div(other: BigIntType): MaybeAbrupt<BigIntType> {
-        if (other.value == BigInteger.ZERO) return throwError(RangeErrorKind.BIGINT_DIV_ZERO)
-        return (value / other.value)
+        if (other.nativeValue == BigInteger.ZERO) return throwError(RangeErrorKind.BIGINT_DIV_ZERO)
+        return (nativeValue / other.nativeValue)
             .languageValue
             .toNormal()
     }
     override fun rem(other: BigIntType): MaybeAbrupt<BigIntType> =
-        if (other.value == BigInteger.ZERO) throwError(RangeErrorKind.BIGINT_DIV_ZERO)
-        else (value % other.value)
+        if (other.nativeValue == BigInteger.ZERO) throwError(RangeErrorKind.BIGINT_DIV_ZERO)
+        else (nativeValue % other.nativeValue)
             .languageValue
             .toNormal()
     override fun plus(other: BigIntType) =
-        (value + other.value)
+        (nativeValue + other.nativeValue)
             .languageValue
     override fun minus(other: BigIntType) =
-        (value - other.value)
+        (nativeValue - other.nativeValue)
             .languageValue
     override fun leftShift(other: BigIntType) =
-        value.operateWithInt(BigInteger::shiftLeft, other.value)
+        nativeValue.operateWithInt(BigInteger::shiftLeft, other.nativeValue)
             .languageValue
             .toNormal()
     override fun signedRightShift(other: BigIntType) =
@@ -51,25 +50,25 @@ value class BigIntType(override val value: BigInteger): NumericType<BigIntType> 
     override fun unsignedRightShift(other: BigIntType) =
         throwError(TypeErrorKind.BIGINT_SHR)
     override fun lessThan(other: BigIntType): MaybeThrow<BooleanType> =
-        (value < other.value)
+        (nativeValue < other.nativeValue)
             .languageValue
             .toNormal()
     override fun equal(other: BigIntType) =
-        value == other.value
+        nativeValue == other.nativeValue
     override fun bitwiseAnd(other: BigIntType) =
-        (value and other.value)
+        (nativeValue and other.nativeValue)
             .languageValue
             .toNormal()
     override fun bitwiseXor(other: BigIntType) =
-        (value xor other.value)
+        (nativeValue xor other.nativeValue)
             .languageValue
             .toNormal()
     override fun bitwiseOr(other: BigIntType) =
-        (value or other.value)
+        (nativeValue or other.nativeValue)
             .languageValue
             .toNormal()
     override fun toString(radix: Int) =
-        value.toString(radix)
+        nativeValue.toString(radix)
             .languageValue
 
     override fun toString() = display()

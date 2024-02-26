@@ -4,9 +4,9 @@ import io.github.andjsrk.v4.EsSpec
 
 class SymbolType(val description: String? = null): PrimitiveLanguageType, LanguageTypePropertyKey {
     /**
-     * Note that symbols will be compared by its identity, not [value].
+     * Note that symbols will be compared by its identity, not [nativeValue].
      */
-    override val value = null
+    override val nativeValue = null
     override fun toString() =
         "Symbol(${description ?: ""})"
 

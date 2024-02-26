@@ -11,16 +11,16 @@ import kotlin.math.*
 
 @JvmInline
 value class NumberType(
-    override val value: Double
+    override val nativeValue: Double
 ): NumericType<NumberType> {
     internal inline val isNegative get() =
-        value.isNegative
+        nativeValue.isNegative
     internal inline val isPositive get() =
         !isNegative
     inline val isNaN get() =
         this == NaN
     inline val isZero get() =
-        value == 0.0
+        nativeValue == 0.0
     inline val isPositiveInfinity get() =
         this == POSITIVE_INFINITY
     inline val isNegativeInfinity get() =
@@ -37,7 +37,7 @@ value class NumberType(
             NEGATIVE_INFINITY -> POSITIVE_INFINITY
             POSITIVE_ZERO -> NEGATIVE_ZERO
             NEGATIVE_ZERO -> POSITIVE_ZERO
-            else -> NumberType(-value)
+            else -> NumberType(-nativeValue)
         }
     override fun bitwiseNot(): MaybeAbrupt<NumberType> {
         val value = this.toInt32()
@@ -55,10 +55,10 @@ value class NumberType(
             this.isNaN -> this
             this.isInfinity ->
                 if (isNegative) {
-                    if (other.value > 0) POSITIVE_INFINITY
+                    if (other.nativeValue > 0) POSITIVE_INFINITY
                     else POSITIVE_ZERO
                 } else {
-                    if (other.value > 0) {
+                    if (other.nativeValue > 0) {
                         if (other.isOddInteger) NEGATIVE_INFINITY
                         else POSITIVE_INFINITY
                     } else {
@@ -67,10 +67,10 @@ value class NumberType(
                     }
                 }
             this == POSITIVE_ZERO ->
-                if (other.value > 0) POSITIVE_ZERO
+                if (other.nativeValue > 0) POSITIVE_ZERO
                 else POSITIVE_INFINITY
             this == NEGATIVE_ZERO ->
-                if (other.value > 0) {
+                if (other.nativeValue > 0) {
                     if (other.isOddInteger) NEGATIVE_ZERO
                     else POSITIVE_ZERO
                 } else {
@@ -78,7 +78,7 @@ value class NumberType(
                     else POSITIVE_INFINITY
                 }
             other.isPositiveInfinity -> {
-                val absBase = abs(value)
+                val absBase = abs(nativeValue)
                 when {
                     absBase > 1 -> POSITIVE_INFINITY
                     absBase < 1 -> POSITIVE_ZERO
@@ -86,28 +86,28 @@ value class NumberType(
                 }
             }
             other.isNegativeInfinity -> {
-                val absBase = abs(value)
+                val absBase = abs(nativeValue)
                 when {
                     absBase > 1 -> POSITIVE_ZERO
                     absBase < 1 -> POSITIVE_INFINITY
                     else -> NaN
                 }
             }
-            value < 0 && other.value.not { isInteger } -> NaN
-            else -> value.pow(other.value).languageValue
+            nativeValue < 0 && other.nativeValue.not { isInteger } -> NaN
+            else -> nativeValue.pow(other.nativeValue).languageValue
         }
             .toNormal()
     override fun times(other: NumberType): NumberType =
         when {
             this.isNaN || other.isNaN -> this
             this.isInfinity -> when {
-                other.value == 0.0 -> NaN
-                other.value > 0 -> this
+                other.nativeValue == 0.0 -> NaN
+                other.nativeValue > 0 -> this
                 else -> -this
             }
             other.isInfinity -> when {
                 this.isZero -> NaN
-                value > 0 -> other
+                nativeValue > 0 -> other
                 else -> -other
             }
             this == NEGATIVE_ZERO ->
@@ -117,7 +117,7 @@ value class NumberType(
                 if (this.isNegative) POSITIVE_ZERO
                 else other
             else ->
-                (value * other.value)
+                (nativeValue * other.nativeValue)
                     .languageValue
         }
     override fun div(other: NumberType) =
@@ -147,7 +147,7 @@ value class NumberType(
                 if (this.isPositive) NEGATIVE_INFINITY
                 else POSITIVE_INFINITY
             else ->
-                (value / other.value)
+                (nativeValue / other.nativeValue)
                     .languageValue
         }
             .toNormal()
@@ -159,7 +159,7 @@ value class NumberType(
             other.isZero -> NaN
             this.isZero -> this
             else ->
-                (value % other.value)
+                (nativeValue % other.nativeValue)
                     .languageValue
         }
             .toNormal()
@@ -170,7 +170,7 @@ value class NumberType(
             this.isInfinity -> this
             other.isInfinity -> other
             else ->
-                (value + other.value)
+                (nativeValue + other.nativeValue)
                     .languageValue
         }
     override fun minus(other: NumberType) =
@@ -183,7 +183,7 @@ value class NumberType(
     ): MaybeAbrupt<NumberType> {
         val left = leftCoercion()
             .orReturn { return it }
-            .value
+            .nativeValue
             .leftTransform()
         val right = other.toUint32()
             .orReturn { return it }
@@ -203,13 +203,13 @@ value class NumberType(
     override fun lessThan(other: NumberType): MaybeThrow<BooleanType> {
         return when {
             this.isNaN || other.isNaN -> return throwError(TypeErrorKind.CANNOT_COMPARE_NAN)
-            this.value == other.value -> FALSE // +0 < -0 or -0 < +0 will be handled on this case
+            this.nativeValue == other.nativeValue -> FALSE // +0 < -0 or -0 < +0 will be handled on this case
             this.isPositiveInfinity -> FALSE
             other.isPositiveInfinity -> TRUE
             other.isNegativeInfinity -> FALSE
             this.isNegativeInfinity -> TRUE
             else ->
-                (value < other.value)
+                (nativeValue < other.nativeValue)
                     .languageValue
         }
             .toNormal()
@@ -264,16 +264,16 @@ value class NumberType(
         when {
             this.isNaN -> "NaN"
             this.isZero -> "0"
-            value < 0 -> "-${(-this).toString(radix).value}"
+            nativeValue < 0 -> "-${(-this).toString(radix).nativeValue}"
             this.isInfinity -> "Infinity"
             else -> when (radix) {
                 10 ->
-                    value
+                    nativeValue
                         .toBigDecimal().toPlainString() // prevent scientific notation
                         .removeSuffix(".0") // remove trailing `.0` because it means the number can be represented as an integer
                 else -> {
-                    assert(value.isInteger)
-                    value
+                    assert(nativeValue.isInteger)
+                    nativeValue
                         .toBigDecimal()
                         .toBigIntegerExact()
                         .toString(radix)
@@ -304,18 +304,18 @@ private val Double.isNegative get() =
 private inline val Int.isOdd get() =
     this and 1 != 0
 internal val NumberType.isInteger get() =
-    this.isFinite && value.isInteger
+    this.isFinite && nativeValue.isInteger
 private inline val NumberType.isOddInteger get() =
-    this.isInteger && value.toInt().isOdd
+    this.isInteger && nativeValue.toInt().isOdd
 /**
  * Note that the function coerces the value to range of [Int].
  */
 internal inline fun NumberType.toInt() =
-    value.toInt()
+    nativeValue.toInt()
 
 internal fun NumberType.requireToBeIntegerWithin(range: LongRange): Long? {
     if (this.isInteger) {
-        val long = this.value.toLong()
+        val long = this.nativeValue.toLong()
         if (abs(long) <= Int.MAX_VALUE && long in range) return long
     }
     return null

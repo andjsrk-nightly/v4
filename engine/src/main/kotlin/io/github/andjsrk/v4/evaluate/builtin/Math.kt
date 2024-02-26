@@ -22,8 +22,8 @@ val abs = functionWithoutThis("abs", 1u) fn@ { args ->
 val acos = functionWithoutThis("acos", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
-    if (x.isNaN || x.value > 1.0 || x.value < 1.0) return@fn NumberType.NaN.toNormal()
-    acos(x.value)
+    if (x.isNaN || x.nativeValue > 1.0 || x.nativeValue < 1.0) return@fn NumberType.NaN.toNormal()
+    acos(x.nativeValue)
         .toNormal()
 }
 
@@ -32,9 +32,9 @@ val acosh = functionWithoutThis("acosh", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.isNaN || x.isPositiveInfinity) return@fn x.toNormal()
-    if (x.value == 1.0) return@fn NumberType.POSITIVE_ZERO.toNormal()
-    if (x.value < 1.0) return@fn NumberType.NaN.toNormal()
-    acosh(x.value)
+    if (x.nativeValue == 1.0) return@fn NumberType.POSITIVE_ZERO.toNormal()
+    if (x.nativeValue < 1.0) return@fn NumberType.NaN.toNormal()
+    acosh(x.nativeValue)
         .toNormal()
 }
 
@@ -43,8 +43,8 @@ val asin = functionWithoutThis("asin", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.isNaN || x.isZero) return@fn x.toNormal()
-    if (x.value > 1.0 || x.value < -1.0) return@fn NumberType.NaN.toNormal()
-    asin(x.value)
+    if (x.nativeValue > 1.0 || x.nativeValue < -1.0) return@fn NumberType.NaN.toNormal()
+    asin(x.nativeValue)
         .toNormal()
 }
 
@@ -53,7 +53,7 @@ val asinh = functionWithoutThis("asinh", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.not { isFinite } || x.isZero) return@fn x.toNormal()
-    asinh(x.value)
+    asinh(x.nativeValue)
         .toNormal()
 }
 
@@ -64,7 +64,7 @@ val atan = functionWithoutThis("atan", 1u) fn@ { args ->
     if (x.isNaN || x.isZero) return@fn x.toNormal()
     if (x.isPositiveInfinity) return@fn atan(PI / 2).toNormal()
     if (x.isNegativeInfinity) return@fn atan(-PI / 2).toNormal()
-    atan(x.value)
+    atan(x.nativeValue)
         .toNormal()
 }
 
@@ -73,10 +73,10 @@ val atanh = functionWithoutThis("atanh", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.isNaN || x.isZero) return@fn x.toNormal()
-    if (x.value > 1.0 || x.value < -1.0) return@fn NumberType.NaN.toNormal()
-    if (x.value == 1.0) return@fn NumberType.POSITIVE_INFINITY.toNormal()
-    if (x.value == -1.0) return@fn NumberType.NEGATIVE_INFINITY.toNormal()
-    asin(x.value)
+    if (x.nativeValue > 1.0 || x.nativeValue < -1.0) return@fn NumberType.NaN.toNormal()
+    if (x.nativeValue == 1.0) return@fn NumberType.POSITIVE_INFINITY.toNormal()
+    if (x.nativeValue == -1.0) return@fn NumberType.NEGATIVE_INFINITY.toNormal()
+    asin(x.nativeValue)
         .toNormal()
 }
 
@@ -87,7 +87,7 @@ val atan2 = functionWithoutThis("atan2", 2u) fn@ { args ->
     val x = args[1]
         .requireToBe<NumberType> { return@fn it }
     if (y.isNaN || x.isNaN) return@fn NumberType.NaN.toNormal()
-    atan2(y.value, x.value)
+    atan2(y.nativeValue, x.nativeValue)
         .toNormal()
 }
 
@@ -96,7 +96,7 @@ val cbrt = functionWithoutThis("cbrt", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.not { isFinite } || x.isZero) return@fn x.toNormal()
-    cbrt(x.value)
+    cbrt(x.nativeValue)
         .toNormal()
 }
 
@@ -105,7 +105,7 @@ val ceil = functionWithoutThis("ceil", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.not { isFinite } || x.isZero) return@fn x.toNormal()
-    ceil(x.value)
+    ceil(x.nativeValue)
         .toNormal()
 }
 
@@ -115,7 +115,7 @@ val clz32 = functionWithoutThis("clz32", 1u) fn@ { args ->
         .requireToBe<NumberType> { return@fn it }
         .toUint32()
         .orReturnThrow { return@fn it }
-    x.value.toUInt().countLeadingZeroBits()
+    x.nativeValue.toUInt().countLeadingZeroBits()
         .languageValue
         .toNormal()
 }
@@ -126,7 +126,7 @@ val cos = functionWithoutThis("cos", 1u) fn@ { args ->
         .requireToBe<NumberType> { return@fn it }
     if (x.not { isFinite }) return@fn NumberType.NaN.toNormal()
     if (x.isZero) return@fn 1.0.toNormal()
-    cos(x.value)
+    cos(x.nativeValue)
         .toNormal()
 }
 
@@ -137,7 +137,7 @@ val cosh = functionWithoutThis("cosh", 1u) fn@ { args ->
     if (x.isNaN) return@fn NumberType.NaN.toNormal()
     if (x.isInfinity) return@fn NumberType.POSITIVE_INFINITY.toNormal()
     if (x.isZero) return@fn 1.0.toNormal()
-    cosh(x.value)
+    cosh(x.nativeValue)
         .toNormal()
 }
 
@@ -148,7 +148,7 @@ val exp = functionWithoutThis("exp", 1u) fn@ { args ->
     if (x.isNaN || x.isPositiveInfinity) return@fn x.toNormal()
     if (x.isZero) return@fn 1.0.toNormal()
     if (x.isNegativeInfinity) return@fn NumberType.POSITIVE_ZERO.toNormal()
-    exp(x.value)
+    exp(x.nativeValue)
         .toNormal()
 }
 
@@ -158,7 +158,7 @@ val floor = functionWithoutThis("floor", 1u) fn@ { args ->
         .requireToBe<NumberType> { return@fn it }
     if (x.isNaN || x.isZero || x.isPositiveInfinity) return@fn x.toNormal()
     if (x.isNegativeInfinity) return@fn (-1.0).toNormal()
-    floor(x.value)
+    floor(x.nativeValue)
         .toNormal()
 }
 
@@ -166,7 +166,7 @@ val floor = functionWithoutThis("floor", 1u) fn@ { args ->
 val hypot = functionWithoutThis("hypot", 1u) fn@ { args ->
     args.forEach { it.requireToBe<NumberType> { return@fn it } }
     (args as List<NumberType>).reduce { acc, it ->
-        hypot(acc.value, it.value)
+        hypot(acc.nativeValue, it.nativeValue)
             .languageValue
     }
         .toNormal()
@@ -178,13 +178,13 @@ val imul = functionWithoutThis("imul", 2u) fn@ { args ->
         .requireToBe<NumberType> { return@fn it }
         .toInt32()
         .orReturnThrow { return@fn it }
-        .value
+        .nativeValue
         .toInt()
     val b = args[1]
         .requireToBe<NumberType> { return@fn it }
         .toInt32()
         .orReturnThrow { return@fn it }
-        .value
+        .nativeValue
         .toInt()
     (a * b)
         .languageValue
@@ -197,10 +197,10 @@ val ln = functionWithoutThis("ln", 1u) fn@ { args ->
         .requireToBe<NumberType> { return@fn it }
     when {
         x.isNaN || x.isPositiveInfinity -> x
-        x.value == 1.0 -> NumberType.POSITIVE_ZERO
+        x.nativeValue == 1.0 -> NumberType.POSITIVE_ZERO
         x.isZero -> NumberType.NEGATIVE_INFINITY
-        x.value < 0.0 -> NumberType.NaN
-        else -> ln(x.value).languageValue
+        x.nativeValue < 0.0 -> NumberType.NaN
+        else -> ln(x.nativeValue).languageValue
     }
         .toNormal()
 }
@@ -212,14 +212,14 @@ val mathLog = functionWithoutThis("log", 2u) fn@ { args ->
         .requireToBe<NumberType> { return@fn it }
     when {
         x.isNaN || base.isNaN
-         || x.value < 0.0 || base.value <= 0.0 || base.value == 1.0
+         || x.nativeValue < 0.0 || base.nativeValue <= 0.0 || base.nativeValue == 1.0
          || x.isPositiveInfinity && base.isPositiveInfinity
          -> NumberType.NaN
-        x.isPositiveInfinity && base.value > 1.0 -> NumberType.POSITIVE_ZERO
-        x.isPositiveInfinity && base.value < 1.0 -> NumberType.NEGATIVE_INFINITY
-        x.isZero && base.value > 1.0 -> NumberType.NEGATIVE_INFINITY
-        x.isZero && base.value < 1.0 -> NumberType.POSITIVE_INFINITY
-        else -> (ln(x.value) / ln(base.value)).languageValue
+        x.isPositiveInfinity && base.nativeValue > 1.0 -> NumberType.POSITIVE_ZERO
+        x.isPositiveInfinity && base.nativeValue < 1.0 -> NumberType.NEGATIVE_INFINITY
+        x.isZero && base.nativeValue > 1.0 -> NumberType.NEGATIVE_INFINITY
+        x.isZero && base.nativeValue < 1.0 -> NumberType.POSITIVE_INFINITY
+        else -> (ln(x.nativeValue) / ln(base.nativeValue)).languageValue
     }
         .toNormal()
 }
@@ -231,8 +231,8 @@ private fun generateLogN(n: Int, fn: (Double) -> Double) =
         when {
             x.isNaN || x.isPositiveInfinity -> x
             x.isZero -> NumberType.NEGATIVE_INFINITY
-            x.value < 0.0 -> NumberType.NaN
-            else -> fn(x.value).languageValue
+            x.nativeValue < 0.0 -> NumberType.NaN
+            else -> fn(x.nativeValue).languageValue
         }
             .toNormal()
     }
@@ -247,7 +247,7 @@ val max = functionWithoutThis("max", 1u) fn@ { args ->
     args.forEach {
         val number = it.requireToBe<NumberType> { return@fn it }
         if (number.isNaN) return@fn throwError(TypeErrorKind.CANNOT_COMPARE_NAN)
-        if (number.value > highest.value) highest = number
+        if (number.nativeValue > highest.nativeValue) highest = number
     }
     highest.toNormal()
 }
@@ -258,7 +258,7 @@ val min = functionWithoutThis("min", 1u) fn@ { args ->
     args.forEach {
         val number = it.requireToBe<NumberType> { return@fn it }
         if (number.isNaN) return@fn throwError(TypeErrorKind.CANNOT_COMPARE_NAN)
-        if (number.value < lowest.value) lowest = number
+        if (number.nativeValue < lowest.nativeValue) lowest = number
     }
     lowest.toNormal()
 }
@@ -282,9 +282,9 @@ val round = functionWithoutThis("round", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.not { isFinite } || x.isInteger) return@fn x.toNormal()
-    if (x.value < 0.5 && x.value > 0.0) return@fn NumberType.POSITIVE_ZERO.toNormal()
-    if (x.value < 0.0 && x.value >= -0.5) return@fn NumberType.NEGATIVE_ZERO.toNormal()
-    round(x.value)
+    if (x.nativeValue < 0.5 && x.nativeValue > 0.0) return@fn NumberType.POSITIVE_ZERO.toNormal()
+    if (x.nativeValue < 0.0 && x.nativeValue >= -0.5) return@fn NumberType.NEGATIVE_ZERO.toNormal()
+    round(x.nativeValue)
         .toNormal()
 }
 
@@ -293,7 +293,7 @@ val roundToFloat = functionWithoutThis("roundToFloat", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.not { isFinite } || x.isZero) return@fn x.toNormal()
-    x.value.toFloat().toDouble()
+    x.nativeValue.toFloat().toDouble()
         .toNormal()
 }
 
@@ -316,7 +316,7 @@ val sin = functionWithoutThis("sin", 1u) fn@ { args ->
         .requireToBe<NumberType> { return@fn it }
     if (x.isNaN || x.isZero) return@fn x.toNormal()
     if (x.isInfinity) return@fn NumberType.NaN.toNormal()
-    sin(x.value)
+    sin(x.nativeValue)
         .toNormal()
 }
 
@@ -325,7 +325,7 @@ val sinh = functionWithoutThis("sinh", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.not { isFinite } || x.isZero) return@fn x.toNormal()
-    sinh(x.value)
+    sinh(x.nativeValue)
         .toNormal()
 }
 
@@ -335,7 +335,7 @@ val sqrt = functionWithoutThis("sqrt", 1u) fn@ { args ->
         .requireToBe<NumberType> { return@fn it }
     if (x.isNaN || x.isZero || x.isPositiveInfinity) return@fn x.toNormal()
     if (x.isNegative) return@fn NumberType.NaN.toNormal()
-    sqrt(x.value)
+    sqrt(x.nativeValue)
         .toNormal()
 }
 
@@ -345,7 +345,7 @@ val tan = functionWithoutThis("tan", 1u) fn@ { args ->
         .requireToBe<NumberType> { return@fn it }
     if (x.isNaN || x.isZero) return@fn x.toNormal()
     if (x.isInfinity) return@fn NumberType.NaN.toNormal()
-    tan(x.value)
+    tan(x.nativeValue)
         .toNormal()
 }
 
@@ -354,8 +354,8 @@ val tanh = functionWithoutThis("tanh", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.isNaN || x.isZero) return@fn x.toNormal()
-    if (x.isInfinity) return@fn 1.0.withSign(x.value).toNormal()
-    tan(x.value)
+    if (x.isInfinity) return@fn 1.0.withSign(x.nativeValue).toNormal()
+    tan(x.nativeValue)
         .toNormal()
 }
 
@@ -364,7 +364,7 @@ val truncate = functionWithoutThis("truncate", 1u) fn@ { args ->
     val x = args[0]
         .requireToBe<NumberType> { return@fn it }
     if (x.not { isFinite } || x.isZero) return@fn x.toNormal()
-    truncate(x.value)
+    truncate(x.nativeValue)
         .toNormal()
 }
 

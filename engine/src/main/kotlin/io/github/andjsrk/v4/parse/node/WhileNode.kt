@@ -25,7 +25,7 @@ class WhileNode(
             val testVal = yieldAll(test.evaluateValue())
                 .orReturn { return@f it }
                 .requireToBe<BooleanType> { return@f it }
-            if (!testVal.value) return@f res.toNormal()
+            if (!testVal.nativeValue) return@f res.toNormal()
             res = yieldAll(body.evaluate())
                 .returnIfShouldNotContinue(res) { return@f it }
         }

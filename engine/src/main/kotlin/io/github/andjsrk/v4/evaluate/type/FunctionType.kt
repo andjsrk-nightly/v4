@@ -4,7 +4,6 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Function
 import io.github.andjsrk.v4.evaluate.builtin.sealedData
-import io.github.andjsrk.v4.evaluate.type.*
 
 sealed class FunctionType(
     var name: PropertyKey?,
@@ -45,4 +44,4 @@ internal inline fun FunctionType.callCollectionPredicate(
 ) =
     callCollectionCallback(element, index, array, rtn)
         .requireToBe<BooleanType>(rtn)
-        .value
+        .nativeValue

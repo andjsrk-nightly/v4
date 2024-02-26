@@ -294,7 +294,7 @@ private val repeat = method("repeat", 1u) fn@ { thisArg, args ->
 @EsSpec("String.prototype.replaceAll")
 private val replaceAll = method("replaceAll", 2u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
-    val string = stringArg.value
+    val string = stringArg.nativeValue
     val new = args[1]
     val oldArg = when (val value = args[0]) {
         is StringType -> value
@@ -309,12 +309,12 @@ private val replaceAll = method("replaceAll", 2u) fn@ { thisArg, args ->
                 ?: unexpectedType(value, "${generalizedDescriptionOf<StringType>()} or a value that has Symbol.replace method")
         )
     }
-    val old = oldArg.value
+    val old = oldArg.nativeValue
     checkStringReplaceNewArg(new)
         .orReturnThrow { return@fn it }
 
     when (new) {
-        is StringType -> string.replace(old, new.value)
+        is StringType -> string.replace(old, new.nativeValue)
         is FunctionType -> {
             val builder = StringBuilder()
             val step = old.length.coerceAtLeast(1)
@@ -345,7 +345,7 @@ private val replaceAll = method("replaceAll", 2u) fn@ { thisArg, args ->
 @EsSpec("String.prototype.replace")
 private val replaceFirst = method("replaceFirst", 2u) fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
-    val string = stringArg.value
+    val string = stringArg.nativeValue
     val new = args[1]
     val oldArg = when (val value = args[0]) {
         is StringType -> value
@@ -360,14 +360,14 @@ private val replaceFirst = method("replaceFirst", 2u) fn@ { thisArg, args ->
                 ?: unexpectedType(value, "${generalizedDescriptionOf<StringType>()} or a value that has Symbol.replace method")
         )
     }
-    val old = oldArg.value
+    val old = oldArg.nativeValue
     checkStringReplaceNewArg(new)
         .orReturnThrow { return@fn it }
 
     when (new) {
         is StringType ->
             // no special patterns supported since it can be replaced by passing a function as an argument
-            string.replaceFirst(old, new.value).languageValue
+            string.replaceFirst(old, new.nativeValue).languageValue
         is FunctionType -> {
             val pos = string.indexOf(old)
             if (pos == -1) stringArg
@@ -428,7 +428,7 @@ private val stringSlice = method("slice", 1u) fn@{ thisArg, args ->
 @EsSpec("String.prototype.split")
 private val split = method("split") fn@ { thisArg, args ->
     val stringArg = thisArg.requireToBe<StringType> { return@fn it }
-    val string = stringArg.value
+    val string = stringArg.nativeValue
     val limit = args.getOptional(1)
     val separatorArg = when (val value = args.getOptional(0)) {
         is StringType -> value
@@ -449,7 +449,7 @@ private val split = method("split") fn@ { thisArg, args ->
             return@fn splitMethod.call(value, listOf(stringArg, limit ?: NullType))
         }
     }
-    val separator = separatorArg.value
+    val separator = separatorArg.nativeValue
     val safeLimit = checkSplitLimitArg(limit)
         .orReturnThrow { return@fn it }
         .value

@@ -16,7 +16,7 @@ class IfStatementNode(
             .orReturn { return@f it }
             .requireToBe<BooleanType> { return@f it }
         val completion =
-            if (testVal.value) yieldAll(then.evaluate())
+            if (testVal.nativeValue) yieldAll(then.evaluate())
             else `else`?.evaluate()?.let { yieldAll(it) } ?: empty
         updateEmpty(completion, NullType)
     }

@@ -44,7 +44,7 @@ class NormalForNode(
                 val testValue = yieldAll(test.evaluateValue())
                     .orReturn { return@f it }
                     .requireToBe<BooleanType> { return@f it }
-                if (!testValue.value) return@f res.toNormal()
+                if (!testValue.nativeValue) return@f res.toNormal()
             }
             res = yieldAll(body.evaluate())
                 .returnIfShouldNotContinue(res) { return@f it }

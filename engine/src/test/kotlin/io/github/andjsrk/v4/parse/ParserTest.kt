@@ -1073,6 +1073,12 @@ internal class ParserTest {
 
         """
             class A {
+                constructor() { return }
+            }
+        """.shouldBeValidStatementAnd<ClassDeclarationNode> {}
+
+        """
+            class A {
                 a() {}
                 a = 1
             }

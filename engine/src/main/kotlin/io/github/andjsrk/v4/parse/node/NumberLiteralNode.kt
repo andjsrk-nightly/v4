@@ -8,7 +8,7 @@ import io.github.andjsrk.v4.evaluate.type.toNormal
 class NumberLiteralNode(rawContent: String, range: Range): DynamicPrimitiveLiteralNode<Double>(rawContent, range), ObjectLiteralKeyNode {
     @EsSpec("NumericValue")
     override val value by lazy {
-        parseNumber(raw).value
+        parseNumber(raw).nativeValue
     }
     override fun evaluate() = lazyFlow {
         value

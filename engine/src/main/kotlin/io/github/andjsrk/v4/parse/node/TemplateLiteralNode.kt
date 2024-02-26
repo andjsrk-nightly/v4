@@ -20,7 +20,7 @@ class TemplateLiteralNode(
                 .orReturn { return@f it }
             val stringified = stringify(value)
                 .orReturn { return@f it }
-            result.append(stringified.value)
+            result.append(stringified.nativeValue)
             result.append(string.value)
         }
         result.toString()

@@ -2,22 +2,21 @@ package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.evaluate.display
 import io.github.andjsrk.v4.evaluate.languageValue
-import io.github.andjsrk.v4.evaluate.type.toNormal
 
 /**
  * Note that this covers a [Private Name](https://tc39.es/ecma262/multipage/ecmascript-data-types-and-values.html#sec-private-names).
  * @see [isPrivateName]
  */
 @JvmInline
-value class StringType(override val value: String): PrimitiveLanguageType, LanguageTypePropertyKey {
+value class StringType(override val nativeValue: String): PrimitiveLanguageType, LanguageTypePropertyKey {
     operator fun plus(other: StringType) =
-        StringType(value + other.value)
+        StringType(nativeValue + other.nativeValue)
     fun lessThan(other: StringType) =
-        (value < other.value)
+        (nativeValue < other.nativeValue)
             .languageValue
             .toNormal()
     val isPrivateName get() =
-        value.startsWith('#')
+        nativeValue.startsWith('#')
 
     override fun toString() = display()
 

@@ -88,9 +88,9 @@ private fun StringBuilder.appendJsonStringifiedLanguageValue(value: LanguageType
     val newIndent = needIndent.thenTake { "\n$newIndentAcc" }.orEmpty()
     when (value) {
         NullType -> append("null")
-        is StringType -> append(KotlinxJson.encodeToString(value.value))
+        is StringType -> append(KotlinxJson.encodeToString(value.nativeValue))
         is BooleanType -> append(value.toString())
-        is NumberType -> append(value.toString(10).value)
+        is NumberType -> append(value.toString(10).nativeValue)
         is BigIntType -> return throwError(TypeErrorKind.CANNOT_CONVERT_BIGINT_TO_JSON)
         is SymbolType -> return throwError(TypeErrorKind.CANNOT_CONVERT_SYMBOL_TO_JSON)
         is FunctionType -> return throwError(TypeErrorKind.CANNOT_CONVERT_FUNCTION_TO_JSON)
@@ -141,7 +141,7 @@ private val stringify = functionWithoutThis("stringify", 1u) fn@ { args ->
     val nonNormalizedIndentArg = args.getOrNull(1)
     val indent = when (val indentArg = nonNormalizedIndentArg?.normalizeNull()) {
         null -> ""
-        is StringType -> indentArg.value
+        is StringType -> indentArg.nativeValue
         is NumberType -> {
             val repeatCount = indentArg.requireToBeUnsignedInt { return@fn it }
             SPACE.toString().repeat(repeatCount)

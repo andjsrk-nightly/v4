@@ -9,8 +9,8 @@ private val assert = functionWithoutThis("assert", 1u) fn@ { args ->
     val value = args[0].requireToBe<BooleanType> { return@fn it }
     val reason = args.getOptional(1)
         ?.requireToBe<StringType> { return@fn it }
-        ?.value
-    if (!value.value) {
+        ?.nativeValue
+    if (!value.nativeValue) {
         if (reason == null) return@fn throwError(RangeErrorKind.ASSERTION_FAILED)
         else return@fn throwError(RangeErrorKind.ASSERTION_FAILED_WITH_REASON, reason)
     }

@@ -11,14 +11,14 @@ private val bigintFrom = functionWithoutThis("from", 1u) fn@ { args ->
     when (val value = args[0]) {
         is NumberType -> return@fn value.toBigInt()
         is StringType -> {
-            val (sign, rest) = getSignAndRest(value.value)
-            if (rest.any { it.not { isDecimalDigit } }) return@fn throwError(TypeErrorKind.BIGINT_FROM_INVALID_VALUE, value.value)
+            val (sign, rest) = getSignAndRest(value.nativeValue)
+            if (rest.any { it.not { isDecimalDigit } }) return@fn throwError(TypeErrorKind.BIGINT_FROM_INVALID_VALUE, value.nativeValue)
             val bigint = BigInteger(rest)
             (if (sign < 0) -bigint else bigint)
                 .languageValue
         }
         is BooleanType -> (
-            if (value.value) BigInteger.ONE
+            if (value.nativeValue) BigInteger.ONE
             else BigInteger.ZERO
         )
             .languageValue
@@ -37,7 +37,7 @@ private val bigintAsIntN = method("asIntN", 1u) fn@ { thisArg, args ->
         .requireToBeUnsignedInt { return@fn it }
     val half = BigInteger.TWO.pow(bits - 1)
     val modRightHand = half.shiftLeft(1)
-    val mod = bigint.value.mod(modRightHand)
+    val mod = bigint.nativeValue.mod(modRightHand)
     (if (mod >= half) mod - modRightHand else mod)
         .languageValue
         .toNormal()
@@ -48,7 +48,7 @@ private val bigintAsUintN = method("asUintN", 1u) fn@ { thisArg, args ->
     val bits = args[0]
         .requireToBe<NumberType> { return@fn it }
         .requireToBeUnsignedInt { return@fn it }
-    bigint.value.mod(BigInteger.TWO.pow(bits))
+    bigint.nativeValue.mod(BigInteger.TWO.pow(bits))
         .languageValue
         .toNormal()
 }
@@ -90,8 +90,8 @@ val BigInt = BuiltinClassType(
 )
 
 private fun NumberType.toBigInt(): MaybeThrow<BigIntType> {
-    if (this.not { isInteger }) return throwError(TypeErrorKind.BIGINT_FROM_NON_INTEGER, toString(10).value)
-    return value.toBigDecimal().toBigIntegerExact()
+    if (this.not { isInteger }) return throwError(TypeErrorKind.BIGINT_FROM_NON_INTEGER, toString(10).nativeValue)
+    return nativeValue.toBigDecimal().toBigIntegerExact()
         .languageValue
         .toNormal()
 }

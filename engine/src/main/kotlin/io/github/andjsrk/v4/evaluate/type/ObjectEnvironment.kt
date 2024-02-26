@@ -22,7 +22,7 @@ class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environm
     override fun setMutableBinding(name: String, value: LanguageType): EmptyOrThrow {
         val has = `object`.hasProperty(name.languageValue)
             .orReturnThrow { return it }
-            .value
+            .nativeValue
         if (!has) return throwError(ReferenceErrorKind.NOT_DEFINED, name)
         `object`.set(name.languageValue, value)
             .orReturnThrow { return it }
@@ -31,7 +31,7 @@ class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environm
     override fun getBindingValue(name: String): NonEmptyOrThrow {
         val has = `object`.hasProperty(name.languageValue)
             .orReturnThrow { return it }
-            .value
+            .nativeValue
         if (!has) return throwError(ReferenceErrorKind.NOT_DEFINED, name)
         return `object`.get(name.languageValue)
     }

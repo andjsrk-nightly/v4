@@ -7,16 +7,16 @@ import io.github.andjsrk.v4.neverHappens
 internal fun ObjectType.toPropertyDescriptor(): MaybeThrow<Property> {
     val hasValueField = hasOwnProperty("value".languageValue)
         .orReturnThrow { return it }
-        .value
+        .nativeValue
     val hasWritableField = hasOwnProperty("writable".languageValue)
         .orReturnThrow { return it }
-        .value
+        .nativeValue
     val hasGetField = hasOwnProperty("get".languageValue)
         .orReturnThrow { return it }
-        .value
+        .nativeValue
     val hasSetField = hasOwnProperty("set".languageValue)
         .orReturnThrow { return it }
-        .value
+        .nativeValue
 
     val isData = hasValueField || hasWritableField
     val isAccessor = hasGetField || hasSetField
@@ -53,4 +53,4 @@ private inline fun ObjectType.getOptionalBooleanPropertyValueOrReturn(key: Prope
     getOwnPropertyValue(key)
         .orReturnThrow(rtn)
         ?.requireToBe<BooleanType>(rtn)
-        ?.value
+        ?.nativeValue

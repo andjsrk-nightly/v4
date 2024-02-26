@@ -17,10 +17,10 @@ private val booleanFrom = functionWithoutThis("from", 1u) fn@ { args ->
 private val isTruthyInJs = functionWithoutThis("isTruthyInJs", 1u) fn@ { args ->
     when (val value = args[0]) {
         NullType -> false
-        is StringType -> value.value.isNotEmpty()
+        is StringType -> value.nativeValue.isNotEmpty()
         is NumberType -> value.not { isZero } && value.not { isNaN }
         is BooleanType -> return@fn value.toNormal()
-        is BigIntType -> value.value != BigInteger.ZERO
+        is BigIntType -> value.nativeValue != BigInteger.ZERO
         is ObjectType -> true
         is SymbolType -> return@fn throwError(TypeErrorKind.BOOLEAN_FROM_INVALID_VALUE, generalizedDescriptionOf(value))
     }
@@ -30,7 +30,7 @@ private val isTruthyInJs = functionWithoutThis("isTruthyInJs", 1u) fn@ { args ->
 
 private val booleanToString = method(SymbolType.WellKnown.toString) fn@ { thisArg, _ ->
     val boolean = thisArg.requireToBe<BooleanType> { return@fn it }
-    boolean.value.toString()
+    boolean.nativeValue.toString()
         .languageValue
         .toNormal()
 }

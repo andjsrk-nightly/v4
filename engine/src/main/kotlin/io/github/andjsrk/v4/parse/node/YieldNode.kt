@@ -28,7 +28,7 @@ class YieldNode(
                             .orReturn { return@f it }
                         val done = res.getDone()
                             .orReturn { return@f it }
-                            .value
+                            .nativeValue
                         val resValueComp = res.getValue()
                         val resValue = resValueComp
                             .orReturn { return@f it }
@@ -46,7 +46,7 @@ class YieldNode(
                             .asIteratorResult()
                         val done = closeRes.getDone()
                             .orReturn { return@f it }
-                            .value
+                            .nativeValue
                         val resValue = closeRes.getValue()
                             .orReturn { return@f it }
                         if (done) return@f Completion.Return(resValue)

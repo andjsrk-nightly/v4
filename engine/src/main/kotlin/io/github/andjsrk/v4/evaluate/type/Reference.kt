@@ -30,14 +30,14 @@ data class Reference(
         assert(this.not { isUnresolvable })
         require(base is Environment)
         require(referencedName is StringType)
-        return base.initializeBinding(referencedName.value, value)
+        return base.initializeBinding(referencedName.nativeValue, value)
     }
     @EsSpec("PutValue")
     fun putValue(value: LanguageType): EmptyOrThrow {
         return when {
             isUnresolvable -> {
                 require(referencedName is StringType)
-                throwError(ReferenceErrorKind.NOT_DEFINED, referencedName.value)
+                throwError(ReferenceErrorKind.NOT_DEFINED, referencedName.nativeValue)
             }
             isProperty -> {
                 if (base !is ObjectType) return throwError(TypeErrorKind.PRIMITIVE_IMMUTABLE)
@@ -49,7 +49,7 @@ data class Reference(
             else -> {
                 require(base is DeclarativeEnvironment)
                 require(referencedName is StringType)
-                base.setMutableBinding(referencedName.value, value)
+                base.setMutableBinding(referencedName.nativeValue, value)
             }
         }
     }

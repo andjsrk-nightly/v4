@@ -11,7 +11,7 @@ import io.github.andjsrk.v4.evaluate.type.*
 internal fun stringify(value: LanguageType): MaybeThrow<StringType> {
     return when (value) {
         NullType -> "null".languageValue
-        is BooleanType -> value.value.toString().languageValue
+        is BooleanType -> value.nativeValue.toString().languageValue
         is StringType -> value
         is NumericType<*> -> value.toString(10)
         // the function allows symbols to be stringified

@@ -2,7 +2,6 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.lang.*
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
@@ -11,310 +10,310 @@ internal class EvaluatorTest {
     fun testPrimitiveLiteral() {
         evaluationOf("""
             "abc"
-        """).shouldBeNormalAnd<StringType> {
-            assert(value == "abc")
+        """).assertNormalAnd<StringType> {
+            assert(value.nativeValue == "abc")
         }
 
         evaluationOf("""
             123
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 123.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 123.0)
         }
 
         evaluationOf("""
             true
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             null
-        """).shouldBeNormalAnd<NullType> {}
+        """).assertNormalAnd<NullType> {}
 
         evaluationOf("""
             123n
-        """).shouldBeNormalAnd<BigIntType> {
-            assert(value == 123.toBigInteger())
+        """).assertNormalAnd<BigIntType> {
+            assert(value.nativeValue == 123.toBigInteger())
         }
     }
     @Test
     fun testUnaryExpression() {
         evaluationOf("""
             void 0
-        """).shouldBeNormalAnd<NullType> {}
+        """).assertNormalAnd<NullType> {}
 
         evaluationOf("""
             typeof "abc"
-        """).shouldBeNormalAnd<StringType> {
-            assert(value == "string")
+        """).assertNormalAnd<StringType> {
+            assert(value.nativeValue == "string")
         }
 
         evaluationOf("""
             typeof 123
-        """).shouldBeNormalAnd<StringType> {
-            assert(value == "number")
+        """).assertNormalAnd<StringType> {
+            assert(value.nativeValue == "number")
         }
 
         evaluationOf("""
             typeof true
-        """).shouldBeNormalAnd<StringType> {
-            assert(value == "boolean")
+        """).assertNormalAnd<StringType> {
+            assert(value.nativeValue == "boolean")
         }
 
         evaluationOf("""
             typeof null
-        """).shouldBeNormalAnd<StringType> {
-            assert(value == "null")
+        """).assertNormalAnd<StringType> {
+            assert(value.nativeValue == "null")
         }
 
         evaluationOf("""
             -123
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == -123.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == -123.0)
         }
 
         evaluationOf("""
             -true
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
 
         evaluationOf("""
             ~123
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == -124.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == -124.0)
         }
 
         evaluationOf("""
             ~true
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
 
         evaluationOf("""
             !true
-        """).shouldBeNormalAnd<BooleanType> {
-            assertFalse(value)
+        """).assertNormalAnd<BooleanType> {
+            assertFalse(value.nativeValue)
         }
 
         evaluationOf("""
             !0
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
     }
     @Test
     fun testArithmeticOperator() {
         evaluationOf("""
             2 ** 4
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 16.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 16.0)
         }
 
         evaluationOf("""
             3 ** 0
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 1.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 1.0)
         }
 
         evaluationOf("""
             "a" ** 1
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
 
         evaluationOf("""
             1 ** 1n
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
 
         evaluationOf("""
             2 * 3
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 6.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 6.0)
         }
 
         evaluationOf("""
             "2" * 3
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
 
         evaluationOf("""
             4 / 2
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 2.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 2.0)
         }
 
         evaluationOf("""
             5 % 2
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 1.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 1.0)
         }
 
         evaluationOf("""
             2.5 % 1
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 0.5)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 0.5)
         }
 
         evaluationOf("""
             -3 % 2
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == -1.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == -1.0)
         }
 
         evaluationOf("""
             1 + 2
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 3.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 3.0)
         }
 
         evaluationOf("""
             "1" + "2"
-        """).shouldBeNormalAnd<StringType> {
-            assert(value == "12")
+        """).assertNormalAnd<StringType> {
+            assert(value.nativeValue == "12")
         }
 
         evaluationOf("""
             "1" + 2
-        """).shouldBeNormalAnd<StringType> {
-            assert(value == "12")
+        """).assertNormalAnd<StringType> {
+            assert(value.nativeValue == "12")
         }
 
         evaluationOf("""
             2 - 1
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 1.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 1.0)
         }
 
         evaluationOf("""
             "2" - 1
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
     }
     @Test
     fun testBitwiseOperator() {
         evaluationOf("""
             1 << 4
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 16.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 16.0)
         }
 
         evaluationOf("""
             16 >> 4
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 1.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 1.0)
         }
 
         evaluationOf("""
             -2 >> 1
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == -1.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == -1.0)
         }
 
         evaluationOf("""
             16 >>> 4
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 1.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 1.0)
         }
 
         evaluationOf("""
             -2 >>> 1
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == Int.MAX_VALUE.toDouble())
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == Int.MAX_VALUE.toDouble())
         }
 
         evaluationOf("""
             7 & 11
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 3.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 3.0)
         }
 
         evaluationOf("""
             3 | 10
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 11.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 11.0)
         }
 
         evaluationOf("""
             1.1 | 0
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 1.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 1.0)
         }
     }
     @Test
     fun testRelationalOperator() {
         evaluationOf("""
             1 < 2
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             1 < 1
-        """).shouldBeNormalAnd<BooleanType> {
-            assertFalse(value)
+        """).assertNormalAnd<BooleanType> {
+            assertFalse(value.nativeValue)
         }
 
         evaluationOf("""
             2 < 1
-        """).shouldBeNormalAnd<BooleanType> {
-            assertFalse(value)
+        """).assertNormalAnd<BooleanType> {
+            assertFalse(value.nativeValue)
         }
 
         evaluationOf("""
             1 <= 2
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             1 <= 1
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             2 <= 1
-        """).shouldBeNormalAnd<BooleanType> {
-            assertFalse(value)
+        """).assertNormalAnd<BooleanType> {
+            assertFalse(value.nativeValue)
         }
 
         evaluationOf("""
             2 > 1
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             1 > 1
-        """).shouldBeNormalAnd<BooleanType> {
-            assertFalse(value)
+        """).assertNormalAnd<BooleanType> {
+            assertFalse(value.nativeValue)
         }
 
         evaluationOf("""
             1 > 2
-        """).shouldBeNormalAnd<BooleanType> {
-            assertFalse(value)
+        """).assertNormalAnd<BooleanType> {
+            assertFalse(value.nativeValue)
         }
 
         evaluationOf("""
             2 >= 1
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             1 >= 1
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             1 >= 2
-        """).shouldBeNormalAnd<BooleanType> {
-            assertFalse(value)
+        """).assertNormalAnd<BooleanType> {
+            assertFalse(value.nativeValue)
         }
     }
     @Test
     fun testEqualOperator() {
         arrayOf("==" to true, "!==" to false).forEach { (op, expected) ->
             fun EvaluationResult.shouldEqual() =
-                this.shouldBeNormalAnd<BooleanType> {
-                    assert(value == expected)
+                this.assertNormalAnd<BooleanType> {
+                    assert(value.nativeValue == expected)
                 }
             fun EvaluationResult.shouldNotEqual() =
-                this.shouldBeNormalAnd<BooleanType> {
-                    assert(value != expected)
+                this.assertNormalAnd<BooleanType> {
+                    assert(value.nativeValue != expected)
                 }
 
             evaluationOf("""
@@ -362,19 +361,19 @@ internal class EvaluatorTest {
     fun testLogicalOperator() {
         evaluationOf("""
             true && true
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             false && true
-        """).shouldBeNormalAnd<BooleanType> {
-            assertFalse(value)
+        """).assertNormalAnd<BooleanType> {
+            assertFalse(value.nativeValue)
         }
 
         evaluationOf("""
             true && 0
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
 
         // evaluationOf("""
         //     true &&> 0
@@ -383,75 +382,75 @@ internal class EvaluatorTest {
         // evaluationOf("""
         //     false &&> 0
         // """).shouldBeNormalAnd<BooleanType> {
-        //     assertFalse(value)
+        //     assertFalse(value.value)
         // }
 
         evaluationOf("""
             true || false
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             false || true
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             false || false
-        """).shouldBeNormalAnd<BooleanType> {
-            assertFalse(value)
+        """).assertNormalAnd<BooleanType> {
+            assertFalse(value.nativeValue)
         }
 
         evaluationOf("""
             true || 0
-        """).shouldBeNormalAnd<BooleanType> {
+        """).assertNormalAnd<BooleanType> {
             // 0 will not be evaluated, so it is just `true` instead of an error
-            assertTrue(value)
+            assertTrue(value.nativeValue)
         }
 
         evaluationOf("""
             false || 0
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
 
         evaluationOf("""
             null ?? 0
-        """).shouldBeNormalAnd<NumberType> {}
+        """).assertNormalAnd<NumberType> {}
 
         evaluationOf("""
             true ?? false
-        """).shouldBeNormalAnd<BooleanType> {
-            assertTrue(value)
+        """).assertNormalAnd<BooleanType> {
+            assertTrue(value.nativeValue)
         }
     }
     @Test
     fun testIfExpression() {
         evaluationOf("""
             (if (true) 1 else 0)
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 1.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 1.0)
         }
 
         evaluationOf("""
             (if (false) 1 else 0)
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 0.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 0.0)
         }
 
         evaluationOf("""
             (if (1) 1 else 0)
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
     }
     @Test
     fun testLexicalDeclaration() {
         evaluationOf("""
             var a
-        """).shouldBeNormalAnd<NullType> {}
+        """).assertNormalAnd<NullType> {}
 
         evaluationOf("""
             var a
-        """).shouldBeNormalAnd {
+        """).assertNormalAnd {
             variableNamed("a").run {
                 assertTrue(isMutable)
                 assertIs<NullType>(value)
@@ -460,7 +459,7 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             let a = 0
-        """).shouldBeNormalAnd {
+        """).assertNormalAnd {
             variableNamed("a").run {
                 assertFalse(isMutable)
                 assertIs<NumberType>(value)
@@ -472,37 +471,37 @@ internal class EvaluatorTest {
         evaluationOf("""
             var a = 0
             a = 1
-        """).shouldBeNormalAnd<NumberType>(moduleBlock={
-            variableNamed("a").shouldBeTypedAs<NumberType> {
-                assert(value == 1.0)
-            }
-        })
+        """).assertNormalAnd<NumberType> {
+            val a = module.variableNamed("a")
+                .assertTypedAs<NumberType>()
+            assert(a.nativeValue == 1.0)
+        }
 
         evaluationOf("""
             var a = 0
             a += 1
-        """).shouldBeNormalAnd<NumberType>(moduleBlock={
-            variableNamed("a").shouldBeTypedAs<NumberType> {
-                assert(value == 1.0)
-            }
-        })
+        """).assertNormalAnd<NumberType> {
+            val a = module.variableNamed("a")
+                .assertTypedAs<NumberType>()
+            assert(a.nativeValue == 1.0)
+        }
     }
     @Test
     fun testIfStatement() {
         evaluationOf("""
             if (true) 0
             else 1
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 0.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 0.0)
         }
 
         evaluationOf("""
             if (true) 0
-        """).shouldBeNormalAnd<NumberType> {}
+        """).assertNormalAnd<NumberType> {}
 
         evaluationOf("""
             if (false) 0
-        """).shouldBeNormalAnd<NullType> {}
+        """).assertNormalAnd<NullType> {}
     }
     @Test
     fun testWhile() {
@@ -513,15 +512,15 @@ internal class EvaluatorTest {
                 count += 1
                 run = false
             }
-        """).shouldBeNormalAnd {
-            variableNamed("count").shouldBeTypedAs<NumberType> {
-                assert(value == 1.0)
-            }
+        """).assertNormalAnd {
+            val count = variableNamed("count")
+                .assertTypedAs<NumberType>()
+            assert(count.nativeValue == 1.0)
         }
 
         evaluationOf("""
             while (false) 0
-        """).shouldBeNormalAnd<NullType> {}
+        """).assertNormalAnd<NullType> {}
     }
     @Test
     fun testIterationFlowControlStatement() {
@@ -533,10 +532,10 @@ internal class EvaluatorTest {
                 if (i == 2) continue
                 a += 1
             }
-        """).shouldBeNormalAnd {
-            variableNamed("a").shouldBeTypedAs<NumberType> {
-                assert(value == 2.0)
-            }
+        """).assertNormalAnd {
+            val a = variableNamed("a")
+                .assertTypedAs<NumberType>()
+            assert(a.nativeValue == 2.0)
         }
 
         evaluationOf("""
@@ -544,35 +543,35 @@ internal class EvaluatorTest {
                 break
                 0
             }
-        """).shouldBeNormalAnd<NullType> {}
+        """).assertNormalAnd<NullType> {}
     }
     @Test
     fun testNormalFor() {
         evaluationOf("""
-            var a = 0
-            for (var i = 0; i < 5; i += 1) a += i
-        """).shouldBeNormalAnd {
-            variableNamed("a").shouldBeTypedAs<NumberType> {
-                assert(value == (0..4).sum().toDouble())
-            }
+            var sum = 0
+            for (var i = 0; i < 5; i += 1) sum += i
+        """).assertNormalAnd {
+            val sum = variableNamed("sum")
+                .assertTypedAs<NumberType>()
+            assert(sum.nativeValue == (0..4).sum().toDouble())
         }
 
         evaluationOf("""
             var i = 0
             for (; i < 5; i += 1);
-        """).shouldBeNormalAnd {
-            variableNamed("i").shouldBeTypedAs<NumberType> {
-                assert(value == 5.0)
-            }
+        """).assertNormalAnd {
+            val i = variableNamed("i")
+                .assertTypedAs<NumberType>()
+            assert(i.nativeValue == 5.0)
         }
 
         evaluationOf("""
             var i = 0
             for (; i < 5;) i += 1
-        """).shouldBeNormalAnd {
-            variableNamed("i").shouldBeTypedAs<NumberType> {
-                assert(value == 5.0)
-            }
+        """).assertNormalAnd {
+            val i = variableNamed("i")
+                .assertTypedAs<NumberType>()
+            assert(i.nativeValue == 5.0)
         }
 
         evaluationOf("""
@@ -581,21 +580,21 @@ internal class EvaluatorTest {
                 i += 1
                 if (i == 5) break
             }
-        """).shouldBeNormalAnd {
-            variableNamed("i").shouldBeTypedAs<NumberType> {
-                assert(value == 5.0)
-            }
+        """).assertNormalAnd {
+            val i = variableNamed("i")
+                .assertTypedAs<NumberType>()
+            assert(i.nativeValue == 5.0)
         }
     }
     @Test
     fun testThrow() {
         evaluationOf("""
             throw 0
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
 
         evaluationOf("""
             while (true) throw 0
-        """).shouldBeThrowAnd {}
+        """).assertThrowAnd {}
     }
     @Test
     fun testTry() {
@@ -606,10 +605,10 @@ internal class EvaluatorTest {
             } catch {
                 threw = true
             }
-        """).shouldBeNormalAnd {
-            variableNamed("threw").shouldBeTypedAs<BooleanType> {
-                assertTrue(value)
-            }
+        """).assertNormalAnd {
+            val threw = variableNamed("threw")
+                .assertTypedAs<BooleanType>()
+            assertTrue(threw.nativeValue)
         }
 
         evaluationOf("""
@@ -619,10 +618,10 @@ internal class EvaluatorTest {
             } finally {
                 threw = true
             }
-        """).shouldBeThrowAnd {
-            variableNamed("threw").shouldBeTypedAs<BooleanType> {
-                assertTrue(value)
-            }
+        """).assertThrowAnd {
+            val threw = variableNamed("threw")
+                .assertTypedAs<BooleanType>()
+            assertTrue(threw.nativeValue)
         }
 
         evaluationOf("""
@@ -633,8 +632,8 @@ internal class EvaluatorTest {
             } finally {
                 1
             }
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 0.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 0.0)
         }
 
         evaluationOf("""
@@ -643,18 +642,18 @@ internal class EvaluatorTest {
             } finally {
                 throw 1
             }
-        """).shouldBeThrowAnd<NumberType> {
-            assert(value == 1.0)
+        """).assertThrowAnd<NumberType> {
+            assert(value.nativeValue == 1.0)
         }
     }
     @Test
     fun testObjectBasic() {
         evaluationOf("""
             ({ a: 0 })
-        """).shouldBeNormalAnd<ObjectType> {
-            dataPropertyNamed("a").run {
+        """).assertNormalAnd<ObjectType> {
+            value.dataPropertyNamed("a").run {
                 value.assertTypeAnd<NumberType> {
-                    assert(value == 0.0)
+                    assert(nativeValue == 0.0)
                 }
             }
         }
@@ -662,32 +661,32 @@ internal class EvaluatorTest {
         evaluationOf("""
             let a = 0
             let b = { a }
-        """).shouldBeNormalAnd {
-            variableNamed("b").shouldBeTypedAs<ObjectType> {
-                dataPropertyNamed("a").run {
-                    value.assertTypeAnd<NumberType> {
-                        assert(value == 0.0)
-                    }
+        """).assertNormalAnd {
+            val b = variableNamed("b")
+                .assertTypedAs<ObjectType>()
+            b.dataPropertyNamed("a").run {
+                value.assertTypeAnd<NumberType> {
+                    assert(nativeValue == 0.0)
                 }
             }
         }
 
         evaluationOf("""
             ({ true })
-        """).shouldBeNormalAnd<ObjectType> {
-            dataPropertyNamed("true").run {
+        """).assertNormalAnd<ObjectType> {
+            value.dataPropertyNamed("true").run {
                 value.assertTypeAnd<BooleanType> {
-                    assertTrue(value)
+                    assertTrue(nativeValue)
                 }
             }
         }
 
         evaluationOf("""
             ({ ["a"] })
-        """).shouldBeNormalAnd<ObjectType> {
-            dataPropertyNamed("a").run {
+        """).assertNormalAnd<ObjectType> {
+            value.dataPropertyNamed("a").run {
                 value.assertTypeAnd<StringType> {
-                    assert(value == "a")
+                    assert(nativeValue == "a")
                 }
             }
         }
@@ -695,60 +694,67 @@ internal class EvaluatorTest {
         evaluationOf("""
             var evaluationCount = 0
             ;({ [evaluationCount += 1] })
-        """).shouldBeNormalAnd {
-            variableNamed("evaluationCount").shouldBeTypedAs<NumberType> {
-                assert(value == 1.0)
-            }
+        """).assertNormalAnd {
+            val evaluationCount = variableNamed("evaluationCount")
+                .assertTypedAs<NumberType>()
+            assert(evaluationCount.nativeValue == 1.0)
         }
     }
     @Test
     fun testMember() {
         evaluationOf("""
             ({ a: 0 }).a
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 0.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 0.0)
         }
 
         evaluationOf("""
             ({ a: { b: 0 } })?.a.b
-        """).shouldBeNormalAnd<NumberType> {
-            assert(value == 0.0)
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 0.0)
         }
 
         evaluationOf("""
             null?.a
-        """).shouldBeNormalAnd<NullType> {}
+        """).assertNormalAnd<NullType> {}
 
         evaluationOf("""
             null?.a.b
-        """).shouldBeNormalAnd<NullType> {}
+        """).assertNormalAnd<NullType> {}
+    }
+    @Test
+    fun testObject() {
+        evaluationOf("""
+            
+        """)
     }
     @Test
     fun testArrowFunction() {
         evaluationOf("""
             let getZero = () => 0
             let zero = getZero()
-        """).shouldBeNormalAnd {
-            variableNamed("zero").shouldBeTypedAs<NumberType> {
-                assert(value == 0.0)
-            }
+        """).assertNormalAnd {
+            val zero = variableNamed("zero")
+                .assertTypedAs<NumberType>()
+            assert(zero.nativeValue == 0.0)
         }
 
         evaluationOf("""
             let addOne = (x) => x + 1
             let two = addOne(1)
-        """).shouldBeNormalAnd {
-            variableNamed("two").shouldBeTypedAs<NumberType> {
-                assert(value == 2.0)
-            }
+        """).assertNormalAnd {
+            val two = variableNamed("two")
+                .assertTypedAs<NumberType>()
+            assert(two.nativeValue == 2.0)
         }
 
         evaluationOf("""
             let argsAsArr = (...args) => args
             let args = argsAsArr(1, 2, 3)
-        """).shouldBeNormalAnd {
-            variableNamed("args").shouldBeTypedAs<ArrayType> {
-                for (i in 1..3) assert(at(i - 1) == NumberType(i.toDouble()))
+        """).assertNormalAnd {
+            val args = variableNamed("args")
+                .assertTypedAs<ArrayType>()
+            for (i in 1..3) assert(args.at(i - 1) == NumberType(i.toDouble()))
             }
         }
     }
@@ -760,15 +766,15 @@ internal class EvaluatorTest {
             }
             let g = createG()
             ;[g.next(), g.next()]
-        """).shouldBeNormalAnd<ArrayType> {
-            at(0).assertTypeAnd<ObjectType> {
+        """).assertNormalAnd<ArrayType> {
+            value.at(0).assertTypeAnd<ObjectType> {
                 dataPropertyNamed("value").value.assertTypeAnd<NumberType> {
-                    assert(value == 0.0)
+                    assert(nativeValue == 0.0)
                 }
             }
-            at(1).assertTypeAnd<ObjectType> {
+            value.at(1).assertTypeAnd<ObjectType> {
                 dataPropertyNamed("value").value.assertTypeAnd<NumberType> {
-                    assert(value == 1.0)
+                    assert(nativeValue == 1.0)
                 }
             }
         }
@@ -784,32 +790,34 @@ private fun SourceTextModule.variableNamed(name: String): Binding {
     assertNotNull(binding)
     return binding
 }
-private inline fun <reified Value: LanguageType> Binding.shouldBeTypedAs(block: Value.() -> Unit) {
-    value.assertTypeAnd<Value>(block)
-}
-private fun EvaluationResult.shouldBeNormalAnd(block: SourceTextModule.() -> Unit) {
+private inline fun <reified Value: LanguageType> Binding.assertTypedAs() =
+    value.assertType<Value>()
+private fun EvaluationResult.assertNormalAnd(block: SourceTextModule.() -> Unit) {
     assertIs<Completion.Normal<*>>(completion)
     block(module)
 }
-private inline fun <reified Value: LanguageType> EvaluationResult.shouldBeNormalAnd(
-    crossinline moduleBlock: SourceTextModule.() -> Unit = {},
-    crossinline valueBlock: Value.() -> Unit = {},
+@JvmName("assertNormalTypedAnd")
+private inline fun <reified Value: LanguageType> EvaluationResult.assertNormalAnd(
+    crossinline block: StrictAssertionContext<Value>.() -> Unit,
 ) =
-    this.shouldBeNormalAnd {
+    this.assertNormalAnd {
         completion.value.assertTypeAnd<Value> {
-            valueBlock(this)
-            moduleBlock(module)
+            block(StrictAssertionContext(this, module))
         }
     }
-private fun EvaluationResult.shouldBeThrowAnd(block: SourceTextModule.() -> Unit) {
+private fun EvaluationResult.assertThrowAnd(block: SourceTextModule.() -> Unit) {
     assertIs<Completion.Throw>(completion)
     block(module)
     // TODO: put more assertions
 }
-@JvmName("shouldBeThrowTypedAnd")
-private inline fun <reified Value: LanguageType> EvaluationResult.shouldBeThrowAnd(crossinline block: Value.() -> Unit) =
-    this.shouldBeThrowAnd {
-        completion.value.assertTypeAnd<Value>(block)
+@JvmName("assertThrowTypedAnd")
+private inline fun <reified Value: LanguageType> EvaluationResult.assertThrowAnd(
+    crossinline block: StrictAssertionContext<Value>.() -> Unit,
+) =
+    this.assertThrowAnd {
+        completion.value.assertTypeAnd<Value> {
+            block(StrictAssertionContext(this, module))
+        }
     }
 private val config = object: HostConfig() {
     override fun loadImportedModule(module: CyclicModule, specifier: String, state: GraphLoadingState) = TODO()
@@ -845,3 +853,4 @@ private fun SourceTextModule.executeModuleWithoutIgnoringValue(): MaybeEmptyOrAb
     return res
 }
 private data class EvaluationResult(val completion: Completion<*>, val module: SourceTextModule)
+private data class StrictAssertionContext<V: LanguageType>(val value: V, val module: SourceTextModule)

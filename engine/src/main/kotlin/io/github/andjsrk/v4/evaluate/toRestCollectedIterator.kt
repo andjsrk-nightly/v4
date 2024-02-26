@@ -66,7 +66,7 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
                         nonRestKeys += key
                         val hasKey = hasProperty(key)
                             .orReturnThrow { return@f it }
-                            .value
+                            .nativeValue
                         if (!hasKey && elem.default == null) throwError(
                             TypeErrorKind.REQUIRED_PROPERTY_NOT_FOUND,
                             key.string()

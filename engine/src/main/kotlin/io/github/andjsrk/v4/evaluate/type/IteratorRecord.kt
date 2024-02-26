@@ -25,7 +25,7 @@ class IteratorRecord(
         val res = rawRes.orReturnThrow { return it }
         val done = res.getDone()
             .orReturnThrow { return it }
-            .value
+            .nativeValue
         return if (done) empty else rawRes
     }
     @EsSpec("IteratorClose")

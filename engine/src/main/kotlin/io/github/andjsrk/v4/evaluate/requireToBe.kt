@@ -16,7 +16,7 @@ internal inline fun <reified T: ObjectType> LanguageType?.requireToBe(clazz: Cla
 
 internal inline fun LanguageType.requireToBeString(rtn: ThrowReturnLambda) =
     requireToBe<StringType>(rtn)
-        .value
+        .nativeValue
 
 internal inline fun LanguageType.requireToBeLanguageTypePropertyKey(rtn: ThrowReturnLambda) =
     if (this !is LanguageTypePropertyKey) rtn(unexpectedType(this, LanguageTypePropertyKey::class))

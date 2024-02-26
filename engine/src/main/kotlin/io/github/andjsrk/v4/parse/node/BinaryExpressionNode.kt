@@ -77,7 +77,7 @@ internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode
             //   require right side to be a Boolean
             //   return right side
             val booleanLeft = left.requireToBe<BooleanType> { return@f it }
-            if (!booleanLeft.value) return@f BooleanType.FALSE.toNormal()
+            if (!booleanLeft.nativeValue) return@f BooleanType.FALSE.toNormal()
             val right = yieldAll(other.evaluateValue())
                 .orReturn { return@f it }
                 .requireToBe<BooleanType> { return@f it }
@@ -85,12 +85,12 @@ internal fun LanguageType.operate(operation: BinaryOpType, other: ExpressionNode
         }
         BinaryOpType.THEN -> {
             val booleanLeft = left.requireToBe<BooleanType> { return@f it }
-            if (!booleanLeft.value) return@f BooleanType.FALSE.toNormal()
+            if (!booleanLeft.nativeValue) return@f BooleanType.FALSE.toNormal()
             return@f yieldAll(other.evaluateValue())
         }
         BinaryOpType.OR -> {
             val booleanLeft = left.requireToBe<BooleanType> { return@f it }
-            if (booleanLeft.value) return@f BooleanType.TRUE.toNormal()
+            if (booleanLeft.nativeValue) return@f BooleanType.TRUE.toNormal()
             val right = yieldAll(other.evaluateValue())
                 .orReturn { return@f it }
                 .requireToBe<BooleanType> { return@f it }

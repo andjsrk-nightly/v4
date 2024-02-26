@@ -66,7 +66,7 @@ open class ObjectType(
     open fun _hasProperty(key: PropertyKey): MaybeThrow<BooleanType> {
         val hasOwn = hasOwnProperty(key)
             .orReturnThrow { return it }
-        if (hasOwn.value) return hasOwn.toNormal()
+        if (hasOwn.nativeValue) return hasOwn.toNormal()
         val prototypeHas = prototype?._hasProperty(key)
             ?.orReturnThrow { return it }
         return (prototypeHas ?: BooleanType.FALSE)
@@ -127,8 +127,8 @@ open class ObjectType(
     fun _ownPropertyKeys() =
         properties.keys.filterIsInstance<LanguageTypePropertyKey>()
     fun ownPropertyEntries() =
-        properties.entries.flatMap { (k, v) ->
-            if (k is LanguageTypePropertyKey) listOf(k to v)
+        properties.entries.flatMap { entry ->
+            if (entry.key is LanguageTypePropertyKey) listOf(entry.toPair())
             else emptyList()
         }
 

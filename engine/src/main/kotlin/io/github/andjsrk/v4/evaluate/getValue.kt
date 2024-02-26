@@ -11,7 +11,7 @@ internal fun getValue(value: EvaluationResult?): NonEmptyOrThrow {
     require(value is Reference)
     if (value.isUnresolvable) {
         require(value.referencedName is StringType)
-        return throwError(ReferenceErrorKind.NOT_DEFINED, value.referencedName.value)
+        return throwError(ReferenceErrorKind.NOT_DEFINED, value.referencedName.nativeValue)
     }
     if (value.isProperty) {
         require(value.base is LanguageType)
@@ -22,6 +22,6 @@ internal fun getValue(value: EvaluationResult?): NonEmptyOrThrow {
         val base = value.base
         require(base is Environment)
         require(value.referencedName is StringType)
-        return base.getBindingValue(value.referencedName.value)
+        return base.getBindingValue(value.referencedName.nativeValue)
     }
 }

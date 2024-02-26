@@ -12,7 +12,7 @@ fun PropertyKey.string() =
         is PrivateName -> description
         is LanguageTypePropertyKey -> stringify(this)
             .unwrap()
-            .value
+            .nativeValue
     }
 fun PropertyKey.toLanguageValue(): LanguageType =
     when (this) {

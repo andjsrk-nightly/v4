@@ -57,11 +57,11 @@ open class DefaultHostConfig: HostConfig() {
         when (value) {
             NullType -> "null"
             is StringType ->
-                if (raw) value.value
-                else Json.encodeToString(value.value)
-            is NumberType -> value.toString(10).value
-            is BigIntType -> value.toString(10).value
-            is BooleanType -> value.value.toString()
+                if (raw) value.nativeValue
+                else Json.encodeToString(value.nativeValue)
+            is NumberType -> value.toString(10).nativeValue
+            is BigIntType -> value.toString(10).nativeValue
+            is BooleanType -> value.nativeValue.toString()
             is SymbolType -> value.toString()
             is ArrayType -> {
                 val mutabilityPrefix = (value is MutableArrayType).thenTake { "(mutable) " }.orEmpty()
@@ -81,7 +81,7 @@ open class DefaultHostConfig: HostConfig() {
                         val key =
                             when (k) {
                                 is StringType ->
-                                    if (k.value.all { it.isIdentifierChar }) k.value
+                                    if (k.nativeValue.all { it.isIdentifierChar }) k.nativeValue
                                     else display(k, false)
                                 is SymbolType -> display(k)
                                 is PrivateName -> k.description

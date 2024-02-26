@@ -8,9 +8,9 @@ import io.github.andjsrk.v4.evaluate.type.StringType
 fun getIdentifierReference(env: Environment?, name: StringType): MaybeThrow<Reference> {
     if (env == null) return Reference(null, name).toWideNormal()
 
-    val hasBinding = env.hasBinding(name.value)
+    val hasBinding = env.hasBinding(name.nativeValue)
         .orReturnThrow { return it }
-        .value
+        .nativeValue
     return (
         if (hasBinding) Reference(env, name).toWideNormal()
         else getIdentifierReference(env.outer, name)

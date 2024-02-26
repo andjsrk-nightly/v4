@@ -46,7 +46,7 @@ private fun ObjectType.initializeErrorCause(options: ObjectType?): EmptyOrThrow 
     if (options == null) return empty
     val hasCause = options.hasProperty("cause".languageValue)
         .orReturnThrow { return it }
-        .value
+        .nativeValue
     if (hasCause) {
         val cause = options.get("cause".languageValue)
             .orReturnThrow { return it }

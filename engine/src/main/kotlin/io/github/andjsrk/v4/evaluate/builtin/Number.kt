@@ -16,9 +16,9 @@ private const val DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 private val numberFrom = functionWithoutThis("from", 1u) fn@ { args ->
     val value = args[0]
     when (value) {
-        is StringType -> parseNumber(value.value)
-        is BigIntType -> value.value.toDouble().languageValue
-        is BooleanType -> NumberType(if (value.value) 1.0 else 0.0)
+        is StringType -> parseNumber(value.nativeValue)
+        is BigIntType -> value.nativeValue.toDouble().languageValue
+        is BooleanType -> NumberType(if (value.nativeValue) 1.0 else 0.0)
         NullType -> NumberType.POSITIVE_ZERO
         is NumberType -> value
         is ObjectType -> return@fn throwError(TypeErrorKind.OBJECT_TO_NUMBER)
@@ -38,7 +38,7 @@ private val isFinite = functionWithoutThis("isFinite", 1u) { args ->
 @EsSpec("Number.isInteger")
 private val isInteger = functionWithoutThis("isInteger", 1u) { args ->
     val number = args[0]
-    (number is NumberType && number.isFinite && number.value.isInteger)
+    (number is NumberType && number.isFinite && number.nativeValue.isInteger)
         .languageValue
         .toNormal()
 }
@@ -55,8 +55,8 @@ private val isSafeInteger = functionWithoutThis("isSafeInteger", 1u) { args ->
     val number = args[0]
     (
         number is NumberType
-            && number.value.isInteger
-            && abs(number.value) <= NumberType.MAX_SAFE_INTEGER
+            && number.nativeValue.isInteger
+            && abs(number.nativeValue) <= NumberType.MAX_SAFE_INTEGER
     )
         .languageValue
         .toNormal()
@@ -66,7 +66,7 @@ private val isSafeInteger = functionWithoutThis("isSafeInteger", 1u) { args ->
 private val parseLeadingDecimal = functionWithoutThis("parseLeadingDecimal", 1u) fn@ { args ->
     val string = args[0].requireToBe<StringType> { return@fn it }
     // does not perform trim to input string
-    val input = string.value
+    val input = string.nativeValue
     run {
         val (sign, rest) = getSignAndRest(input)
         if (rest.startsWith("Infinity")) return@fn (
@@ -96,7 +96,7 @@ private val parseLeadingInteger = functionWithoutThis("parseLeadingInteger", 1u)
         ?.requireToBeRadix { return@fn it }
         ?: 10
     val digitCharsForRadix = DIGITS.substring(0, radix)
-    val validPart = string.value.takeWhile { digitCharsForRadix.contains(it, ignoreCase=true) }
+    val validPart = string.nativeValue.takeWhile { digitCharsForRadix.contains(it, ignoreCase=true) }
     (
         if (validPart.isEmpty()) NumberType.NaN
         else BigInteger(validPart, radix).toDouble().languageValue
@@ -115,7 +115,7 @@ private fun String.postProcessExponential() =
 @EsSpec("Number.prototype.toExponential")
 private val toExponential = method("toExponential") fn@ { thisArg, args ->
     val numberArg = thisArg.requireToBe<NumberType> { return@fn it }
-    val number = numberArg.value
+    val number = numberArg.nativeValue
     val fracPartDigitCount = args.getOptional(0)
         ?.requireToBe<NumberType> { return@fn it }
         ?.requireToBeIntWithin(0L..100L) { return@fn it }
@@ -146,7 +146,7 @@ private val toFixed = method("toFixed") fn@ { thisArg, args ->
         ?.requireToBeIntWithin(0L..100L) { return@fn it }
         ?: 0
     if (number.not { isFinite }) return@fn number.toString(10).toNormal()
-    number.value
+    number.nativeValue
         .toBigDecimal()
         .setScale(fracPartDigitCount, RoundingMode.DOWN)
         .toDouble()

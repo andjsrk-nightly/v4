@@ -271,7 +271,7 @@ internal val arrayJoin = method("join") fn@ { thisArg, args ->
         .map {
             stringify(it)
                 .orReturnThrow { return@fn it }
-                .value
+                .nativeValue
         }
         .joinToString(separator)
     res
@@ -436,11 +436,11 @@ internal val sortDefaultCompareFn = functionWithoutThis("compareFn", 2u) sort@ {
     when {
         a.lessThan(b)
             .orReturnThrow { return@sort it }
-            .value
+            .nativeValue
             -> -1
         b.lessThan(a)
             .orReturnThrow { return@sort it }
-            .value
+            .nativeValue
             -> 1
         else -> 0
     }

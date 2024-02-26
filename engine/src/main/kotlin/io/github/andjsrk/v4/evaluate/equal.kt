@@ -9,7 +9,7 @@ fun equal(left: LanguageType, right: LanguageType): Boolean =
     else when (left) {
         NullType -> true
         is NumericType<*> -> left.equal(right as NumericType<*>)
-        is StringType -> left.value == (right as StringType).value
-        is BooleanType -> left.value == (right as BooleanType).value
+        is StringType -> left.nativeValue == (right as StringType).nativeValue
+        is BooleanType -> left.nativeValue == (right as BooleanType).nativeValue
         is ObjectType, is SymbolType -> left === right
     }

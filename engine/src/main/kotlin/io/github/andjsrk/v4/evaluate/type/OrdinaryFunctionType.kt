@@ -34,21 +34,15 @@ class OrdinaryFunctionType(
 ) {
     override val isMethod = thisMode == ThisMode.METHOD
     override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrThrow {
-        val calleeContext = prepareForOrdinaryCall()
-        bindThisInCall(calleeContext, thisArg)
-        val res = evaluateBody(args).unwrap() as Completion.FromFunctionBody<*>
-        executionContextStack.removeTop()
+        val res = withTemporalCtx(createContextForCall()) {
+            bindThisInCall(runningExecutionContext, thisArg)
+            specEvaluateBody(args)
+        }
         if (res is Completion.Return) return res.value.toNormal()
         require(res is MaybeThrow<*>)
         res.orReturnThrow { return it }
         // if the function returned nothing, return `null`
         return normalNull
-    }
-    @EsSpec("PrepareForOrdinaryCall")
-    private fun prepareForOrdinaryCall(): ExecutionContext {
-        val calleeContext = ExecutionContext(realm, FunctionEnvironment.from(this), this, module=module)
-        executionContextStack.addTop(calleeContext)
-        return calleeContext
     }
     @EsSpec("OrdinaryCallBindThis")
     fun bindThisInCall(calleeContext: ExecutionContext, thisArg: LanguageType?) {
@@ -57,6 +51,10 @@ class OrdinaryFunctionType(
         require(localEnv is FunctionEnvironment)
         localEnv.bindThisValue(thisArg)
     }
+    override fun evaluateBody(thisArg: LanguageType?, args: List<LanguageType>): Completion.FromFunctionBody<*> {
+        bindThisInCall(runningExecutionContext, thisArg)
+        return specEvaluateBody(args)
+    }
     @EsSpec("EvaluateBody")
     @EsSpec("EvaluateConciseBody")
     @EsSpec("EvaluateAsyncConciseBody")
@@ -64,7 +62,7 @@ class OrdinaryFunctionType(
     @EsSpec("EvaluateAsyncFunctionBody")
     @EsSpec("EvaluateGeneratorBody")
     @EsSpec("EvaluateAsyncGeneratorBody")
-    fun evaluateBody(args: List<LanguageType>) = lazyFlow f@ {
+    fun specEvaluateBody(args: List<LanguageType>): Completion.FromFunctionBody<*> {
         fun evaluateBodyFlexibly(body: ConciseBodyNode) =
             (
                 if (isMethod) evaluateStatements(body as BlockNode).asFromFunctionBody()
@@ -75,10 +73,10 @@ class OrdinaryFunctionType(
 
         when {
             isAsync && isGenerator -> {
-                instantiationRes.orReturn { return@f it }
+                instantiationRes.orReturnNonEmpty { return it }
                 val generator = AsyncGeneratorType()
                 generator.start(evaluateBodyFlexibly(body))
-                Completion.Return(generator)
+                return Completion.Return(generator)
             }
             isAsync -> {
                 val capability = PromiseType.Capability.new()
@@ -89,17 +87,17 @@ class OrdinaryFunctionType(
                             .unwrap()
                     else -> neverHappens()
                 }
-                Completion.Return(capability.promise)
+                return Completion.Return(capability.promise)
             }
             isGenerator -> {
-                instantiationRes.orReturn { return@f it }
+                instantiationRes.orReturnNonEmpty { return it }
                 val generator = SyncGeneratorType()
                 generator.start(evaluateBodyFlexibly(body))
-                Completion.Return(generator)
+                return Completion.Return(generator)
             }
             else -> {
-                instantiationRes.orReturn { return@f it }
-                yieldAll(evaluateBodyFlexibly(body))
+                instantiationRes.orReturnNonEmpty { return it }
+                return evaluateBodyFlexibly(body).unwrap()
             }
         }
     }

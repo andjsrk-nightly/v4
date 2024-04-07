@@ -3,7 +3,6 @@ package io.github.andjsrk.v4.evaluate
 import io.github.andjsrk.v4.evaluate.builtin.Generator
 import io.github.andjsrk.v4.evaluate.builtin.sealedData
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.evaluate.type.toNormal
 import io.github.andjsrk.v4.not
 
 fun createIteratorObject(nextMethod: FunctionType, closeMethod: FunctionType? = null): ObjectType {
@@ -14,7 +13,7 @@ fun createIteratorObject(nextMethod: FunctionType, closeMethod: FunctionType? = 
         )
             .toMutableMap()
     )
-    return Generator.construct(listOf(obj))
+    return Generator.new(listOf(obj))
         .unwrap()
 }
 

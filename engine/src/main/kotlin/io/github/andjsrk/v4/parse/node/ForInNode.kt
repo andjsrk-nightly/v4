@@ -27,7 +27,7 @@ class ForInNode(
         if (uninitializedBoundNames.isNotEmpty()) {
             val newEnv = DeclarativeEnvironment(oldEnv)
             uninitializedBoundNames.forEach {
-                newEnv.createMutableBinding(it)
+                newEnv.createMutableBinding(it).unwrap()
             }
             runningExecutionContext.lexicalEnvNotNull = newEnv
         }
@@ -49,14 +49,13 @@ class ForInNode(
                 .orReturn { return@f it }
             val iteratorEnv = DeclarativeEnvironment(oldEnv)
             declaration.instantiateIn(iteratorEnv)
-            runningExecutionContext.lexicalEnvNotNull = iteratorEnv
-            yieldAll(declaration.binding.initializeWith(nextValue, iteratorEnv))
-                .orReturnNonEmpty {
-                    runningExecutionContext.lexicalEnvNotNull = oldEnv
-                    return@f iterRec.close(it)
-                }
-            val stmtRes = yieldAll(body.evaluate())
-            runningExecutionContext.lexicalEnvNotNull = oldEnv
+            val stmtRes = withTemporalLexicalEnv(iteratorEnv) {
+                yieldAll(declaration.binding.initializeWith(nextValue, iteratorEnv))
+                    .orReturnNonEmpty {
+                        return@f iterRec.close(it)
+                    }
+                yieldAll(body.evaluate())
+            }
             if (!continueLoop(stmtRes)) {
                 require(stmtRes is Completion.Throw)
                 val abrupt = updateEmpty(stmtRes, res)

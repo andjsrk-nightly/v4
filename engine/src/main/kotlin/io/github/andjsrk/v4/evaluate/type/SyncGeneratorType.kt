@@ -4,11 +4,10 @@ import io.github.andjsrk.v4.*
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Generator
-import io.github.andjsrk.v4.evaluate.type.*
 
 class SyncGeneratorType(
-    override val brand: String? = null,
-): io.github.andjsrk.v4.evaluate.type.GeneratorType<SyncGeneratorType.State>(lazy { Generator.instancePrototype }) {
+    override var brand: String? = null,
+): GeneratorType<SyncGeneratorType.State>(lazy { Generator.instancePrototype }) {
     override val context = runningExecutionContext
     override var state: State? = null // [[GeneratorState]]
     @EsSpec("GeneratorStart")

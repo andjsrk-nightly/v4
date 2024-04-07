@@ -553,15 +553,16 @@ val Array: BuiltinClassType = BuiltinClassType(
         sealedMethod(immutableArrayIterator),
         "count".accessor(getter=arrayCountGetter),
     ),
-    constructor ctor@ { _, args ->
+    { ImmutableArrayType(emptyList()) },
+    constructor ctor@ { arr, args ->
+        require(arr is ImmutableArrayType)
+
         val count = args.getOptional(0)
             ?.requireToBe<NumberType> { return@ctor it }
             ?.requireToBeUnsignedInt { return@ctor it }
             ?: 0
-        val arr = ImmutableArrayType(
-            List(count) { NullType }
-        )
-        arr.toNormal()
+        arr.array = List(count) { NullType }
+        empty
     },
 )
 

@@ -247,12 +247,15 @@ val MutableArray = BuiltinClassType(
         sealedMethod(mutableArraySort),
         "count".accessor(getter=arrayCountGetter),
     ),
-    constructor ctor@ { _, args ->
+    { MutableArrayType(mutableListOf()) },
+    constructor ctor@ { arr, args ->
+        require(arr is MutableArrayType)
+
         val size = args.getOptional(0)
             ?.requireToBe<NumberType> { return@ctor it }
             ?.requireToBeUnsignedInt { return@ctor it }
             ?: 0
-        val arr = MutableArrayType(MutableList(size) { NullType })
-        arr.toNormal()
+        arr.array = MutableList(size) { NullType }
+        empty
     },
 )

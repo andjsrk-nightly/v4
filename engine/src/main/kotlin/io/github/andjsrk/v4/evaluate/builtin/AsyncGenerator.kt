@@ -60,6 +60,7 @@ val AsyncGenerator = BuiltinClassType(
         sealedMethod(asyncGeneratorNext),
         sealedMethod(asyncGeneratorClose),
     ),
+    { AsyncGeneratorType() },
     constructor { _, _ ->
         TODO()
     },

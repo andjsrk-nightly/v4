@@ -15,7 +15,8 @@ class NewExpressionNode(
             .orReturn { return@f it }
         val args = yieldAll(arguments.evaluate())
             .orReturn { return@f it }
-        val clazz = calleeValue.requireToBe<ClassType> { return@f it }
-        clazz.construct(args)
+        val clazz = calleeValue
+            .requireToBe<ClassType> { return@f it }
+        clazz.new(args)
     }
 }

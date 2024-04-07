@@ -12,29 +12,34 @@ import io.github.andjsrk.v4.evaluate.type.*
 @EsSpec("Error.prototype.name")
 val errorNameGetter = getter("name") fn@ {
     val error = it.requireToBe<ObjectType> { return@fn it }
-    error.findName()?.toLanguageValue().normalizeToNormal()
+    error.findName()
+        ?.toLanguageValue()
+        .normalizeToNormal()
 }
 
 @EsSpec("%Error%")
-val Error = BuiltinClassType(
-    "Error",
-    Object,
-    mutableMapOf(),
-    mutableMapOf(
-        "name".accessor(getter=errorNameGetter, configurable=false),
-    ),
-    constructor(1u) ctor@ { error, args ->
-        val message = args[0]
-            .normalizeNull()
-            ?.requireToBe<StringType> { return@ctor it }
-        val options = args.getOptional(1)
-            ?.requireToBe<ObjectType> { return@ctor it }
-        if (message != null) error.createDataProperty("message".languageValue, message)
-        error.initializeErrorCause(options)
-            .orReturnThrow { return@ctor it }
-        error.toNormal()
-    },
-)
+val Error: BuiltinClassType by lazy {
+    BuiltinClassType(
+        "Error",
+        Object,
+        mutableMapOf(),
+        mutableMapOf(
+            "name".accessor(getter=errorNameGetter, configurable=false),
+        ),
+        { ObjectType(Error.instancePrototype) },
+        constructor(1u) ctor@ { error, args ->
+            val message = args[0]
+                .normalizeNull()
+                ?.requireToBe<StringType> { return@ctor it }
+            val options = args.getOptional(1)
+                ?.requireToBe<ObjectType> { return@ctor it }
+            if (message != null) error.createDataProperty("message".languageValue, message)
+            error.initializeErrorCause(options)
+                .orReturnThrow { return@ctor it }
+            empty
+        },
+    )
+}
 
 private tailrec fun ObjectType.findName(): PropertyKey? {
     val proto = prototype ?: return null
@@ -62,5 +67,6 @@ internal fun createNativeErrorClass(name: String) =
         Error,
         mutableMapOf(),
         mutableMapOf(),
+        { null },
         Error.constructor,
     )

@@ -755,7 +755,23 @@ internal class EvaluatorTest {
             val args = variableNamed("args")
                 .assertTypedAs<ArrayType>()
             for (i in 1..3) assert(args.at(i - 1) == NumberType(i.toDouble()))
+        }
+    }
+    @Test
+    fun testClass() {
+        evaluationOf("""
+            class A {
+                a = 0
             }
+            new A()
+        """).assertNormalAnd<ObjectType> {
+            val classA = module.variableNamed("A")
+                .assertTypedAs<OrdinaryClassType>()
+            assert(value.prototype == classA.instancePrototype)
+            val a = value.dataPropertyNamed("a")
+                .value
+                .assertType<NumberType>()
+            assert(a.nativeValue == 0.0)
         }
     }
     @Test

@@ -38,7 +38,7 @@ class NormalForNode(
     @EsSpec("ForBodyEvaluation")
     private fun evaluateBody(bindingNames: List<String>) = lazyFlow f@ {
         var res: LanguageType = NullType
-        runningExecutionContext.lexicalEnvNotNull.coverBindingsPerIteration(bindingNames)
+        coverBindingsPerIteration(bindingNames)
         while (true) {
             if (test != null) {
                 val testValue = yieldAll(test.evaluateValue())
@@ -48,7 +48,7 @@ class NormalForNode(
             }
             res = yieldAll(body.evaluate())
                 .returnIfShouldNotContinue(res) { return@f it }
-            runningExecutionContext.lexicalEnvNotNull.coverBindingsPerIteration(bindingNames)
+            coverBindingsPerIteration(bindingNames)
             update?.evaluateValue()
                 ?.let { yieldAll(it) }
                 ?.orReturn { return@f it }
@@ -59,17 +59,18 @@ class NormalForNode(
 }
 
 @EsSpec("CreatePerIterationEnvironment")
-private fun DeclarativeEnvironment.coverBindingsPerIteration(bindingNames: List<String>) {
+private fun coverBindingsPerIteration(bindingNames: List<String>) {
     if (bindingNames.isEmpty()) return
+
     val lastIterationEnv = runningExecutionContext.lexicalEnvNotNull
     val outer = lastIterationEnv.outer
     requireNotNull(outer)
     val currIterationEnv = DeclarativeEnvironment(outer)
     for (name in bindingNames) {
-        currIterationEnv.createMutableBinding(name)
+        currIterationEnv.createMutableBinding(name).unwrap()
         val lastValue = lastIterationEnv.getBindingValue(name)
             .unwrap()
-        currIterationEnv.initializeBinding(name, lastValue)
+        currIterationEnv.initializeBinding(name, lastValue).unwrap()
     }
     runningExecutionContext.lexicalEnvNotNull = currIterationEnv
 }

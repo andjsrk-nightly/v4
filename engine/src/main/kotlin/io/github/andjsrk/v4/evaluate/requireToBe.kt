@@ -2,8 +2,15 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.evaluate.type.*
 import io.github.andjsrk.v4.not
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
+@OptIn(ExperimentalContracts::class)
 inline fun <reified T: LanguageType> LanguageType?.requireToBe(rtn: ThrowReturnLambda): T {
+    contract {
+        returns() implies (this@requireToBe is T)
+    }
+
     if (this !is T) rtn(unexpectedType(this, T::class))
     return this
 }

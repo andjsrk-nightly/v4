@@ -11,6 +11,9 @@ data class ExecutionContext(
     var codeEvaluationState: SimpleLazyFlow<Completion.FromFunctionBody<LanguageType>>? = null,
     var privateEnv: PrivateEnvironment? = null,
 ) {
+    /**
+     * @see lexicalEnv
+     */
     var lexicalEnvNotNull: DeclarativeEnvironment
         get() = lexicalEnv!!
         set(value) {

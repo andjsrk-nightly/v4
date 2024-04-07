@@ -76,8 +76,8 @@ class SourceTextModule(
             val importedModule = getImportedModule(entry.sourceModule)
             when (entry) {
                 is NamespaceImportEntry -> {
-                    env.createImmutableBinding(entry.localName)
-                    env.initializeBinding(entry.localName, importedModule.namespaceObject)
+                    env.createImmutableBinding(entry.localName).unwrap()
+                    env.initializeBinding(entry.localName, importedModule.namespaceObject).unwrap()
                 }
                 is NormalImportEntry -> {
                     val resolution = importedModule.resolveExport(entry.importName)

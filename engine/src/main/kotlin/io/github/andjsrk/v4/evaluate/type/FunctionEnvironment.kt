@@ -13,7 +13,10 @@ class FunctionEnvironment(
     var initialized = false
     @EsSpec("BindThisValue")
     fun bindThisValue(value: LanguageType?): EmptyOrThrow {
-        if (initialized) TODO() // what ReferenceError should I throw?
+        if (initialized) {
+            throw IllegalStateException("This value is already initialized for the environment.")
+            // TODO() // what ReferenceError should I throw?
+        }
         thisValue = value
         initialized = true
         return empty

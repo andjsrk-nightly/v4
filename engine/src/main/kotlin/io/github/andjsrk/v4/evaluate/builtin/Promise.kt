@@ -81,13 +81,15 @@ val Promise = BuiltinClassType(
         sealedMethod(catch),
         sealedMethod(finally),
     ),
-    constructor(1u) ctor@ { _, args ->
+    { PromiseType() },
+    constructor(1u) ctor@ { promise, args ->
+        require(promise is PromiseType)
+
         val executor = args[0]
             .requireToBe<FunctionType> { return@ctor it }
-        val promise = PromiseType()
         val (resolve, reject) = promise.createResolveRejectFunction()
         val executorCallRes = executor.call(null, listOf(resolve, reject))
-        if (executorCallRes is Completion.Abrupt) reject.call(null, listOf(executorCallRes.value!!)).unwrap()
-        promise.toNormal()
+        if (executorCallRes is Completion.Abrupt) reject.callWithSingleArg(executorCallRes.value!!).unwrap()
+        empty
     },
 )

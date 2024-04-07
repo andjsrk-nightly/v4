@@ -21,8 +21,15 @@ sealed class FunctionType(
     val realm = runningExecutionContext.realm
     val module = getActiveModule()
     abstract val isMethod: Boolean
+    /**
+     * Note that the method does not add the context to [executionContextStack] automatically.
+     */
+    @EsSpec("PrepareForOrdinaryCall")
+    fun createContextForCall() =
+        ExecutionContext(realm, FunctionEnvironment.from(this), this, module=module)
     @EsSpec("Call") // the method implements Call rather than [[Call]] since additional type check is no needed
     abstract fun call(thisArg: LanguageType? = null, args: List<LanguageType> = emptyList()): NonEmptyOrThrow
+    abstract fun evaluateBody(thisArg: LanguageType?, args: List<LanguageType>): Completion.FromFunctionBody<*>
     fun callWithSingleArg(value: LanguageType) =
         call(null, listOf(value))
 }

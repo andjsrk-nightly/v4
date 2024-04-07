@@ -21,7 +21,6 @@ open class ObjectType(
     @EsSpec("OrdinaryObjectCreate")
     constructor(prototype: ObjectType?): this(lazy { prototype })
     var prototype by MutableLazy.from(lazyPrototype)
-        protected set
     var extensible = true
 
     @EsSpec("[[SetPrototypeOf]]")
@@ -210,6 +209,18 @@ open class ObjectType(
     fun addPrivateMethodOrAccessor(prop: PrivateProperty): EmptyOrThrow {
         if (prop.key in privateElements) return throwError(SyntaxErrorKind.INVALID_PRIVATE_MEMBER_REINITIALIZATION, prop.key.string())
         privateElements[prop.key] = prop
+        return empty
+    }
+    @EsSpec("InitializeInstanceElements")
+    fun initializeInstanceElements(clazz: ClassType): EmptyOrThrow {
+        clazz.privateInstanceMethods.forEach { (_, m) ->
+            addPrivateMethodOrAccessor(m)
+                .orReturnThrow { return it }
+        }
+        clazz.instanceFields.forEach { (_, f) ->
+            defineField(f)
+                .orReturnThrow { return it }
+        }
         return empty
     }
     @EsSpec("SetIntegrityLevel")

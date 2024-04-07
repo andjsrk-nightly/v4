@@ -17,7 +17,7 @@ fun instantiateFunctionDeclaration(func: OrdinaryFunctionType, args: List<Langua
     val calleeContext = runningExecutionContext
     val paramNames = func.parameters.boundStringNames()
     val env = calleeContext.lexicalEnvNotNull
-    for (paramName in paramNames) env.createMutableBinding(paramName)
+    for (paramName in paramNames) env.createMutableBinding(paramName).unwrap()
     func.parameters.initializeBindingsWith(args, env)
         .unwrap() // await or yield can never exist because of syntactic restriction
         .orReturnNonEmpty { return it }

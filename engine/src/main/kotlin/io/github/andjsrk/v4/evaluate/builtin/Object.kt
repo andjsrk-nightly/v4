@@ -84,27 +84,32 @@ private val run = method("run", 1u) fn@ { thisArg, args ->
 }
 
 @EsSpec("%Object%")
-val Object = BuiltinClassType(
-    "Object",
-    null,
-    mutableMapOf(
-        sealedMethod(objectAssign),
-        sealedMethod(objectEntries),
-        sealedMethod(fromEntries),
-        sealedMethod(freeze),
-        sealedMethod(getOwnStringKeys),
-        sealedMethod(getOwnStringKeyValues),
-        sealedMethod(objectIs),
-        // TODO
-    ),
-    mutableMapOf(
-        sealedMethod(run),
-    ),
-    constructor ctor@ { _, args ->
-        val prototype = args.getOptional(0)
-            ?.normalizeNull()
-            ?.requireToBe<ObjectType> { return@ctor it }
-        ObjectType(prototype)
-            .toNormal()
-    },
-)
+val Object: BuiltinClassType by lazy {
+    BuiltinClassType(
+        "Object",
+        null,
+        mutableMapOf(
+            sealedMethod(objectAssign),
+            sealedMethod(objectEntries),
+            sealedMethod(fromEntries),
+            sealedMethod(freeze),
+            sealedMethod(getOwnStringKeys),
+            sealedMethod(getOwnStringKeyValues),
+            sealedMethod(objectIs),
+            // TODO
+        ),
+        mutableMapOf(
+            sealedMethod(run),
+        ),
+        { null },
+        constructor ctor@ { obj, args ->
+            val rawPrototype = args.getOptional(0)
+            if (rawPrototype != null) {
+                obj.prototype = rawPrototype
+                    .normalizeNull()
+                    ?.requireToBe<ObjectType> { return@ctor it }
+            }
+            empty
+        },
+    )
+}

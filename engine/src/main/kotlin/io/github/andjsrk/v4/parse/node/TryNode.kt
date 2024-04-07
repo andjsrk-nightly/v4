@@ -34,7 +34,7 @@ class TryNode(
         val oldEnv = runningExecutionContext.lexicalEnvNotNull
         if (catch.binding != null) {
             val catchEnv = DeclarativeEnvironment(oldEnv)
-            for (name in catch.binding.boundStringNames()) catchEnv.createMutableBinding(name)
+            for (name in catch.binding.boundStringNames()) catchEnv.createMutableBinding(name).unwrap()
             runningExecutionContext.lexicalEnvNotNull = catchEnv
             yieldAll(catch.binding.initializeWith(thrown, catchEnv))
                 .orReturn {

@@ -1,8 +1,8 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.EsSpec
-import io.github.andjsrk.v4.evaluate.SimpleLazyFlow
-import io.github.andjsrk.v4.evaluate.ThrowTrace
+import io.github.andjsrk.v4.evaluate.*
+import io.github.andjsrk.v4.evaluate.type.Completion.Abrupt
 
 typealias MaybeEmpty = Completion.Normal<LanguageType?>
 typealias Empty = Completion.Normal<Nothing?>
@@ -20,6 +20,11 @@ typealias NonEmptyOrThrow = MaybeThrow<LanguageType>
 
 typealias EmptyOrNonEmptyAbrupt = Completion.FromFunctionBody<Nothing?>
 
+/**
+ * Note that a code that does not handle an [Abrupt]
+ * with either [orReturn] (including its variations) or [unwrap] is an error.
+ * Even if you assure that the [Completion] is not an [Abrupt], you need to call [unwrap] explicitly on it.
+ */
 @EsSpec("Completion Record")
 sealed interface Completion<out V: AbstractType?>: Record {
     val value: AbstractType?
@@ -57,6 +62,10 @@ sealed interface Completion<out V: AbstractType?>: Record {
     sealed interface Abrupt: Completion<Nothing> {
         override val value: LanguageType?
     }
+
+    /**
+     * An abrupt completion that its value could never be a `null`.
+     */
     sealed interface NonEmptyAbrupt: Abrupt, FromFunctionBody<Nothing> {
         override val value: LanguageType
     }

@@ -7,9 +7,9 @@ import io.github.andjsrk.v4.evaluate.builtin.AsyncGenerator
 import io.github.andjsrk.v4.neverHappens
 
 class AsyncGeneratorType(
-    override val brand: String? = null,
+    override var brand: String? = null,
 ): GeneratorType<AsyncGeneratorType.State>(lazy { AsyncGenerator.instancePrototype }) {
-    override val context = runningExecutionContext
+    override var context = runningExecutionContext
     override var state: State? = null // [[AsyncGeneratorState]]
     val queue = ArrayDeque<Request>()
     @EsSpec("AsyncGeneratorStart")

@@ -1,6 +1,7 @@
 package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.evaluate.requireToBe
+import io.github.andjsrk.v4.evaluate.withTemporalCtx
 
 class OrdinaryClassType(
     name: PropertyKey?,
@@ -9,10 +10,15 @@ class OrdinaryClassType(
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     constructor: FunctionType,
 ): ClassType(name, parent?.instancePrototype, staticProperties, instancePrototypeProperties, constructor) {
-    override fun construct(args: List<LanguageType>, thisArg: LanguageType): MaybeThrow<ObjectType> {
-        val obj = thisArg
-            .requireToBe<ObjectType> { return it }
-        TODO()
-        return obj.toNormal()
+    override fun construct(thisArg: LanguageType, args: List<LanguageType>): MaybeThrow<Nothing?> {
+        thisArg.requireToBe<ObjectType> { return it }
+        val res = withTemporalCtx(constructor.createContextForCall()) {
+            constructor.evaluateBody(thisArg, args)
+        }
+        if (res is Completion.Throw) return res
+        return empty
     }
+    override fun createNearestBuiltinClassInstance() =
+        // returns parent's result since the class is not built-in
+        parentInstancePrototype?.ownerClass?.createNearestBuiltinClassInstance()
 }

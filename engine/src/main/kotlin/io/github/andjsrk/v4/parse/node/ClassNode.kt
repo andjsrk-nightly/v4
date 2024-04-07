@@ -20,7 +20,7 @@ sealed class ClassNode: NonAtomicNode {
         val env = runningExecutionContext.lexicalEnv
         val classEnv = DeclarativeEnvironment(env)
         val name = name?.value
-        if (name != null) classEnv.createImmutableBinding(name)
+        if (name != null) classEnv.createImmutableBinding(name).unwrap()
         val outerPrivEnv = runningExecutionContext.privateEnv
         val classPrivEnv = PrivateEnvironment(outerPrivEnv)
         privateBoundIdentifiers().forEach {
@@ -49,12 +49,11 @@ sealed class ClassNode: NonAtomicNode {
                 runningExecutionContext.privateEnv = outerPrivEnv
             },
         ) {
-
             val ctor = ctorNode?.evaluate()?.let { yieldAll(it) }
                 ?.orReturn { return@f it }
                 ?: method("constructor") ctor@ { thisArg, args ->
                     // if constructor is present, call it with thisArg and drop the return value
-                    parentValue?.construct(args, thisArg)
+                    parentValue?.construct(thisArg, args)
                         ?.orReturnThrow { return@ctor it }
                     thisArg.toNormal()
                 }
@@ -73,7 +72,7 @@ sealed class ClassNode: NonAtomicNode {
             )
             yieldAll(clazz.collect(normalElements, res))
                 .orReturn { return@f it }
-            if (name != null) classEnv.initializeBinding(name, clazz)
+            if (name != null) classEnv.initializeBinding(name, clazz).unwrap()
             res.privateStaticMethods.forEach { (_, m) ->
                 clazz.addPrivateMethodOrAccessor(m).unwrap()
             }

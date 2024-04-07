@@ -14,7 +14,7 @@ class ClassDeclarationNode(
         val name = name.value
         val value = yieldAll(evaluateTail())
             .orReturn { return@f it }
-        runningExecutionContext.lexicalEnvNotNull.initializeBinding(name, value)
+        runningExecutionContext.lexicalEnvNotNull.initializeBinding(name, value).unwrap()
         value.toNormal()
     }
 }

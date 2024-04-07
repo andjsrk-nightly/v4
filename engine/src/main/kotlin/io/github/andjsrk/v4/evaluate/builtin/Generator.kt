@@ -24,16 +24,16 @@ val Generator = BuiltinClassType(
         sealedMethod(generatorNext),
         sealedMethod(generatorClose),
     ),
-    constructor ctor@ { _, args ->
+    { SyncGeneratorType() },
+    constructor ctor@ { gen, args ->
         val sourceObj = args[0]
             .requireToBe<ObjectType> { return@ctor it }
         val nextMethod = sourceObj.getMethod("next".languageValue)
             .orReturnThrow { return@ctor it }
         val closeMethod = sourceObj.getMethod("close".languageValue)
             .orReturnThrow { return@ctor it }
-        val gen = SyncGeneratorType()
         gen.definePropertyOrThrow("next".languageValue, DataProperty(nextMethod)).unwrap()
         if (closeMethod != null) gen.definePropertyOrThrow("close".languageValue, DataProperty(closeMethod)).unwrap()
-        gen.toNormal()
+        empty
     },
 )

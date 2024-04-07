@@ -206,6 +206,7 @@ val Number = BuiltinClassType(
         sealedMethod(numberToRadix),
         sealedMethod(numberToString),
     ),
+    { ObjectType() /* dummy object */ },
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "Number")
     },

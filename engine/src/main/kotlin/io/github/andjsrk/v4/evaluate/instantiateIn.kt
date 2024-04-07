@@ -14,7 +14,7 @@ internal fun DeclarationNode.instantiateIn(
 ) {
     val isConstant = this.isConstant
     for (name in names) {
-        if (isConstant) env.createImmutableBinding(name)
-        else env.createMutableBinding(name)
+        if (isConstant) env.createImmutableBinding(name).unwrap()
+        else env.createMutableBinding(name).unwrap()
     }
 }

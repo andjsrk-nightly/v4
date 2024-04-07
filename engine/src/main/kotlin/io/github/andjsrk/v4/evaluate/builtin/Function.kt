@@ -25,6 +25,7 @@ val Function = BuiltinClassType(
         "name".accessor(getter=functionNameGetter, setter= functionNameSetter),
         // TODO
     ),
+    { BuiltinFunctionType { _, _ -> normalNull } },
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "Function")
     },

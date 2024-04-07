@@ -25,7 +25,7 @@ fun error(kind: ErrorKind, vararg args: String): ObjectType {
  */
 fun error(errorClass: BuiltinClassType, message: String): ObjectType {
     assert(errorClass.isNativeError)
-    return errorClass.construct(listOf(message.languageValue))
+    return errorClass.new(listOf(message.languageValue))
         .unwrap()
 }
 

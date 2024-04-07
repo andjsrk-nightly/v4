@@ -94,10 +94,12 @@ val Set = BuiltinClassType(
         sealedMethod(setIterator),
         "count".accessor(getter=setCountGetter),
     ),
-    constructor ctor@ { _, args ->
+    { SetType(mutableSetOf()) },
+    constructor ctor@ { set, args ->
+        require(set is SetType)
+
         val source = args.getOptional(0)
         if (source != null) TODO()
-        SetType(mutableSetOf())
-            .toNormal()
+        empty
     },
 )

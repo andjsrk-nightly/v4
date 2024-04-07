@@ -18,13 +18,12 @@ class BuiltinFunctionType(
         behavior: BuiltinFunctionBehavior,
     ): this(name?.languageValue, requiredParameterCount, behavior)
     override val isMethod = true
-    override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrThrow {
-        val calleeContext = ExecutionContext(realm, FunctionEnvironment.from(this, thisArg), this)
-        executionContextStack.addTop(calleeContext)
-        val res = behavior(thisArg, args)
-        executionContextStack.removeTop()
-        return res
-    }
+    override fun call(thisArg: LanguageType?, args: List<LanguageType>) =
+        withTemporalCtx(createContextForCall()) {
+            evaluateBody(thisArg, args)
+        }
+    override fun evaluateBody(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrThrow =
+        behavior(thisArg, args)
 }
 
 private typealias BuiltinMethodBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyOrThrow

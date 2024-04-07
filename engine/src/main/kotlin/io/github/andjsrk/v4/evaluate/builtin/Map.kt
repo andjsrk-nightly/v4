@@ -129,10 +129,12 @@ val Map = BuiltinClassType(
         sealedMethod(mapIterator),
         "count".accessor(getter=mapCountGetter),
     ),
-    constructor ctor@ { _, args ->
+    { MapType(mutableMapOf()) },
+    constructor ctor@ { map, args ->
+        require(map is MapType)
+
         val source = args.getOptional(0)
         if (source != null) TODO()
-        MapType(mutableMapOf())
-            .toNormal()
+        empty
     },
 )

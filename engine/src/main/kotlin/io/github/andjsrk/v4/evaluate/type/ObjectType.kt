@@ -211,18 +211,6 @@ open class ObjectType(
         privateElements[prop.key] = prop
         return empty
     }
-    @EsSpec("InitializeInstanceElements")
-    fun initializeInstanceElements(clazz: ClassType): EmptyOrThrow {
-        clazz.privateInstanceMethods.forEach { (_, m) ->
-            addPrivateMethodOrAccessor(m)
-                .orReturnThrow { return it }
-        }
-        clazz.instanceFields.forEach { (_, f) ->
-            defineField(f)
-                .orReturnThrow { return it }
-        }
-        return empty
-    }
     @EsSpec("SetIntegrityLevel")
     fun setImmutabilityLevel(level: ObjectImmutabilityLevel): EmptyOrThrow {
         val keys = _ownPropertyKeys()

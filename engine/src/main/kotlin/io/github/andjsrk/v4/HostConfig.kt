@@ -17,7 +17,7 @@ abstract class HostConfig {
     abstract fun wait(ms: Int): PromiseType
 
     companion object {
-        lateinit var value: HostConfig
+        internal lateinit var value: HostConfig
         fun set(config: HostConfig) {
             value = config
         }

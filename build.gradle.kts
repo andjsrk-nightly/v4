@@ -1,6 +1,6 @@
 plugins {
     java
-    kotlin("jvm") version "1.9.10"
+    kotlin("jvm") version "2.0.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
@@ -33,5 +33,11 @@ subprojects {
 
     dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+    }
+
+    tasks {
+        jar {
+            dependsOn(shadowJar)
+        }
     }
 }

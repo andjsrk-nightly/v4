@@ -3,9 +3,6 @@ dependencies {
 }
 
 tasks {
-    jar {
-        dependsOn(shadowJar)
-    }
     test {
         useJUnitPlatform()
     }

@@ -9,9 +9,3 @@ application {
 dependencies {
     implementation(project(":engine"))
 }
-
-tasks {
-    jar {
-        dependsOn(shadowJar)
-    }
-}

@@ -92,7 +92,7 @@ val Set = BuiltinClassType(
         sealedMethod(setHas),
         sealedMethod(setValues),
         sealedMethod(setIterator),
-        "count".accessor(getter=setCountGetter),
+        "count".accessor(getter = setCountGetter),
     ),
     { SetType(mutableSetOf()) },
     constructor ctor@ { set, args ->

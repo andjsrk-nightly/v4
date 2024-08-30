@@ -38,7 +38,7 @@ val Symbol = BuiltinClassType(
         // TODO
     ),
     mutableMapOf(
-        "description".accessor(getter=descriptionGetter),
+        "description".accessor(getter = descriptionGetter),
     ),
     { ObjectType() /* dummy object */ },
     constructor { _, _ ->

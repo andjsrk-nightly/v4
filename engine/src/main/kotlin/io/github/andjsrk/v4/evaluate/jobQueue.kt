@@ -9,7 +9,7 @@ fun runJobs() {
 
     while (jobQueue.isNotEmpty()) {
         val job = jobQueue.removeFirst()
-        val newCtx = ExecutionContext(job.realm ?: runningExecutionContext.realm, module=job.module)
+        val newCtx = ExecutionContext(job.realm ?: runningExecutionContext.realm, module = job.module)
         executionContextStack.addTop(newCtx)
         job.closure()
         executionContextStack.removeTop()

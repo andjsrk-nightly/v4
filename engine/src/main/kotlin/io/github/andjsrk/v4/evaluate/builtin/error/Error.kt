@@ -24,7 +24,7 @@ val Error: BuiltinClassType by lazy {
         Object,
         mutableMapOf(),
         mutableMapOf(
-            "name".accessor(getter=errorNameGetter, configurable=false),
+            "name".accessor(getter = errorNameGetter, configurable = false),
         ),
         { ObjectType(Error.instancePrototype) },
         constructor(1u) ctor@ { error, args ->

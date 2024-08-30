@@ -14,7 +14,7 @@ class ObjectEnvironment(val `object`: ObjectType, outer: Environment?): Environm
      */
     @EsSpec("CreateMutableBinding")
     fun createNonConfigurableMutableBinding(name: String) =
-        `object`.definePropertyOrThrow(name.languageValue, DataProperty(NullType, configurable=false))
+        `object`.definePropertyOrThrow(name.languageValue, DataProperty(NullType, configurable = false))
     override fun createImmutableBinding(name: String) =
         throw NotImplementedError()
     override fun initializeBinding(name: String, value: LanguageType) =

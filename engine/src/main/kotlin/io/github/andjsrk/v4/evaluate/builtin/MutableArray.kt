@@ -245,7 +245,7 @@ val MutableArray = BuiltinClassType(
         sealedMethod(mutableArraySet),
         sealedMethod(mutableArraySlice),
         sealedMethod(mutableArraySort),
-        "count".accessor(getter=arrayCountGetter),
+        "count".accessor(getter = arrayCountGetter),
     ),
     { MutableArrayType(mutableListOf()) },
     constructor ctor@ { arr, args ->

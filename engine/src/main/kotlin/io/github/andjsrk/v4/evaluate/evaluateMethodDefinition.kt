@@ -21,12 +21,12 @@ fun evaluateMethodDefinition(methodNode: MethodNode, obj: ObjectType) = lazyFlow
                     homeObject = obj
                 }
             val name = getter.name!!
-            if (name is PrivateName) PrivateProperty(name, AccessorProperty(get=getter)).toWideNormal()
+            if (name is PrivateName) PrivateProperty(name, AccessorProperty(get = getter)).toWideNormal()
             else {
                 val existingDesc = obj._getOwnProperty(name)
                     .orReturnThrow { return@f it }
                 obj.properties[name] = when (existingDesc) {
-                    null, is DataProperty -> AccessorProperty(get=getter)
+                    null, is DataProperty -> AccessorProperty(get = getter)
                     is AccessorProperty -> existingDesc.apply { get = getter }
                 }
                 empty
@@ -39,7 +39,7 @@ fun evaluateMethodDefinition(methodNode: MethodNode, obj: ObjectType) = lazyFlow
                     homeObject = obj
                 }
             val name = setter.name!!
-            if (name is PrivateName) PrivateProperty(name, AccessorProperty(set=setter)).toWideNormal()
+            if (name is PrivateName) PrivateProperty(name, AccessorProperty(set = setter)).toWideNormal()
             else {
                 val existingDesc = obj._getOwnProperty(name)
                     .orReturn { return@f it }

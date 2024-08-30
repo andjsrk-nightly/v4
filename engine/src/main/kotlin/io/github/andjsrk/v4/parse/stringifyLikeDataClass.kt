@@ -8,18 +8,18 @@ import kotlin.reflect.KProperty0
 // if this is declared as an extension function,
 // we do not need to pass type of this explicitly because it will be inferred
 internal inline fun <T: Node> T.stringifyLikeDataClass(vararg properties: KProperty0<*>, pretty: Boolean = true): String =
-    stringify(*properties, pretty=pretty, className=className)
+    stringify(*properties, pretty = pretty, className = className)
 
 private fun stringify(vararg properties: KProperty0<*>, pretty: Boolean, className: String): String =
     if (pretty) {
-        // if all properties are neither Node nor Collection, return same result as pretty=false
+        // if all properties are neither Node nor Collection, return same result as pretty = false
         if (properties.all {
             val value = it.get()
             value !is Node && value !is Collection<*>
-        }) stringify(*properties, pretty=false, className=className)
+        }) stringify(*properties, pretty = false, className = className)
         else "$className(\n${
             properties
-                .joinToString(",\n", transform=stringifyProperty { value ->
+                .joinToString(",\n", transform = stringifyProperty { value ->
                     when (value) {
                         is List<*> -> "[\n${value.joinToString(",\n").indentEachLines()}\n]"
                         is String -> Json.encodeToString(value)
@@ -30,7 +30,7 @@ private fun stringify(vararg properties: KProperty0<*>, pretty: Boolean, classNa
         }\n)"
     } else {
         "$className(${
-            properties.joinToString(", ", transform=stringifyProperty { it.toString() })
+            properties.joinToString(", ", transform = stringifyProperty { it.toString() })
         })"
     }
 

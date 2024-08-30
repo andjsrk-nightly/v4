@@ -337,7 +337,7 @@ internal inline fun NumberType.requireToBeIntWithin(range: NamedRange, descripti
         ?: rtn(unexpectedNumberRange(description, range.name))
 
 internal inline fun NumberType.requireToBeUnsignedInt(rtn: ThrowReturnLambda) =
-    requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
+    requireToBeIntWithin(NamedRange.unsignedInteger, rtn = rtn)
 /**
  * Note that the function returns `-1` if the number is [NumberType.POSITIVE_INFINITY].
  */
@@ -348,16 +348,16 @@ internal inline fun NumberType.requireToBeUnsignedIntOrPositiveInfinity(rtn: Thr
         ?: rtn(unexpectedNumberRange("The number", "an unsigned integer or positive infinity"))
 }
 internal inline fun NumberType.requireToBeRadix(rtn: ThrowReturnLambda) =
-    requireToBeIntWithin(NamedRange.radix, rtn=rtn)
+    requireToBeIntWithin(NamedRange.radix, rtn = rtn)
 internal inline fun NumberType.requireToBeIndex(rtn: ThrowReturnLambda) =
-    requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
+    requireToBeIntWithin(NamedRange.unsignedInteger, rtn = rtn)
 internal inline fun NumberType.requireToBeIndexWithin(size: Int, rtn: ThrowReturnLambda) =
-    requireToBeIntWithin(NamedRange.unsignedInteger, rtn=rtn)
+    requireToBeIntWithin(NamedRange.unsignedInteger, rtn = rtn)
         .let {
             it.takeIf { it < size } ?: rtn(invalidIndex(it))
         }
 internal inline fun NumberType.requireToBeRelativeIndex(rtn: ThrowReturnLambda) =
-    requireToBeIntWithin(NamedRange.relativeIndex, rtn=rtn)
+    requireToBeIntWithin(NamedRange.relativeIndex, rtn = rtn)
 /**
  * Returns `null` if the number is greater than [Int.MAX_VALUE].
  * Note that the function assumes that the number is an index.

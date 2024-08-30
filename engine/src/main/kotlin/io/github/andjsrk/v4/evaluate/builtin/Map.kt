@@ -127,7 +127,7 @@ val Map = BuiltinClassType(
         sealedMethod(mapSet),
         sealedMethod(mapValues),
         sealedMethod(mapIterator),
-        "count".accessor(getter=mapCountGetter),
+        "count".accessor(getter = mapCountGetter),
     ),
     { MapType(mutableMapOf()) },
     constructor ctor@ { map, args ->

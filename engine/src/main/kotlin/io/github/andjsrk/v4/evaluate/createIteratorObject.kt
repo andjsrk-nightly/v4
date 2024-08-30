@@ -7,7 +7,7 @@ import io.github.andjsrk.v4.not
 
 fun createIteratorObject(nextMethod: FunctionType, closeMethod: FunctionType? = null): ObjectType {
     val obj = ObjectType(
-        properties=listOfNotNull(
+        properties = listOfNotNull(
             "next".sealedData(nextMethod),
             closeMethod?.let { "close".sealedData(it) },
         )

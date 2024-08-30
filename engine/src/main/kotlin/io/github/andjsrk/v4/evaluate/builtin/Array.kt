@@ -551,7 +551,7 @@ val Array: BuiltinClassType = BuiltinClassType(
         sealedMethod(immutableArraySort),
         sealedMethod(immutableArraySet),
         sealedMethod(immutableArrayIterator),
-        "count".accessor(getter=arrayCountGetter),
+        "count".accessor(getter = arrayCountGetter),
     ),
     { ImmutableArrayType(emptyList()) },
     constructor ctor@ { arr, args ->

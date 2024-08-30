@@ -102,7 +102,7 @@ open class ObjectType(
                     if (existingDesc is AccessorProperty) return BooleanType.FALSE.toNormal()
                     require(existingDesc is DataProperty)
                     if (existingDesc.not { writable }) return throwError(TypeErrorKind.CANNOT_ASSIGN_TO_READ_ONLY_PROPERTY, key.string())
-                    receiver._defineOwnProperty(key, existingDesc.copy(value=value))
+                    receiver._defineOwnProperty(key, existingDesc.copy(value = value))
                 }
             }
             is AccessorProperty -> {
@@ -148,13 +148,13 @@ open class ObjectType(
         _defineOwnProperty(key, DataProperty(value))
     @EsSpec("CreateNonEnumerableDataPropertyOrThrow")
     fun createNonEnumerableDataPropertyOrThrow(key: PropertyKey, value: LanguageType) =
-        definePropertyOrThrow(key, DataProperty(value, enumerable=false))
+        definePropertyOrThrow(key, DataProperty(value, enumerable = false))
     @EsSpec("DefinePropertyOrThrow")
     inline fun definePropertyOrThrow(key: PropertyKey, descriptor: Property) =
         _defineOwnProperty(key, descriptor)
     @EsSpec("CreateMethodProperty")
     fun createMethodProperty(key: PropertyKey, value: LanguageType) {
-        definePropertyOrThrow(key, DataProperty(value, enumerable=false))
+        definePropertyOrThrow(key, DataProperty(value, enumerable = false))
             .unwrap()
     }
     @EsSpec("DeletePropertyOrThrow")
@@ -194,15 +194,15 @@ open class ObjectType(
     }
     @EsSpec("DefineMethodProperty")
     fun defineMethodProperty(key: PropertyKey, method: FunctionType, enumerable: Boolean): MaybeAbrupt<PrivateProperty?> {
-        if (key is PrivateName) return PrivateProperty(key, DataProperty(method, false, enumerable=enumerable)).toWideNormal()
-        definePropertyOrThrow(key, DataProperty(method, true, enumerable=enumerable))
+        if (key is PrivateName) return PrivateProperty(key, DataProperty(method, false, enumerable = enumerable)).toWideNormal()
+        definePropertyOrThrow(key, DataProperty(method, true, enumerable = enumerable))
             .unwrap()
         return empty
     }
     @EsSpec("PrivateFieldAdd")
     fun addPrivateField(key: PrivateName, value: LanguageType): EmptyOrThrow {
         if (key in privateElements) return throwError(SyntaxErrorKind.INVALID_PRIVATE_MEMBER_REINITIALIZATION, key.string())
-        privateElements[key] = PrivateProperty(key, DataProperty(value, enumerable=false, configurable=false))
+        privateElements[key] = PrivateProperty(key, DataProperty(value, enumerable = false, configurable = false))
         return empty
     }
     @EsSpec("PrivateMethodOrAccessorAdd")
@@ -275,6 +275,6 @@ open class ObjectType(
          * Returns an Object that `[[Prototype]]` is set to `%Object.prototype%`.
          */
         fun createNormal(properties: MutableMap<PropertyKey, Property> = mutableMapOf()): ObjectType =
-            ObjectType(properties=properties)
+            ObjectType(properties = properties)
     }
 }

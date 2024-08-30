@@ -67,8 +67,8 @@ sealed class ClassNode: NonAtomicNode {
                 ctor,
             )
             val res = ClassElementCollectResult(
-                privateInstanceMethods=clazz.privateInstanceMethods,
-                instanceFields=clazz.instanceFields,
+                privateInstanceMethods = clazz.privateInstanceMethods,
+                instanceFields = clazz.instanceFields,
             )
             yieldAll(clazz.collect(normalElements, res))
                 .orReturn { return@f it }

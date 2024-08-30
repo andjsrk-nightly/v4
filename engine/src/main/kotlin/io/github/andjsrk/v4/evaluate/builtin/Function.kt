@@ -22,7 +22,7 @@ val Function = BuiltinClassType(
     Object,
     mutableMapOf(),
     mutableMapOf(
-        "name".accessor(getter=functionNameGetter, setter= functionNameSetter),
+        "name".accessor(getter = functionNameGetter, setter= functionNameSetter),
         // TODO
     ),
     { BuiltinFunctionType { _, _ -> normalNull } },

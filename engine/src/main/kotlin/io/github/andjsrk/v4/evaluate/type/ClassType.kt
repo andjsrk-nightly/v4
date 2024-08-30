@@ -10,7 +10,7 @@ sealed class ClassType(
     staticProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     open val constructor: FunctionType,
-): ObjectType(properties=staticProperties) {
+): ObjectType(properties = staticProperties) {
     val privateInstanceMethods = mutableMapOf<PrivateName, PrivateProperty>()
     val instanceFields = mutableMapOf<PropertyKey, ClassFieldDefinition>()
     val instancePrototype: ClassAssociatedPrototypeObjectType =

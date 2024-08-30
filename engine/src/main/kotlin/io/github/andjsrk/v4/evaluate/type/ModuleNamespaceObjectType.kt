@@ -13,7 +13,7 @@ class ModuleNamespaceObjectType(val module: Module, exports: List<String>): Obje
         if (key.nativeValue !in exports) return null.toWideNormal()
         val value = get(key)
             .orReturnThrow { return it }
-        return DataProperty(value, configurable=false).toWideNormal()
+        return DataProperty(value, configurable = false).toWideNormal()
     }
     override fun _hasProperty(key: PropertyKey): MaybeThrow<BooleanType> {
         if (key is SymbolType) return super._hasProperty(key)

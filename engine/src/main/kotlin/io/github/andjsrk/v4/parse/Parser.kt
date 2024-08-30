@@ -31,7 +31,7 @@ class Parser(sourceText: String) {
         tokenizer.error?.run(::reportError)
     }
     private val parseCtxs = Stack(
-        ParseContext(allowModuleItem=true),
+        ParseContext(allowModuleItem = true),
     )
     private inline fun <R> withParseContext(ctxProvider: ParseContext.() -> ParseContext, block: () -> R): R {
         val ctx = ctxProvider(parseCtxs.top)
@@ -217,7 +217,7 @@ class Parser(sourceText: String) {
     private fun parseMethod(name: ObjectLiteralKeyNode, isAsync: Boolean, isGenerator: Boolean, startRange: Range): ObjectMethodNode? {
         if (!isAsync && !isGenerator && currToken.type != LEFT_PARENTHESIS) return null
         val parameters = parseArrowFormalParameters() ?: return null
-        val body = withParseContext({ copy(allowReturn=true, allowAwait=isAsync) }) {
+        val body = withParseContext({ copy(allowReturn = true, allowAwait = isAsync) }) {
             parseBlock(false) ?: return null
         }
         return ObjectMethodNode(name, parameters, body, isAsync, isGenerator, startRange)
@@ -498,7 +498,7 @@ class Parser(sourceText: String) {
 
         startCheckPoint.load()
 
-        val params = parseArrowFormalParameters(shouldBreakIfInvalid=false)
+        val params = parseArrowFormalParameters(shouldBreakIfInvalid = false)
         val paramsError = error
         val paramsCheckPoint = CheckPoint()
 
@@ -528,8 +528,8 @@ class Parser(sourceText: String) {
         val methodTokenRange = takeIfMatchesKeyword(METHOD)?.range ?: return (isAsync || isGenerator).thenTake {
             reportUnexpectedToken()
         }
-        val params = parseArrowFormalParameters(doDuplicateCheck=false) ?: return null
-        val body = withParseContext({ copy(allowReturn=true, allowAwait=isAsync) }) {
+        val params = parseArrowFormalParameters(doDuplicateCheck = false) ?: return null
+        val body = withParseContext({ copy(allowReturn = true, allowAwait = isAsync) }) {
             parseBlock() ?: return null
         }
         return MethodExpressionNode(params, body, isAsync, isGenerator, startRange ?: methodTokenRange)

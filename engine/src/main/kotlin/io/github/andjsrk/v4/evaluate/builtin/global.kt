@@ -15,7 +15,7 @@ val wait = functionWithoutThis("wait", 1u) fn@ { args ->
 }
 
 @EsSpec("global object")
-val global = ObjectType(properties=mutableMapOf(
+val global = ObjectType(properties = mutableMapOf(
     // 19.3 (Constructor Properties)
     sealedData(::Array),
     sealedData(::BigInt),

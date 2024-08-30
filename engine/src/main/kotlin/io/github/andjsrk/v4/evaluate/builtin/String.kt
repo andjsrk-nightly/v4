@@ -453,7 +453,7 @@ private val split = method("split") fn@ { thisArg, args ->
     val safeLimit = checkSplitLimitArg(limit)
         .orReturnThrow { return@fn it }
         .value
-    val res = string.split(separator, limit=safeLimit)
+    val res = string.split(separator, limit = safeLimit)
         .let {
             // NOTE 1 (remove leading/trailing empty strings if separator is an empty string)
             if (separator.isEmpty()) it.drop(1).dropLast(1)

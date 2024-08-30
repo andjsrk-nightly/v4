@@ -96,7 +96,7 @@ private val parseLeadingInteger = functionWithoutThis("parseLeadingInteger", 1u)
         ?.requireToBeRadix { return@fn it }
         ?: 10
     val digitCharsForRadix = DIGITS.substring(0, radix)
-    val validPart = string.nativeValue.takeWhile { digitCharsForRadix.contains(it, ignoreCase=true) }
+    val validPart = string.nativeValue.takeWhile { digitCharsForRadix.contains(it, ignoreCase = true) }
     (
         if (validPart.isEmpty()) NumberType.NaN
         else BigInteger(validPart, radix).toDouble().languageValue

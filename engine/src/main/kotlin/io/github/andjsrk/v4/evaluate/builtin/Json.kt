@@ -14,7 +14,7 @@ private const val SPACE = '\u0020'
 private fun JsonElement.toLanguageValue(): NonEmptyOrThrow {
     return when (this) {
         is JsonObject ->
-            ObjectType(properties=mutableMapOf(
+            ObjectType(properties = mutableMapOf(
                 *entries.map {
                     val key = it.key.languageValue
                     val value = it.value.toLanguageValue()
@@ -99,7 +99,7 @@ private fun StringBuilder.appendJsonStringifiedLanguageValue(value: LanguageType
                 .orReturnThrow { return it }
             append('[')
             ctx.stack.addTop(value) // stack will be shared with newCtx since both are same instance
-            val newCtx = ctx.copy(indentAcc=newIndentAcc)
+            val newCtx = ctx.copy(indentAcc = newIndentAcc)
             for ((i, elem) in value.array.withIndex()) {
                 append(newIndent)
                 appendJsonStringifiedLanguageValue(elem, newCtx)
@@ -115,7 +115,7 @@ private fun StringBuilder.appendJsonStringifiedLanguageValue(value: LanguageType
                 .orReturnThrow { return it }
             append('{')
             ctx.stack.addTop(value)
-            val newCtx = ctx.copy(indentAcc=newIndentAcc)
+            val newCtx = ctx.copy(indentAcc = newIndentAcc)
             val comma = if (needIndent) ": " else ":"
             val keys = value.ownEnumerableStringPropertyKeys()
             for ((i, key) in keys.withIndex()) {
@@ -157,7 +157,7 @@ private val stringify = functionWithoutThis("stringify", 1u) fn@ { args ->
 }
 
 @EsSpec("%JSON%")
-val Json = ObjectType(properties=mutableMapOf(
+val Json = ObjectType(properties = mutableMapOf(
     sealedMethod(parse),
     sealedMethod(stringify),
 ))

@@ -1,14 +1,14 @@
 package io.github.andjsrk.v4.parse
 
 enum class ReservedWord(val isContextual: Boolean = false) {
-    AS(isContextual=true),
+    AS(isContextual = true),
     ASYNC,
     AWAIT,
     BREAK,
     CASE,
     CATCH,
     CLASS,
-    CONSTRUCTOR(isContextual=true),
+    CONSTRUCTOR(isContextual = true),
     CONTINUE,
     DEFAULT,
     ELSE,
@@ -18,7 +18,7 @@ enum class ReservedWord(val isContextual: Boolean = false) {
     FINALLY,
     FOR,
     GEN,
-    GET(isContextual=true),
+    GET(isContextual = true),
     IF,
     IMPORT,
     IN,
@@ -28,7 +28,7 @@ enum class ReservedWord(val isContextual: Boolean = false) {
     NEW,
     NULL,
     RETURN,
-    SET(isContextual=true),
+    SET(isContextual = true),
     STATIC,
     SUPER,
     SWITCH,
@@ -40,7 +40,7 @@ enum class ReservedWord(val isContextual: Boolean = false) {
     VAR,
     VOID,
     WHILE,
-    WITH(isContextual=true),
+    WITH(isContextual = true),
     YIELD;
 
     val value = name.lowercase()

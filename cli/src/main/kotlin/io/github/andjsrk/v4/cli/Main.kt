@@ -19,14 +19,16 @@ val moduleAbsolutePaths = mutableMapOf<Module, String>()
 
 class UncaughtAbruptException: RuntimeException()
 
+val defaultConfig = CliHostConfig()
+
 fun enterReplMode() {
-    val config = object: DefaultHostConfig() {
+    val replConfig = object: CliHostConfig() {
         override fun onGotUncaughtAbrupt(abrupt: Completion.Abrupt): Nothing {
             eprintAbrupt(abrupt)
             throw UncaughtAbruptException()
         }
     }
-    HostConfig.set(config)
+    HostConfig.set(replConfig)
     initializeRealm()
     println("Welcome to REPL.")
     while (true) {
@@ -43,10 +45,10 @@ fun enterReplMode() {
         instantiateBlockDeclaration(module, runningExecutionContext.lexicalEnvNotNull)
         try {
             val evalRes = module.evaluate()
-            evalRes.yieldedValues.forEach { it.orReturn(config::onGotUncaughtAbrupt) }
+            evalRes.yieldedValues.forEach { it.orReturn(replConfig::onGotUncaughtAbrupt) }
             val result = evalRes
                 .unwrap()
-                .orReturn(config::onGotUncaughtAbrupt)
+                .orReturn(replConfig::onGotUncaughtAbrupt)
             println(result.display())
         } catch (_: UncaughtAbruptException) {}
     }
@@ -62,11 +64,7 @@ fun runFile(path: String) {
             .orReturn { throw NoSuchFileException(p.absolutePathString()) }
             .value
     }
-    HostConfig.set(object: DefaultHostConfig() {
-        override fun onGotUncaughtAbrupt(abrupt: Completion.Abrupt): Nothing {
-            exitWithAbrupt(abrupt)
-        }
-    })
+    HostConfig.set(defaultConfig)
     initializeRealm()
     val module = parseModuleOrExit(entryPointContent, runningExecutionContext.realm)
     moduleAbsolutePaths[module] = entryPointPath.absolutePathString()
@@ -87,7 +85,7 @@ fun runFile(path: String) {
 
 private fun PromiseType.onRejected(callback: (reason: LanguageType) -> Unit) =
     also {
-        then(null, BuiltinFunctionType(requiredParameterCount=1u) { _, (reason) ->
+        then(null, BuiltinFunctionType(requiredParameterCount = 1u) { _, (reason) ->
             callback(reason)
             normalNull
         }, PromiseType.Capability.new())
@@ -107,4 +105,4 @@ internal fun exitWithError(error: Error): Nothing {
 }
 
 internal fun LanguageType.display() =
-    HostConfig.value.display(this)
+    defaultConfig.display(this)

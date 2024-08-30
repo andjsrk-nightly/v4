@@ -8,7 +8,7 @@ group = "io.github.andjsrk"
 version = "1.0-SNAPSHOT"
 
 allprojects {
-    apply(plugin="org.jetbrains.kotlin.jvm")
+    apply(plugin = "org.jetbrains.kotlin.jvm")
 
     repositories {
         mavenCentral()
@@ -26,7 +26,7 @@ allprojects {
 }
 
 subprojects {
-    apply(plugin="com.github.johnrengelman.shadow")
+    apply(plugin = "com.github.johnrengelman.shadow")
 
     group = rootProject.group
     version = rootProject.version

@@ -30,7 +30,7 @@ class MemberExpressionNode(
             .orReturn { return@f it }
 
         if (isOptionalChain && base == NullType) {
-            return@f Reference(NullType, null, isOptionalChain=true)
+            return@f Reference(NullType, null, isOptionalChain = true)
                 .toWideNormal()
         }
 

@@ -15,7 +15,7 @@ import kotlin.io.path.absolutePathString
 private val timer = Timer()
 private val scheduledTaskCount = AtomicInteger(0)
 
-open class DefaultHostConfig: HostConfig() {
+open class CliHostConfig: HostConfig() {
     override fun loadImportedModule(module: CyclicModule, specifier: String, state: GraphLoadingState): EmptyOrAbrupt {
         val path = Path(moduleAbsolutePaths[module]!!).join(specifier)
         val (actualPath, sourceText) = path.resolveAndRead()

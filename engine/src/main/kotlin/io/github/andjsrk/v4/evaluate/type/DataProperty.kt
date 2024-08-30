@@ -43,6 +43,6 @@ data class DataProperty(
         private val VALUE_DEFAULT = NullType
         private const val WRITABLE_DEFAULT = true
         fun sealed(value: LanguageType) =
-            DataProperty(value, writable=false, enumerable=false, configurable=false)
+            DataProperty(value, writable = false, enumerable = false, configurable = false)
     }
 }

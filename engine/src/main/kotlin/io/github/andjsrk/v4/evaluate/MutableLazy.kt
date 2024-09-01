@@ -25,6 +25,7 @@ internal class MutableLazy<T>(initializer: () -> T): ReadWriteProperty<Any?, T>,
         set(value) =
             synchronized(this) {
                 _value = value
+                initializer = null
             }
     override fun isInitialized() =
         initializer == null

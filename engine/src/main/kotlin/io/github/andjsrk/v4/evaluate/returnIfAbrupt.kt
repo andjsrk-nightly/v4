@@ -2,7 +2,6 @@ package io.github.andjsrk.v4.evaluate
 
 import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.evaluate.type.*
-import io.github.andjsrk.v4.neverHappens
 
 /**
  * Indicates a lambda that returns an abrupt completion, which will be used on inline functions.
@@ -46,4 +45,6 @@ inline fun <V: AbstractType?> MaybeThrow<V>.orReturnThrow(rtn: ThrowReturnLambda
  * Returns [Completion.Normal.value] assuming the completion is a normal completion.
  */
 fun <V: AbstractType?> MaybeAbrupt<V>.unwrap() =
-    this.orReturn { neverHappens() }
+    this.orReturn { throw UnwrapFailedError(it) }
+
+class UnwrapFailedError(cause: Completion<*>): IllegalArgumentException("Unwrap failed because of $cause")

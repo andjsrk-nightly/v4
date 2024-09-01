@@ -32,7 +32,11 @@ sealed class ClassType(
      * Returns a new instance of the class, that is initialized with the constructor.
      */
     fun new(args: List<LanguageType>): MaybeThrow<ObjectType> {
-        val instance = createNearestBuiltinClassInstance() ?: ObjectType(instancePrototype)
+        val instance =
+            createNearestBuiltinClassInstance()?.apply {
+                prototype = instancePrototype
+            }
+                ?: ObjectType(instancePrototype)
         construct(instance, args)
             .orReturnThrow { return it }
         return instance.toNormal()

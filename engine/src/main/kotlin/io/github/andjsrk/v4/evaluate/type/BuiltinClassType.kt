@@ -21,7 +21,7 @@ class BuiltinClassType(
         instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
         createBasicInstance_: (self: BuiltinClassType) -> ObjectType?,
         constructor: BuiltinFunctionType,
-    ): this(name.languageValue, parent, staticProperties, instancePrototypeProperties, createBasicInstance_, constructor)
+    ): this(name.languageValue, parent?.instancePrototype, staticProperties, instancePrototypeProperties, createBasicInstance_, constructor)
     constructor(
         name: String,
         parentInstancePrototype: PrototypeObjectType? = null,

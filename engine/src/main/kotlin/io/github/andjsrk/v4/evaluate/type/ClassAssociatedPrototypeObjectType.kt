@@ -1,7 +1,5 @@
 package io.github.andjsrk.v4.evaluate.type
 
-import io.github.andjsrk.v4.evaluate.type.Property
-
 /**
  * A prototype object that is associated to a class.
  */

@@ -1321,7 +1321,9 @@ class Parser(sourceText: String) {
         if (currToken.isPrevLineTerminator) return reportUnexpectedToken()
         advance()
 
-        val body = parseConciseBody() ?: return null
+        val body = withParseContext({ copy(allowReturn = true, allowAwait = false) }) {
+            parseConciseBody() ?: return null
+        }
 
         return ArrowFunctionNode(
             params,

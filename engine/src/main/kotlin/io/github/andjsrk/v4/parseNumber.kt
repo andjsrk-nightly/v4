@@ -31,7 +31,6 @@ internal fun parseNumber(string: String): NumberType {
  * @see toUIntOrNull
  */
 private fun String.toDoubleOrNull(radix: Int): Double? {
-    @Suppress("INVISIBLE_MEMBER")
     checkRadix(radix)
 
     val length = length
@@ -43,8 +42,7 @@ private fun String.toDoubleOrNull(radix: Int): Double? {
     var limitBeforeMul = limitForMaxRadix
     var result = 0.0
     for (i in 0 until length) {
-        @Suppress("INVISIBLE_MEMBER")
-        val digit = digitOf(this[i], radix)
+        val digit = Character.digit(this[i], radix)
 
         if (digit < 0) return null
         if (result > limitBeforeMul) {
@@ -62,5 +60,14 @@ private fun String.toDoubleOrNull(radix: Int): Double? {
     return result
 }
 
+/**
+ * @see kotlin.text.checkRadix
+ */
+private fun checkRadix(radix: Int): Int {
+    if (radix !in Character.MIN_RADIX..Character.MAX_RADIX) {
+        throw IllegalArgumentException("radix $radix was not in valid range ${Character.MIN_RADIX..Character.MAX_RADIX}")
+    }
+    return radix
+}
 private fun String.removePrefixOrNull(prefix: CharSequence) =
     removePrefix(prefix).takeIf { it !== this }

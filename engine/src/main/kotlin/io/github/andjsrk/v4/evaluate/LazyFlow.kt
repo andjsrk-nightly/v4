@@ -27,7 +27,7 @@ class LazyFlow<out R: C, out C: MaybeAbrupt<*>>(block: suspend LazyFlow<R, C>.()
     private var nextStep: Continuation<Unit>? =
         block.createCoroutineUnintercepted(
             this,
-            object: Continuation<R> {
+            object: Continuation<@UnsafeVariance R> {
                 override fun resumeWith(result: Result<@UnsafeVariance R>) {
                     returnValue = result.getOrThrow()
                     nextCallInput = null
@@ -108,5 +108,7 @@ fun <R: YRC, YRC: MaybeAbrupt<*>> lazyFlow(@BuilderInference block: suspend Lazy
     LazyFlow(block)
 
 @OptIn(ExperimentalTypeInference::class)
-fun <R: MaybeAbrupt<*>> lazyFlowNoYields(@BuilderInference block: suspend SimpleLazyFlow<R>.() -> R) =
-    SimpleLazyFlow(block)
+fun <R: MaybeAbrupt<*>> lazyFlowNoYields(@BuilderInference block: suspend SimpleLazyFlow<R>.() -> R): SimpleLazyFlow<R> =
+    LazyFlow(block)
+    // NOTE: currently(Kotlin 2.0) calling LazyFlow's constructor through SimpleLazyFlow is not allowed;
+    // it seems like a bug

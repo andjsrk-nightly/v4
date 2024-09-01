@@ -1195,6 +1195,49 @@ internal class ParserTest {
         """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.UNEXPECTED_SUPER)
     }
     @Test
+    fun testCallLikeWithLineTerminatorBeforeArguments() {
+        """
+            a
+            (1)
+        """.shouldBeValidModuleAnd {
+            elements[0]
+                .unwrapExprStmt<IdentifierNode>()
+                .assertIdentifierNamed("a")
+            elements[1]
+                .unwrapExprStmt<ParenthesizedExpressionNode>()
+                .expression
+                .assertType<NumberLiteralNode>()
+        }
+
+        """
+            a
+            ?.
+            ()
+        """.shouldBeValidExpressionAnd<NormalCallNode> {
+            // although it is currently allowed, it could be changed someday
+            assert(isOptionalChain)
+        }
+
+        """
+            new A
+            ()
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.NEWLINE_BEFORE_ARGUMENTS)
+
+        """
+            class A extends P {
+                constructor() {
+                    super
+                    ()
+                }
+            }
+        """.shouldBeInvalidStatementWithError(SyntaxErrorKind.NEWLINE_BEFORE_ARGUMENTS)
+
+        """
+            import
+            ("mod")
+        """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.NEWLINE_BEFORE_ARGUMENTS)
+    }
+    @Test
     fun testImportDeclaration() {
         """
             import "mod" with { a, b as c }

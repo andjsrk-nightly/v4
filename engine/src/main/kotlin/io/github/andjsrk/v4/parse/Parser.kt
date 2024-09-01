@@ -715,11 +715,12 @@ class Parser(sourceText: String) {
     /**
      * Parses [Arguments](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-Arguments).
      */
-    @Careful(false)
-    private fun parseArguments(): ArgumentsNode? {
+    @Careful
+    private fun parseArguments(isOptionalChain: Boolean = false): ArgumentsNode? {
         val elements = mutableListOf<MaybeSpreadNode>()
 
-        val startRange = expect(LEFT_PARENTHESIS)?.range ?: return null
+        if (!isOptionalChain && currToken.not { isLeftParenForCall }) return null
+        val startRange = expect(LEFT_PARENTHESIS)!!.range
         var skippedComma = true
         while (currToken.type != RIGHT_PARENTHESIS) {
             if (!skippedComma) return reportUnexpectedToken()
@@ -752,8 +753,8 @@ class Parser(sourceText: String) {
         val questionDotToken = takeIfMatches(QUESTION_DOT)
         val isOptionalChain = questionDotToken != null
 
-        if (parsingNew && isOptionalChain) return reportError(SyntaxErrorKind.NEW_OPTIONAL_CHAIN, questionDotToken!!.range)
-        if (parsingSuperProperty && isOptionalChain) return reportError(SyntaxErrorKind.SUPER_OPTIONAL_CHAIN, questionDotToken!!.range)
+        if (parsingNew && isOptionalChain) return reportError(SyntaxErrorKind.NEW_OPTIONAL_CHAIN, questionDotToken.range)
+        if (parsingSuperProperty && isOptionalChain) return reportError(SyntaxErrorKind.SUPER_OPTIONAL_CHAIN, questionDotToken.range)
 
         lateinit var property: ExpressionNode
         lateinit var endRange: Range
@@ -782,7 +783,11 @@ class Parser(sourceText: String) {
             else -> {
                 if (!parsingNew) {
                     val isNormalCall = currToken.type == LEFT_PARENTHESIS
+                    // here, newline should not be checked because of a super call;
+                    // newline check will be performed in parseCall()
+
                     val isTaggedTemplate = !parsingSuperProperty && currToken.type.isTemplateStart && currToken.not { isPrevLineTerminator }
+
                     if (isNormalCall || isTaggedTemplate) return parseCall(actualObject, isOptionalChain)
                 }
 
@@ -816,7 +821,12 @@ class Parser(sourceText: String) {
         val importNode = takeIfMatchesKeyword(IMPORT)
             ?.let { ImportNode(it.range) }
             ?: return null
-        takeIfMatches(LEFT_PARENTHESIS) ?: return null
+
+        if (currToken.type != LEFT_PARENTHESIS) return null
+
+        if (currToken.isPrevLineTerminator) return reportError(SyntaxErrorKind.NEWLINE_BEFORE_ARGUMENTS)
+        else advance()
+
         val pathSpecifier = parseAssignment() ?: return null
         val endRange = expect(RIGHT_PARENTHESIS)?.range ?: return null
 
@@ -833,13 +843,21 @@ class Parser(sourceText: String) {
                 else -> null
             }
             else when {
-                currToken.type == LEFT_PARENTHESIS -> {
-                    val args = parseArguments() ?: return null
+                currToken.type == LEFT_PARENTHESIS ->
                     when (callee) {
-                        is SuperNode -> SuperCallNode(callee, args)
-                        else -> NormalCallNode(callee, args, isOptionalChain)
+                        is SuperNode -> {
+                            val args = parseArguments() ?: return reportError(SyntaxErrorKind.NEWLINE_BEFORE_ARGUMENTS)
+                            SuperCallNode(callee, args)
+                        }
+                        else -> {
+                            if (!isOptionalChain) {
+                                if (currToken.isPrevLineTerminator) return callee // ok, it still is a valid separate expression
+                            }
+
+                            val args = parseArguments(isOptionalChain) ?: return null
+                            NormalCallNode(callee, args, isOptionalChain)
+                        }
                     }
-                }
                 currToken.type.isTemplateStart && currToken.not { isPrevLineTerminator } -> {
                     fun report() = reportError(SyntaxErrorKind.TAGGED_TEMPLATE_OPTIONAL_CHAIN)
                     if (isOptionalChain) return report()
@@ -881,6 +899,7 @@ class Parser(sourceText: String) {
         if (!isNewExpr) return memberExpr
         requireNotNull(newToken)
 
+        if (currToken.isPrevLineTerminator) return reportError(SyntaxErrorKind.NEWLINE_BEFORE_ARGUMENTS)
         val args = parseArguments() ?: return null
         return parseMemberExpression(NewExpressionNode(memberExpr, args, newToken.range))
     }
@@ -1870,3 +1889,5 @@ private fun Token.isKeyword(keyword: ReservedWord, verifiedTokenType: Boolean = 
  */
 private val TokenType.isAsiJob get() =
     this.isOneOf(EOS, RIGHT_BRACE)
+private val Token.isLeftParenForCall get() =
+    type == LEFT_PARENTHESIS && !isPrevLineTerminator

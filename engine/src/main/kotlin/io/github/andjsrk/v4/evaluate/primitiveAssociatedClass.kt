@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.builtin.Boolean
 import io.github.andjsrk.v4.evaluate.builtin.String
 import io.github.andjsrk.v4.evaluate.type.*
 
-internal fun PrimitiveLanguageType.toBuiltinClass() =
+internal val PrimitiveLanguageType.associatedClass get() =
     when (this) {
         NullType -> null
         is StringType -> String

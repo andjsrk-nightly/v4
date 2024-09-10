@@ -9,4 +9,4 @@ val LanguageType.prototype get() =
     }
 
 val PrimitiveLanguageType.prototype get() =
-    toBuiltinClass()?.instancePrototype
+    associatedClass?.instancePrototype

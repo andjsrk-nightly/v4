@@ -7,7 +7,7 @@ import kotlin.math.min
 abstract class Module(val realm: Realm): Record {
     var env: ModuleEnvironment? = null
     private var initializedNamespaceObject = false
-    var namespaceObject = ObjectType() // dummy initial value for fitting the type
+    var namespaceObject: ObjectType = ObjectType.Impl() // dummy initial value for fitting the type
         @EsSpec("GetModuleNamespace")
         get() {
             if (!initializedNamespaceObject) {

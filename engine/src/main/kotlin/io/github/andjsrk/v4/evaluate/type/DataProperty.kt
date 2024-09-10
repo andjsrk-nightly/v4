@@ -32,7 +32,7 @@ data class DataProperty(
         return empty
     }
     override fun toDescriptorObject(): ObjectType {
-        val obj = ObjectType.createNormal().apply {
+        val obj = ObjectType.Impl().apply {
             createDataProperty("value".languageValue, value)
             createDataProperty("writable".languageValue, writable.languageValue)
         }

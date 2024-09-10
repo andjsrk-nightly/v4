@@ -596,7 +596,7 @@ val String = BuiltinClassType(
         "length".accessor(stringLengthGetter),
         // TODO
     ),
-    { ObjectType() /* dummy object */ },
+    { ObjectType.Impl() /* dummy object */ },
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "String")
     },

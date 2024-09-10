@@ -45,7 +45,7 @@ private val freeze = functionWithoutThis("freeze", 1u) fn@ { args ->
 
 @EsSpec("Object.fromEntries")
 private val fromEntries = functionWithoutThis("fromEntries", 1u) { args ->
-    val obj = ObjectType.createNormal()
+    val obj = ObjectType.Impl()
     TODO()
 }
 
@@ -108,6 +108,7 @@ val Object: BuiltinClassType by lazy {
                 obj.prototype = rawPrototype
                     .normalizeNull()
                     ?.requireToBe<ObjectType> { return@ctor it }
+                    ?.let { ObjectWrapperPrototypeObjectType(it) }
             }
             empty
         },

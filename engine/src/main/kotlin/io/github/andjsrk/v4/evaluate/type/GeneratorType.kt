@@ -2,12 +2,10 @@ package io.github.andjsrk.v4.evaluate.type
 
 import io.github.andjsrk.v4.evaluate.ExecutionContext
 import io.github.andjsrk.v4.evaluate.SimpleLazyFlow
-import io.github.andjsrk.v4.evaluate.type.Completion
-import io.github.andjsrk.v4.evaluate.type.EmptyOrThrow
 
 sealed class GeneratorType<S: Enum<*>>(
-    lazyPrototype: Lazy<io.github.andjsrk.v4.evaluate.type.PrototypeObjectType>,
-): io.github.andjsrk.v4.evaluate.type.ObjectType(lazyPrototype) {
+    lazyPrototype: Lazy<PrototypeObjectType>,
+): ObjectType by ObjectType.Impl(lazyPrototype) {
     abstract val context: ExecutionContext // [[GeneratorContext]]
     abstract var state: S?
     abstract val brand: String? // [[GeneratorBrand]]

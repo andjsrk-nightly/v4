@@ -20,7 +20,7 @@ internal fun generalizedDescriptionOf(clazz: KClass<*>) =
         clazz.`is`<LanguageTypePropertyKey>() -> "a property key"
         clazz.`is`<ArrayType>() -> "an array"
         clazz.`is`<FunctionType>() -> "a function"
-        clazz.`is`<io.github.andjsrk.v4.evaluate.type.RegExpType>() -> "a regular expression"
+        clazz.`is`<RegExpType>() -> "a regular expression"
         clazz.`is`<ObjectType>() -> "an object"
         else -> missingBranch()
     }

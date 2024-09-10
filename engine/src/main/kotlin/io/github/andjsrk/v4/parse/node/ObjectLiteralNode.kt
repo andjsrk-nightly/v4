@@ -15,7 +15,7 @@ class ObjectLiteralNode(
     override fun toString() =
         stringifyLikeDataClass(::elements, ::range)
     override fun evaluate() = lazyFlow f@ {
-        val obj = ObjectType.createNormal()
+        val obj = ObjectType.Impl()
         elements.forEach {
             yieldAll(evaluatePropertyDefinition(obj, it))
                 .orReturn { return@f it }

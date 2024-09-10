@@ -5,10 +5,7 @@ import io.github.andjsrk.v4.evaluate.type.*
 val LanguageType.prototype get() =
     when (this) {
         is ObjectType -> prototype
-        else -> {
-            require(this is PrimitiveLanguageType)
-            prototype
-        }
+        is PrimitiveLanguageType -> prototype
     }
 
 val PrimitiveLanguageType.prototype get() =

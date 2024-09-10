@@ -5,7 +5,7 @@ import io.github.andjsrk.v4.evaluate.*
 
 @EsSpec("Module Namespace Exotic Objects")
 @EsSpec("ModuleNamespaceCreate")
-class ModuleNamespaceObjectType(val module: Module, exports: List<String>): ObjectType(null) {
+class ModuleNamespaceObjectType(val module: Module, exports: List<String>): ObjectType by ObjectType.Impl(null) {
     val exports = exports.sorted()
     override fun _getOwnProperty(key: PropertyKey): MaybeThrow<Property?> {
         if (key is SymbolType) return super._getOwnProperty(key)

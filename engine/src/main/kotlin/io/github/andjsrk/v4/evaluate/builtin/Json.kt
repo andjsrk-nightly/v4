@@ -14,7 +14,7 @@ private const val SPACE = '\u0020'
 private fun JsonElement.toLanguageValue(): NonEmptyOrThrow {
     return when (this) {
         is JsonObject ->
-            ObjectType(properties = mutableMapOf(
+            ObjectType.Impl(mutableMapOf(
                 *entries.map {
                     val key = it.key.languageValue
                     val value = it.value.toLanguageValue()
@@ -157,7 +157,7 @@ private val stringify = functionWithoutThis("stringify", 1u) fn@ { args ->
 }
 
 @EsSpec("%JSON%")
-val Json = ObjectType(properties = mutableMapOf(
+val Json = ObjectType.Impl(mutableMapOf(
     sealedMethod(parse),
     sealedMethod(stringify),
 ))

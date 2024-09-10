@@ -33,7 +33,7 @@ data class AccessorProperty(
         return empty
     }
     override fun toDescriptorObject(): ObjectType {
-        val obj = ObjectType.createNormal()
+        val obj = ObjectType.Impl()
         obj.createDataProperty("get".languageValue, get ?: NullType)
         obj.createDataProperty("set".languageValue, set ?: NullType)
         return super.toDescriptorObject(obj)

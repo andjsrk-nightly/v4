@@ -22,7 +22,7 @@ private val log = functionWithoutThis("log", 1u) fn@ { args ->
     normalNull
 }
 
-internal val globalObj = ObjectType(properties = mutableMapOf(
+internal val globalObj = ObjectType.Impl(mutableMapOf(
     sealedMethod(assert),
     sealedMethod(log),
 ))

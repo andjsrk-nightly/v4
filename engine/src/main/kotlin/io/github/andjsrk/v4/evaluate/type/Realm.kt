@@ -12,7 +12,7 @@ class Realm: Record {
     @EsSpec("SetRealmGlobalObject")
     @JvmName("setGlobalObjectNonProperty")
     fun setGlobalObject(baseGlobal: ObjectType?) {
-        globalObject = baseGlobal ?: ObjectType(null)
+        globalObject = baseGlobal ?: ObjectType.Impl(null)
         globalEnv = GlobalEnvironment(globalObject)
     }
     @EsSpec("SetDefaultGlobalBindings")

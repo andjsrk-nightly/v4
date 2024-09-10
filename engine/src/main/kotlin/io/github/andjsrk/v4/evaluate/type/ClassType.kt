@@ -10,11 +10,10 @@ sealed class ClassType(
     staticProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
     open val constructor: FunctionType,
-): ObjectType(properties = staticProperties) {
+): ObjectType by ObjectType.Impl(properties = staticProperties) {
     val privateInstanceMethods = mutableMapOf<PrivateName, PrivateProperty>()
     val instanceFields = mutableMapOf<PropertyKey, ClassFieldDefinition>()
-    val instancePrototype: ClassAssociatedPrototypeObjectType =
-        ClassAssociatedPrototypeObjectType(lazy { parentInstancePrototype }, instancePrototypeProperties, this)
+    val instancePrototype = ClassAssociatedPrototypeObjectType(this, instancePrototypeProperties)
     init {
         definePropertyOrThrow("instancePrototype".languageValue, DataProperty.sealed(instancePrototype))
     }
@@ -36,7 +35,7 @@ sealed class ClassType(
             createNearestBuiltinClassInstance()?.apply {
                 prototype = instancePrototype
             }
-                ?: ObjectType(instancePrototype)
+                ?: ObjectType.Impl(instancePrototype)
         construct(instance, args)
             .orReturnThrow { return it }
         return instance.toNormal()

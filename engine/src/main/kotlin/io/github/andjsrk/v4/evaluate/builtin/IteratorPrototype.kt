@@ -6,9 +6,8 @@ private val iteratorIterator = method(SymbolType.WellKnown.iterator) { thisArg, 
     thisArg.toNormal()
 }
 
-val IteratorInstancePrototype = PrototypeObjectType(
-    lazy { Object.instancePrototype },
-    mutableMapOf(
+val IteratorInstancePrototype = ObjectWrapperPrototypeObjectType(
+    ObjectType.Impl(mutableMapOf(
         sealedMethod(iteratorIterator),
-    ),
+    ))
 )

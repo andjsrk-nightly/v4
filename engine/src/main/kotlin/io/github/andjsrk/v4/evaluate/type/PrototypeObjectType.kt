@@ -1,6 +1,9 @@
 package io.github.andjsrk.v4.evaluate.type
 
-typealias PrototypeObjectType = ObjectType
+/**
+ * A union of [ClassAssociatedPrototypeObjectType] and [ObjectWrapperPrototypeObjectType]
+ */
+sealed interface PrototypeObjectType: ObjectType
 
 val PrototypeObjectType.ownerClass get() =
     (this as? ClassAssociatedPrototypeObjectType)

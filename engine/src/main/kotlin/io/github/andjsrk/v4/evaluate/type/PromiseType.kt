@@ -4,9 +4,8 @@ import io.github.andjsrk.v4.EsSpec
 import io.github.andjsrk.v4.error.TypeErrorKind
 import io.github.andjsrk.v4.evaluate.*
 import io.github.andjsrk.v4.evaluate.builtin.Promise
-import io.github.andjsrk.v4.evaluate.type.*
 
-class PromiseType: ObjectType(lazy { Promise.instancePrototype }) {
+class PromiseType: ObjectType by ObjectType.Impl(lazy { Promise.instancePrototype }) {
     var state: State? = null
     var result: LanguageType? = null
     val fulfillReactions = mutableListOf<Reaction>()

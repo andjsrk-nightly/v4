@@ -26,7 +26,7 @@ val Error: BuiltinClassType by lazy {
         mutableMapOf(
             "name".accessor(getter = errorNameGetter, configurable = false),
         ),
-        { ObjectType(Error.instancePrototype) },
+        { ObjectType.Impl(Error.instancePrototype) },
         constructor(1u) ctor@ { error, args ->
             val message = args[0]
                 .normalizeNull()
@@ -43,7 +43,8 @@ val Error: BuiltinClassType by lazy {
 
 private tailrec fun ObjectType.findName(): PropertyKey? {
     val proto = prototype ?: return null
-    return proto.ownerClass?.name ?: proto.findName()
+    proto.ownerClass?.name?.let { return it }
+    return proto.findName() // TODO: switch the code to use elvis operator - currently using it makes tailrec to not work
 }
 
 @EsSpec("InstallErrorCause")

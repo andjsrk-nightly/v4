@@ -84,7 +84,7 @@ val BigInt = BuiltinClassType(
         sealedMethod(bigintToRadix),
         sealedMethod(bigintToString),
     ),
-    { ObjectType() /* dummy object */ },
+    { ObjectType.Impl() /* dummy object */ },
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "BigInt")
     },

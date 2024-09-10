@@ -47,7 +47,7 @@ private val defineProperty = functionWithoutThis("defineProperty", 3u) fn@ { arg
 private val getOwnerClass = functionWithoutThis("getOwnerClass", 1u) fn@ { args ->
     val proto = args[0]
         .requireToBe<ObjectType> { return@fn it }
-    proto.ownerClass
+    (proto as? ClassAssociatedPrototypeObjectType)?.ownerClass
         .normalizeToNormal()
 }
 
@@ -76,7 +76,7 @@ private val getOwnPropertyDescriptor = functionWithoutThis("getOwnPropertyDescri
 private val getOwnPropertyDescriptors = functionWithoutThis("getOwnPropertyDescriptors", 1u) fn@ { args ->
     val obj = args[0]
         .requireToBe<ObjectType> { return@fn it }
-    val res = ObjectType.createNormal()
+    val res = ObjectType.Impl()
     for ((key, desc) in obj.ownPropertyEntries()) res.createDataProperty(key, desc.toDescriptorObject())
     res.toNormal()
 }
@@ -139,7 +139,7 @@ private val preventExtensions = functionWithoutThis("preventExtensions", 1u) fn@
 }
 
 @EsSpec("%Reflect%")
-val Reflect = ObjectType(properties = mutableMapOf(
+val Reflect = ObjectType.Impl(mutableMapOf(
     sealedMethod(defineProperty),
     sealedMethod(defineProperties),
     sealedMethod(getOwnPropertyDescriptor),

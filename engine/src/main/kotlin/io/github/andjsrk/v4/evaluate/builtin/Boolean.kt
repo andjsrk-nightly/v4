@@ -45,7 +45,7 @@ val Boolean = BuiltinClassType(
     mutableMapOf(
         sealedMethod(booleanToString),
     ),
-    { ObjectType() /* dummy object */ },
+    { ObjectType.Impl() /* dummy object */ },
     constructor { _, _ ->
         throwError(TypeErrorKind.CANNOT_CONSTRUCT, "Boolean")
     },

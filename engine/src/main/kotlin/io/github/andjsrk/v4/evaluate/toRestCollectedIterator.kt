@@ -55,9 +55,9 @@ fun LanguageType.toRestCollectedObjectIterator(bindingElements: List<MaybeRestNo
                             val props = properties.toMutableMap() // clone the original object
                             props -= nonRestKeys // remove properties that its key is contained in non-rest keys
                             props.entries.removeAll { (_, prop) -> prop.not { enumerable } }
-                            ObjectType.createNormal(props)
+                            ObjectType.Impl(props)
                         }
-                            ?: ObjectType.createNormal() // since primitive values cannot have any own properties, we can sure that the result is an empty object
+                            ?: ObjectType.Impl() // since primitive values cannot have any own properties, we can sure that the result is an empty object
                         rest.toNormal() // an object that contains the other own enumerable properties of the value
                     }
                     is NonRestObjectPropertyNode -> {

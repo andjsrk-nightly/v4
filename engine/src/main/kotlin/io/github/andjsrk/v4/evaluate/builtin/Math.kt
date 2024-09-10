@@ -369,7 +369,7 @@ val truncate = functionWithoutThis("truncate", 1u) fn@ { args ->
 }
 
 @EsSpec("%Math%")
-val Math = ObjectType(properties = mutableMapOf(
+val Math = ObjectType.Impl(mutableMapOf(
     "E".sealedData(E.languageValue),
     "LN_10".sealedData(ln(10.0).languageValue),
     "LN_2".sealedData(ln(2.0).languageValue),

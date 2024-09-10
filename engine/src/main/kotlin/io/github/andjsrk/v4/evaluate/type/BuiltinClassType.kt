@@ -16,20 +16,20 @@ class BuiltinClassType(
 ): ClassType(name, parentInstancePrototype, staticProperties, instancePrototypeProperties, constructor) {
     constructor(
         name: String,
-        parent: ClassType? = null,
-        staticProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
-        instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
-        createBasicInstance_: (self: BuiltinClassType) -> ObjectType?,
-        constructor: BuiltinFunctionType,
-    ): this(name.languageValue, parent?.instancePrototype, staticProperties, instancePrototypeProperties, createBasicInstance_, constructor)
-    constructor(
-        name: String,
         parentInstancePrototype: PrototypeObjectType? = null,
         staticProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
         instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
         createBasicInstance_: (self: BuiltinClassType) -> ObjectType?,
         constructor: BuiltinFunctionType,
     ): this(name.languageValue, parentInstancePrototype, staticProperties, instancePrototypeProperties, createBasicInstance_, constructor)
+    constructor(
+        name: String,
+        parent: ClassType,
+        staticProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
+        instancePrototypeProperties: MutableMap<PropertyKey, Property> = mutableMapOf(),
+        createBasicInstance_: (self: BuiltinClassType) -> ObjectType?,
+        constructor: BuiltinFunctionType,
+    ): this(name.languageValue, parent.instancePrototype, staticProperties, instancePrototypeProperties, createBasicInstance_, constructor)
     @EsSpec("BuiltinCallOrConstruct")
     override fun construct(thisArg: LanguageType, args: List<LanguageType>): MaybeThrow<Nothing?> {
         thisArg.requireToBe<ObjectType> { return it }

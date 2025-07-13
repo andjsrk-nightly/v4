@@ -683,6 +683,18 @@ class Parser(sourceText: String) {
         }
         return TemplateLiteralNode(strings.map(::TemplateStringNode), expressions.toList())
     }
+    @Careful
+    private fun parseDoExpression(): DoExpressionNode? {
+        val startRange = takeIfMatchesKeyword(DO)?.range ?: return null
+
+        expect(LEFT_BRACE) ?: return null
+        val statements = mutableListOf<StatementNode>()
+        while (currToken.type != RIGHT_BRACE) statements += parseStatementListItem() ?: return null
+        val endRange = expect(RIGHT_BRACE)?.range ?: return null
+
+        return DoExpressionNode(statements, startRange..endRange)
+            .withDuplicateNameCheck()
+    }
     /**
      * Parses [PrimaryExpression](https://tc39.es/ecma262/multipage/ecmascript-language-expressions.html#prod-PrimaryExpression).
      */
@@ -691,6 +703,7 @@ class Parser(sourceText: String) {
         parsePrimitiveLiteral() ?: parseIdentifier() ?: when (currToken.type) {
             IDENTIFIER -> // now there are only keywords except primitive literals
                 listOf(
+                    ::parseDoExpression,
                     ::parseThis,
                     ::parseClassExpression,
                 )

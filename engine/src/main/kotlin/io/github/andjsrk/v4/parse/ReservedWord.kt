@@ -11,6 +11,7 @@ enum class ReservedWord(val isContextual: Boolean = false) {
     CONSTRUCTOR(isContextual = true),
     CONTINUE,
     DEFAULT,
+    DO,
     ELSE,
     EXPORT,
     EXTENDS,

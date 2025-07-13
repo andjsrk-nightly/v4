@@ -1238,6 +1238,28 @@ internal class ParserTest {
         """.shouldBeInvalidExpressionWithError(SyntaxErrorKind.NEWLINE_BEFORE_ARGUMENTS)
     }
     @Test
+    fun testDoExpression() {
+        """
+            do {
+                if (true);
+                123
+            }
+        """.shouldBeValidExpressionAnd<DoExpressionNode> {
+            elements[0].assertType<IfStatementNode>()
+            elements[1].assertType<ExpressionStatementNode>()
+        }
+
+        """
+            do {
+                if (true);
+            }
+        """.shouldBeValidExpressionAnd<DoExpressionNode> {
+            // do expressions that end with a statement is allowed (results null by default)
+
+            elements[0].assertType<IfStatementNode>()
+        }
+    }
+    @Test
     fun testImportDeclaration() {
         """
             import "mod" with { a, b as c }

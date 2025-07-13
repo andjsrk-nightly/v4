@@ -504,6 +504,26 @@ internal class EvaluatorTest {
         """).assertNormalAnd<NullType> {}
     }
     @Test
+    fun testDo() {
+        evaluationOf("""
+            let a = do {
+                let b = [1, 2, 3]
+                b.count
+            }
+            a
+        """).assertNormalAnd<NumberType> {
+            assert(value.nativeValue == 3.0)
+        }
+
+        evaluationOf("""
+            let a = do {
+                123
+                let b = 456
+            }
+            a
+        """).assertNormalAnd<NullType> {}
+    }
+    @Test
     fun testWhile() {
         evaluationOf("""
             var run = true
@@ -693,7 +713,7 @@ internal class EvaluatorTest {
 
         evaluationOf("""
             var evaluationCount = 0
-            ;({ [evaluationCount += 1] })
+            ;({ [(evaluationCount += 1, 'foo')] })
         """).assertNormalAnd {
             val evaluationCount = variableNamed("evaluationCount")
                 .assertTypedAs<NumberType>()

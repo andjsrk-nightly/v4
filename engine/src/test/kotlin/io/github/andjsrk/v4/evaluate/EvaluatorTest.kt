@@ -780,18 +780,40 @@ internal class EvaluatorTest {
     @Test
     fun testClass() {
         evaluationOf("""
-            class A {
-                a = 0
-            }
+            class A {}
             new A()
         """).assertNormalAnd<ObjectType> {
             val classA = module.variableNamed("A")
                 .assertTypedAs<OrdinaryClassType>()
             assert(value.prototype == classA.instancePrototype)
+        }
+
+        evaluationOf("""
+            class A {
+                a = 0
+            }
+            new A()
+        """).assertNormalAnd<ObjectType> {
             val a = value.dataPropertyNamed("a")
                 .value
                 .assertType<NumberType>()
             assert(a.nativeValue == 0.0)
+        }
+
+        evaluationOf("""
+            let a = new MutableArray()
+            class A {
+                constructor(x) {
+                    a.addLast(x)
+                }
+            }
+            new A(1)
+            a
+        """).assertNormalAnd<ArrayType> {
+            assert(value.array.size == 1)
+            value.array[0].assertTypeAnd<NumberType> {
+                assert(nativeValue == 1.0)
+            }
         }
     }
     @Test

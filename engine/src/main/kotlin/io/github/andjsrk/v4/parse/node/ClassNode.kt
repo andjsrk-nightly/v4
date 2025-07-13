@@ -59,12 +59,16 @@ sealed class ClassNode: NonAtomicNode {
                 }
             val staticProps = mutableMapOf<PropertyKey, Property>()
             val instanceProtoProps = mutableMapOf<PropertyKey, Property>()
+            val ctorKind =
+                if (parent == null) ConstructorKind.BASE
+                else ConstructorKind.DERIVED
             val clazz = OrdinaryClassType(
                 name?.languageValue,
                 parentValue,
                 staticProps,
                 instanceProtoProps,
                 ctor,
+                ctorKind,
             )
             val res = ClassElementCollectResult(
                 privateInstanceMethods = clazz.privateInstanceMethods,

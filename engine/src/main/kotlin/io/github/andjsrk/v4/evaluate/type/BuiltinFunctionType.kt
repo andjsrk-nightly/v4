@@ -20,10 +20,10 @@ class BuiltinFunctionType(
     override val isMethod = true
     override fun call(thisArg: LanguageType?, args: List<LanguageType>) =
         withTemporalCtx(createContextForCall()) {
-            evaluateBody(thisArg, args)
+            behavior(thisArg, args)
         }
-    override fun evaluateBody(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrThrow =
-        behavior(thisArg, args)
+    override fun ordinaryCallEvaluateBody(args: List<LanguageType>): NonEmptyOrThrow =
+        behavior(null, args)
 }
 
 private typealias BuiltinMethodBehavior = (thisArg: LanguageType, args: List<LanguageType>) -> NonEmptyOrThrow

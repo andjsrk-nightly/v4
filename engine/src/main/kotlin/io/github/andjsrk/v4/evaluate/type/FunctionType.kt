@@ -29,7 +29,8 @@ sealed class FunctionType(
         ExecutionContext(realm, FunctionEnvironment.from(this), this, module = module)
     @EsSpec("Call") // the method implements Call rather than [[Call]] since additional type check is no needed
     abstract fun call(thisArg: LanguageType? = null, args: List<LanguageType> = emptyList()): NonEmptyOrThrow
-    abstract fun evaluateBody(thisArg: LanguageType?, args: List<LanguageType>): Completion.FromFunctionBody<*>
+    @EsSpec("OrdinaryCallEvaluateBody")
+    abstract fun ordinaryCallEvaluateBody(args: List<LanguageType>): Completion.FromFunctionBody<*>
     fun callWithSingleArg(value: LanguageType) =
         call(null, listOf(value))
 }

@@ -36,7 +36,7 @@ class OrdinaryFunctionType(
     override fun call(thisArg: LanguageType?, args: List<LanguageType>): NonEmptyOrThrow {
         val res = withTemporalCtx(createContextForCall()) {
             bindThisInCall(runningExecutionContext, thisArg)
-            specEvaluateBody(args)
+            evaluateBody(args)
         }
         if (res is Completion.Return) return res.value.toNormal()
         require(res is MaybeThrow<*>)
@@ -51,9 +51,8 @@ class OrdinaryFunctionType(
         require(localEnv is FunctionEnvironment)
         localEnv.bindThisValue(thisArg)
     }
-    override fun evaluateBody(thisArg: LanguageType?, args: List<LanguageType>): Completion.FromFunctionBody<*> {
-        bindThisInCall(runningExecutionContext, thisArg)
-        return specEvaluateBody(args)
+    override fun ordinaryCallEvaluateBody(args: List<LanguageType>): Completion.FromFunctionBody<*> {
+        return evaluateBody(args)
     }
     @EsSpec("EvaluateBody")
     @EsSpec("EvaluateConciseBody")
@@ -62,7 +61,7 @@ class OrdinaryFunctionType(
     @EsSpec("EvaluateAsyncFunctionBody")
     @EsSpec("EvaluateGeneratorBody")
     @EsSpec("EvaluateAsyncGeneratorBody")
-    fun specEvaluateBody(args: List<LanguageType>): Completion.FromFunctionBody<*> {
+    fun evaluateBody(args: List<LanguageType>): Completion.FromFunctionBody<*> {
         fun evaluateBodyFlexibly(body: ConciseBodyNode) =
             (
                 if (isMethod) evaluateStatements(body as BlockNode).asFromFunctionBody()
